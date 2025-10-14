@@ -71,6 +71,7 @@ async def process_collection_changes(collection, collection_changes: Dict[str, L
 
     if "updated" in collection_changes:
         for doc in collection_changes["updated"]:
+            doc["updated_at"] = datetime.utcnow()
             await collection.update_one(
                 {"id": doc["id"], "user_id": user_id},
                 {"$set": doc}

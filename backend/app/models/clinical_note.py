@@ -10,6 +10,7 @@ class ClinicalNote(BaseModel):
     content: str
     visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         from_attributes = True

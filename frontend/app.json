@@ -15,8 +15,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000"
+        "backgroundColor": "#FFFFFF"
       },
+      "package": "com.anonymous.frontend",
+      "versionCode": 1,
       "edgeToEdgeEnabled": true
     },
     "web": {

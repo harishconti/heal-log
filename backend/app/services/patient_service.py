@@ -1,7 +1,7 @@
 from async_lru import alru_cache
 from app.db.session import PatientCollection, CounterCollection
-from app.schemas.patient import PatientCreate, PatientUpdate, NoteCreate
-from app.schemas.clinical_note import ClinicalNoteCreate
+from app.schemas.patient import PatientCreate, PatientUpdate
+from app.schemas.clinical_note import ClinicalNoteCreate, NoteCreate
 from app.models.patient import Patient
 from app.models.clinical_note import ClinicalNote
 from app.services import clinical_note_service, analytics_service

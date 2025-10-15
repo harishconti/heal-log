@@ -1,82 +1,69 @@
 from datetime import datetime
+from app.db.session import get_db
+from app.models.patient import Patient
+from app.models.clinical_note import ClinicalNote
+from bson import ObjectId
 from typing import Dict, Any, List
-from app.db.session import PatientCollection, ClinicalNoteCollection
-from app.models.user import User
 
-async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
-    """
-    Pull changes from the database since the last pulled timestamp.
-    """
-    last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000)
+async def pull_changes(last_pulled_at: int, user_id: str):
+    db = get_db()
 
-    # Fetch changes from all relevant collections
-    patient_changes = await get_collection_changes(PatientCollection, last_pulled_at_dt, user_id)
-    note_changes = await get_collection_changes(ClinicalNoteCollection, last_pulled_at_dt, user_id)
+    # Convert last_pulled_at from milliseconds to a datetime object
+    last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0) if last_pulled_at else datetime.min
 
-    changes = {
-        "patients": patient_changes,
-        "clinical_notes": note_changes,
-    }
+    # Fetch created and updated records
+    created_patients = await db.patients.find({"user_id": user_id, "created_at": {"$gt": last_pulled_at_dt}}).to_list(length=None)
+    updated_patients = await db.patients.find({"user_id": user_id, "updated_at": {"$gt": last_pulled_at_dt}, "created_at": {"$lte": last_pulled_at_dt}}).to_list(length=None)
 
-    return {
-        "changes": changes,
-        "timestamp": int(datetime.now().timestamp() * 1000)
-    }
+    created_notes = await db.clinical_notes.find({"user_id": user_id, "created_at": {"$gt": last_pulled_at_dt}}).to_list(length=None)
+    updated_notes = await db.clinical_notes.find({"user_id": user_id, "updated_at": {"$gt": last_pulled_at_dt}, "created_at": {"$lte": last_pulled_at_dt}}).to_list(length=None)
 
-async def get_collection_changes(collection, last_pulled_at_dt: datetime, user_id: str) -> Dict[str, List[Dict]]:
-    """
-    Generic function to get changes from a collection.
-    """
-    created_cursor = collection.find({
-        "user_id": user_id,
-        "created_at": {"$gt": last_pulled_at_dt}
-    })
-    updated_cursor = collection.find({
-        "user_id": user_id,
-        "updated_at": {"$gt": last_pulled_at_dt},
-        "created_at": {"$lte": last_pulled_at_dt}
-    })
-
-    created = await created_cursor.to_list(length=None)
-    updated = await updated_cursor.to_list(length=None)
-
-    # We don't have a way to track deletions yet.
-    # This will be handled in a future iteration.
+    # Since WatermelonDB doesn't have a concept of "deleted" records in the pull, we assume deletions are handled by setting a status.
+    # For this implementation, we will not handle deletions in the pull.
 
     return {
-        "created": [doc for doc in created],
-        "updated": [doc for doc in updated],
-        "deleted": []
+        "patients": {
+            "created": [Patient(**p).to_response() for p in created_patients],
+            "updated": [Patient(**p).to_response() for p in updated_patients],
+            "deleted": []
+        },
+        "clinical_notes": {
+            "created": [ClinicalNote(**n).to_response() for n in created_notes],
+            "updated": [ClinicalNote(**n).to_response() for n in updated_notes],
+            "deleted": []
+        }
     }
 
-async def push_changes(changes: Dict[str, Any], user_id: str):
-    """
-    Push changes from the client to the database.
-    """
-    # Process changes for each table
-    if "patients" in changes:
-        await process_collection_changes(PatientCollection, changes["patients"], user_id)
+async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user_id: str):
+    db = get_db()
 
-    if "clinical_notes" in changes:
-        await process_collection_changes(ClinicalNoteCollection, changes["clinical_notes"], user_id)
+    # Process created records
+    if 'created' in changes.get('patients', {}):
+        for patient_data in changes['patients']['created']:
+            patient_data['user_id'] = user_id
+            await db.patients.insert_one(patient_data)
 
-async def process_collection_changes(collection, collection_changes: Dict[str, List[Dict]], user_id: str):
-    """
-    Generic function to process creates, updates, and deletes for a collection.
-    """
-    if "created" in collection_changes:
-        for doc in collection_changes["created"]:
-            doc["user_id"] = user_id
-            await collection.insert_one(doc)
+    if 'created' in changes.get('clinical_notes', {}):
+        for note_data in changes['clinical_notes']['created']:
+            note_data['user_id'] = user_id
+            await db.clinical_notes.insert_one(note_data)
 
-    if "updated" in collection_changes:
-        for doc in collection_changes["updated"]:
-            doc["updated_at"] = datetime.utcnow()
-            await collection.update_one(
-                {"id": doc["id"], "user_id": user_id},
-                {"$set": doc}
-            )
+    # Process updated records
+    if 'updated' in changes.get('patients', {}):
+        for patient_data in changes['patients']['updated']:
+            patient_id = patient_data.pop('id')
+            await db.patients.update_one({"_id": ObjectId(patient_id)}, {"$set": patient_data})
 
-    if "deleted" in collection_changes:
-        for doc_id in collection_changes["deleted"]:
-            await collection.delete_one({"id": doc_id, "user_id": user_id})
+    if 'updated' in changes.get('clinical_notes', {}):
+        for note_data in changes['clinical_notes']['updated']:
+            note_id = note_data.pop('id')
+            await db.clinical_notes.update_one({"_id": ObjectId(note_id)}, {"$set": note_data})
+
+    # Process deleted records
+    if 'deleted' in changes.get('patients', {}):
+        for patient_id in changes['patients']['deleted']:
+            await db.patients.delete_one({"_id": ObjectId(patient_id)})
+
+    if 'deleted' in changes.get('clinical_notes', {}):
+        for note_id in changes['clinical_notes']['deleted']:
+            await db.clinical_notes.delete_one({"_id": ObjectId(note_id)})

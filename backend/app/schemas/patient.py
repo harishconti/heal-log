@@ -1,10 +1,8 @@
 from pydantic import BaseModel, Field, EmailStr, validator
-from typing import List, Optional, Literal
+from typing import Optional
 from datetime import datetime
-import uuid
 import re
 
-# --- Patient Schemas ---
 class PatientBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     phone: Optional[str] = Field(default="", max_length=25)
@@ -13,7 +11,7 @@ class PatientBase(BaseModel):
     location: Optional[str] = Field(default="", max_length=100)
     initial_complaint: Optional[str] = Field(default="", max_length=5000)
     initial_diagnosis: Optional[str] = Field(default="", max_length=5000)
-    photo: Optional[str] = None  # base64 encoded image, validation can be complex
+    photo: Optional[str] = None
     group: Optional[str] = Field(default="general", max_length=50)
     is_favorite: bool = False
 
@@ -32,43 +30,25 @@ class PatientBase(BaseModel):
 class PatientCreate(PatientBase):
     pass
 
-class PatientUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
-    phone: Optional[str] = Field(default=None, max_length=25)
+class PatientUpdate(PatientBase):
+    name: Optional[str] = None
+    phone: Optional[str] = None
     email: Optional[EmailStr] = None
-    address: Optional[str] = Field(default=None, max_length=255)
-    location: Optional[str] = Field(default=None, max_length=100)
-    initial_complaint: Optional[str] = Field(default=None, max_length=5000)
-    initial_diagnosis: Optional[str] = Field(default=None, max_length=5000)
+    address: Optional[str] = None
+    location: Optional[str] = None
+    initial_complaint: Optional[str] = None
+    initial_diagnosis: Optional[str] = None
     photo: Optional[str] = None
-    group: Optional[str] = Field(default=None, max_length=50)
+    group: Optional[str] = None
     is_favorite: Optional[bool] = None
 
-    @validator('name')
-    def name_must_not_be_empty(cls, v):
-        if v and not v.strip():
-            raise ValueError('Name must not be empty')
-        return v
 
-    @validator('phone')
-    def validate_phone_number(cls, v):
-        if v and not re.match(r'^\+?1?\d{9,15}$', v):
-            raise ValueError('Invalid phone number format.')
-        return v
-
-class PatientInDBBase(PatientBase):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    patient_id: str  # Auto-generated incremental ID like PAT001
-    user_id: str  # Associate with logged-in user
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+class PatientResponse(PatientBase):
+    id: str
+    patient_id: str
+    user_id: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
-
-class Patient(PatientInDBBase):
-    pass
-
-class NoteCreate(BaseModel):
-    content: str = Field(..., min_length=1, max_length=5000)
-    visit_type: Literal["regular", "follow-up", "emergency"] = "regular"

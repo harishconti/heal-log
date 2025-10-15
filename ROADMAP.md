@@ -21,11 +21,11 @@ This document outlines the development status and future roadmap for all compone
   - [x] The checkout flow is implemented, calling the backend to create a secure checkout session.
 - **Data Layer:**
   - [x] **Offline Support:** Initial WatermelonDB setup is complete and configured correctly for web builds. *(Note: Full functionality is blocked by the missing backend sync API).*
+- **Input Validation:**
+    - [x] The Zod validation schema for patients (`patientSchema`) is now in place, allowing for patient creation and editing.
 
 ### ⏳ Pending Features
 
-- **Core Functionality:**
-    - [ ] **Input Validation:** The Zod validation schema for patients (`patientSchema`) is missing, preventing the creation and editing of patients.
 - **Document Management (Pro Feature):** *(Depends on: Backend Image Storage)*
   - [ ] Implement the document upload UI on the patient detail screen. 
   - [ ] Implement a view to list, download, and manage a patient's uploaded documents.
@@ -68,10 +68,12 @@ This is a new, Pro-exclusive application to be built from scratch.
   - [x] **Rate Limiting:** Implemented rate limiting across all major API endpoints.
   - [x] **Server-Side Validation:** Enhanced validation for patient and clinical note data.
 
+- **Data Synchronization API:**
+  - [x] Implemented `/api/sync/pull` and `/api/sync/push` endpoints required by the frontend's WatermelonDB client.
+
 ### ⏳ Pending Features
 
 - **Core Functionality:**
-  - [ ] **Data Synchronization API:** Implement `/api/sync/pull` and `/api/sync/push` endpoints required by the frontend's WatermelonDB client.
   - [ ] **Appointments:** Develop API endpoints for appointment management.
   - [ ] **Image Storage:** Integrate with a cloud storage service (e.g., AWS S3, Cloudinary) for document files.
 

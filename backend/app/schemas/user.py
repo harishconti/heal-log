@@ -65,5 +65,5 @@ class UserInDB(UserInDBBase):
     password_hash: str
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    username: EmailStr
     password: str

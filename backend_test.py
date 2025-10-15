@@ -123,11 +123,11 @@ class MedicalContactsAPITester:
         """Test login with demo user"""
         try:
             login_data = {
-                "email": "dr.sarah@clinic.com",
+                "username": "dr.sarah@clinic.com",
                 "password": "password123"
             }
             
-            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+            response = self.session.post(f"{API_BASE}/auth/login", data=login_data)
             success = response.status_code == 200
             
             if success:
@@ -155,7 +155,7 @@ class MedicalContactsAPITester:
         
         try:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
-            response = self.session.get(f"{API_BASE}/auth/me", headers=headers)
+            response = self.session.get(f"{API_BASE}/users/me", headers=headers)
             success = response.status_code == 200
             
             if success:
@@ -183,7 +183,7 @@ class MedicalContactsAPITester:
 
         try:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
-            response = self.session.get(f"{API_BASE}/auth/me", headers=headers)
+            response = self.session.get(f"{API_BASE}/users/me", headers=headers)
             success = response.status_code == 200
 
             if success:

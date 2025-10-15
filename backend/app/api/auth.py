@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from app.schemas.user import UserCreate, UserLogin
+from fastapi.security import OAuth2PasswordRequestForm
+from app.schemas.user import UserCreate
 from app.core.limiter import limiter
 from app.schemas.token import Token, RefreshToken
 from app.services import user_service
@@ -42,11 +43,11 @@ async def register_user(request: Request, user_data: UserCreate):
 
 @router.post("/login", response_model=dict)
 @limiter.limit("5/minute")
-async def login_for_access_token(request: Request, user_data: UserLogin):
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Authenticate a user and return tokens and user info.
     """
-    user = await user_service.authenticate_user(user_data)
+    user = await user_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -103,14 +104,3 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )
-
-@router.get("/me", response_model=dict)
-async def read_users_me(current_user_id: str = Depends(get_current_user)):
-    """
-    Get the current authenticated user's information.
-    """
-    user = await user_service.get_user_by_id(current_user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    return {"success": True, "user": user.to_response()}

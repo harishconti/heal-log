@@ -1,5 +1,5 @@
 from app.db.session import UserCollection
-from app.schemas.user import UserCreate, UserLogin, UserPlan, SubscriptionStatus
+from app.schemas.user import UserCreate, UserPlan, SubscriptionStatus
 from app.core.hashing import get_password_hash, verify_password
 from app.models.user import User
 from bson import ObjectId
@@ -28,12 +28,12 @@ async def create_user(user_data: UserCreate) -> User:
 
     return db_user
 
-async def authenticate_user(user_data: UserLogin) -> Optional[User]:
+async def authenticate_user(email: str, password: str) -> Optional[User]:
     """
     Authenticates a user. Returns the user object if successful, otherwise None.
     """
-    user_from_db = await UserCollection.find_one({"email": user_data.email})
-    if not user_from_db or not verify_password(user_data.password, user_from_db.get("password_hash", "")):
+    user_from_db = await UserCollection.find_one({"email": email})
+    if not user_from_db or not verify_password(password, user_from_db.get("password_hash", "")):
         return None
 
     return User(**user_from_db)

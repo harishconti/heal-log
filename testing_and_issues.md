@@ -16,28 +16,8 @@ This document tracks the integration testing process and any issues or bugs foun
 
 ## Open Issues
 
-### 1. Missing Backend Sync API Endpoints
-- **Issue:** The entire backend API for data synchronization is missing. The frontend application attempts to call `/api/sync/pull` and `/api/sync/push`, but these endpoints do not exist, causing the frontend to hang indefinitely during the initial data sync.
-- **How to reproduce:**
-  1. Start both servers.
-  2. The application will hang on a blank screen as it waits for a response from the non-existent sync API.
-- **Methods tried:**
-  - Verified the frontend `sync.ts` service is making calls to these endpoints.
-  - Inspected the `backend/app/api` directory and confirmed there is no `sync.py` or equivalent file implementing these routes.
-- **Status:** **Critical Bug.** This is a fundamental flaw that makes the application unusable as the data layer cannot initialize. The fix requires implementing the entire synchronization API on the backend.
-
-### 2. Missing Validation File Causes Frontend Build to Fail
-- **Issue:** The frontend application fails to build because the file `frontend/lib/validation/index.ts` is missing. This file is imported by `add-patient.tsx` and `edit-patient/[id].tsx` and is expected to contain the `patientSchema` for form validation.
-- **How to reproduce:**
-  1. Attempt to start the frontend development server with `npm run start`.
-  2. The Metro bundler will fail with an "Unable to resolve module `../lib/validation`" error.
-- **Methods tried:**
-  - Verified the `frontend/lib` directory does not exist.
-  - Used `grep` to confirm that `patientSchema` is used in multiple components but is not defined anywhere.
-- **Status:** **Critical Bug.** This completely prevents the frontend from building and running. The fix requires re-creating the `frontend/lib/validation/index.ts` file with the correct Zod schema.
-
-### 3. API Convention: Password validation during registration
-- **Issue:** The backend enforces password complexity rules, but these are not explicitly documented for the API user. The registration endpoint requires at least one number in the password.
+### 1. API Convention: Password validation during registration
+- **Issue:** The backend enforces password complexity rules, but these are not explicitly documented for the API user. The registration endpoint requires at least one number in the anumber in the password.
 - **Status:** Identified. The long-term fix would be to document this requirement in the API specification.
 
 ### 4. API Convention: Incorrect `Content-Type` for Login Endpoint
@@ -79,3 +59,9 @@ The backend API has been tested for the following functionalities:
 
 ### Infinite Loading Screen due to State Hydration Issue
 - **Status:** **Resolved.** Analysis of `frontend/contexts/AuthContext.tsx` confirmed that `useAppStore.persist.rehydrate()` is called explicitly during app initialization, resolving the state hydration issue.
+
+### Missing Backend Sync API Endpoints
+- **Status:** **Resolved.** Implemented the entire synchronization API on the backend, including `/api/sync/pull` and `/api/sync/push` endpoints.
+
+### Missing Validation File Causes Frontend Build to Fail
+- **Status:** **Resolved.** Created the missing `frontend/lib/validation/index.ts` file with the correct Zod schema for patient validation.

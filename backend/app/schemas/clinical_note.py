@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
-from typing import Optional, Literal
-import uuid
+from typing import Literal
 
 class ClinicalNoteBase(BaseModel):
     content: str = Field(..., min_length=1, max_length=5000, description="The content of the clinical note.")
@@ -14,18 +13,22 @@ class ClinicalNoteBase(BaseModel):
         return v
 
 class NoteCreate(ClinicalNoteBase):
-    """Schema for creating a note from an API request body."""
     pass
 
 class ClinicalNoteCreate(ClinicalNoteBase):
-    """Schema for creating a note in the service layer, including patient_id."""
     patient_id: str
 
-class ClinicalNote(ClinicalNoteBase):
+class ClinicalNoteUpdate(BaseModel):
+    content: str | None = None
+    visit_type: Literal["regular", "follow-up", "emergency"] | None = None
+
+
+class ClinicalNoteResponse(ClinicalNoteBase):
     id: str
     patient_id: str
     user_id: str
     created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

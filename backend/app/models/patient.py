@@ -4,6 +4,8 @@ from datetime import datetime
 import uuid
 from bson import ObjectId
 
+from app.schemas.patient import PatientResponse
+
 class Patient(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     patient_id: str
@@ -20,6 +22,25 @@ class Patient(BaseModel):
     is_favorite: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def to_response(self) -> PatientResponse:
+        return PatientResponse(
+            id=self.id,
+            patient_id=self.patient_id,
+            user_id=self.user_id,
+            name=self.name,
+            phone=self.phone,
+            email=self.email,
+            address=self.address,
+            location=self.location,
+            initial_complaint=self.initial_complaint,
+            initial_diagnosis=self.initial_diagnosis,
+            photo=self.photo,
+            group=self.group,
+            is_favorite=self.is_favorite,
+            created_at=self.created_at,
+            updated_at=self.updated_at
+        )
 
     class Config:
         from_attributes = True

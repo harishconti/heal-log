@@ -419,25 +419,20 @@ class MedicalContactsAPITester:
             success = response.status_code == 200
             
             if success:
-                data = response.json()
-                if data.get('success') and data.get('patients'):
-                    patients = data['patients']
-                    patient_count = len(patients)
-                    if patient_count >= 5:  # Should have 5 demo patients
-                        # Check for specific demo patients
-                        patient_names = [p['name'] for p in patients]
-                        expected_names = ['John Wilson', 'Emma Rodriguez', 'Robert Chang', 'Lisa Thompson', 'David Miller']
-                        found_names = [name for name in expected_names if name in patient_names]
-                        
-                        self.log_result("Demo Patients Loaded", True, 
-                                      f"Found {patient_count} patients including: {', '.join(found_names[:3])}")
-                    else:
-                        success = False
-                        self.log_result("Demo Patients Loaded", False, 
-                                      f"Expected 5+ demo patients, found {patient_count}", response)
+                patients = response.json()
+                patient_count = len(patients)
+                if patient_count >= 5:  # Should have 5 demo patients
+                    # Check for specific demo patients
+                    patient_names = [p['name'] for p in patients]
+                    expected_names = ['John Wilson', 'Emma Rodriguez', 'Robert Chang', 'Lisa Thompson', 'David Miller']
+                    found_names = [name for name in expected_names if name in patient_names]
+
+                    self.log_result("Demo Patients Loaded", True,
+                                    f"Found {patient_count} patients including: {', '.join(found_names[:3])}")
                 else:
                     success = False
-                    self.log_result("Demo Patients Loaded", False, "No patients data returned", response)
+                    self.log_result("Demo Patients Loaded", False,
+                                    f"Expected 5+ demo patients, found {patient_count}", response)
             else:
                 self.log_result("Demo Patients Loaded", False, "Failed to get patients", response)
             
@@ -470,9 +465,8 @@ class MedicalContactsAPITester:
             success = response.status_code == 201 # Expect 201 Created
             
             if success:
-                data = response.json()
-                if data.get('success') and data.get('patient'):
-                    patient = data['patient']
+                patient = response.json()
+                if patient and patient.get('id'):
                     self.test_patient_id = patient['id']
                     self.log_result("Create Patient", True, 
                                   f"Created patient: {patient['name']}, ID: {patient['patient_id']}")
@@ -499,14 +493,13 @@ class MedicalContactsAPITester:
             success = response.status_code == 200
             
             if success:
-                data = response.json()
-                if data.get('success') and 'patients' in data:
-                    patients = data['patients']
+                patients = response.json()
+                if isinstance(patients, list):
                     self.log_result("Get Patients", True, 
                                   f"Retrieved {len(patients)} patients for current user")
                 else:
                     success = False
-                    self.log_result("Get Patients", False, "Missing patients data", response)
+                    self.log_result("Get Patients", False, "Response is not a list of patients", response)
             else:
                 self.log_result("Get Patients", False, "Failed to get patients", response)
             
@@ -529,9 +522,8 @@ class MedicalContactsAPITester:
             success = response.status_code == 200
             
             if success:
-                data = response.json()
-                if data.get('success') and data.get('patients'):
-                    patients = data['patients']
+                patients = response.json()
+                if isinstance(patients, list):
                     found_john = any('John' in p['name'] for p in patients)
                     if found_john:
                         self.log_result("Search Patients", True, 
@@ -728,13 +720,10 @@ class MedicalContactsAPITester:
             success = response1.status_code == 200 and response2.status_code == 200
             
             if success:
-                data1 = response1.json()
-                data2 = response2.json()
+                patients1 = response1.json()
+                patients2 = response2.json()
                 
-                if data1.get('success') and data2.get('success'):
-                    patients1 = data1['patients']
-                    patients2 = data2['patients']
-                    
+                if isinstance(patients1, list) and isinstance(patients2, list):
                     # Check that patient lists are different and don't overlap
                     patient_ids1 = set(p['id'] for p in patients1)
                     patient_ids2 = set(p['id'] for p in patients2)

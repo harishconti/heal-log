@@ -5,15 +5,15 @@ from app.schemas.role import UserRole
 from app.services import patient_service, clinical_note_service
 from app.core.limiter import limiter
 from app.schemas.patient import (
-    PatientCreate, PatientUpdate, Patient
+    PatientCreate, PatientUpdate, PatientResponse
 )
-from app.schemas.clinical_note import NoteCreate, ClinicalNote
+from app.schemas.clinical_note import NoteCreate, ClinicalNoteResponse
 
 router = APIRouter()
 
 import logging
 
-@router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("20/minute")
 async def create_patient(
     request: Request,
@@ -25,7 +25,7 @@ async def create_patient(
     """
     try:
         patient = await patient_service.create_patient(patient_data, current_user_id)
-        return {"success": True, "patient": patient}
+        return patient
     except Exception as e:
         logging.error(f"Error creating patient for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(
@@ -33,7 +33,7 @@ async def create_patient(
             detail="An unexpected error occurred while creating the patient."
         )
 
-@router.get("/", response_model=dict)
+@router.get("/", response_model=List[PatientResponse])
 @limiter.limit("60/minute")
 async def get_all_patients(
     request: Request,
@@ -52,7 +52,7 @@ async def get_all_patients(
             group=group,
             favorites_only=favorites_only
         )
-        return {"success": True, "patients": patients}
+        return patients
     except Exception as e:
         logging.error(f"Error fetching patients for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(
@@ -60,7 +60,7 @@ async def get_all_patients(
             detail="An unexpected error occurred while fetching patients."
         )
 
-@router.get("/{id}", response_model=dict)
+@router.get("/{id}", response_model=PatientResponse)
 @limiter.limit("120/minute")
 async def get_patient_by_id(
     request: Request,
@@ -73,9 +73,9 @@ async def get_patient_by_id(
     patient = await patient_service.get_patient_by_id(id, current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
-    return {"success": True, "patient": patient}
+    return patient
 
-@router.put("/{id}", response_model=dict)
+@router.put("/{id}", response_model=PatientResponse)
 @limiter.limit("30/minute")
 async def update_patient(
     request: Request,
@@ -89,7 +89,7 @@ async def update_patient(
     patient = await patient_service.update_patient(id, patient_data, current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
-    return {"success": True, "patient": patient}
+    return patient
 
 @router.delete("/{id}", response_model=dict)
 @limiter.limit("10/minute")
@@ -108,7 +108,7 @@ async def delete_patient(
 
 # --- Notes Routes ---
 
-@router.post("/{id}/notes", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/{id}/notes", response_model=ClinicalNoteResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("45/minute")
 async def add_patient_note(
     request: Request,
@@ -122,9 +122,9 @@ async def add_patient_note(
     note = await patient_service.add_note_to_patient(id, note_data, current_user_id)
     if not note:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
-    return {"success": True, "note": note}
+    return note
 
-@router.get("/{id}/notes", response_model=dict)
+@router.get("/{id}/notes", response_model=List[ClinicalNoteResponse])
 @limiter.limit("120/minute")
 async def get_patient_notes(
     request: Request,
@@ -137,7 +137,7 @@ async def get_patient_notes(
     notes = await patient_service.get_patient_notes(id, current_user_id)
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
-    return {"success": True, "notes": notes}
+    return notes
 
 # --- Other Utility Routes ---
 

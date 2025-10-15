@@ -54,6 +54,10 @@ The application is built with a modern, modular architecture designed for scalab
 - **Frontend (Mobile):** React Native, Expo, Zustand, WatermelonDB
 - **Frontend (Web):** React.js (Planned)
 
+## 🔴 Known Issues
+
+**The Android build is currently broken.** All attempts to fix the native Android build have failed due to a complex C++ compilation issue. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
+
 ## 🚀 Getting Started
 
 Follow these instructions to set up the development environment.

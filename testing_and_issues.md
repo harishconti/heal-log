@@ -16,6 +16,16 @@ This document tracks the integration testing process and any issues or bugs foun
 
 ## Open Issues
 
+### Android Build Failure
+- **Issue:** The Android application fails to build due to a series of complex and interconnected issues related to the native build environment. The root cause appears to be a C++ compilation error, but all attempts to resolve it have been unsuccessful.
+- **Status:** **Unresolved.** The following steps were taken to try and resolve the issue:
+    - Installed the correct JDK (OpenJDK 17) and Android SDK.
+    - Updated all frontend dependencies to the latest versions compatible with the Expo SDK.
+    - Ran `expo-doctor` and resolved all critical issues, including missing peer dependencies and incorrect `app.json` configurations.
+    - Attempted to force the C++17 standard by modifying `android/build.gradle` and `android/app/build.gradle` in various ways, but the build continued to fail with C++ compilation errors.
+    - Attempted to disable the Foojay resolver, which did not resolve the issue.
+    - The build consistently fails with a C++ compilation error, indicating a fundamental incompatibility between the native modules and the build environment.
+
 ### 1. API Convention: Password validation during registration
 - **Issue:** The backend enforces password complexity rules, but these are not explicitly documented for the API user. The registration endpoint requires at least one number in the anumber in the password.
 - **Status:** Identified. The long-term fix would be to document this requirement in the API specification.

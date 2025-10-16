@@ -4,7 +4,7 @@ from app.core.security import get_current_user
 
 router = APIRouter()
 
-@router.get("/users/me", response_model=dict)
+@router.get("/me", response_model=dict)
 async def read_users_me(current_user_id: str = Depends(get_current_user)):
     """
     Get the current authenticated user's information.

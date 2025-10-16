@@ -19,15 +19,15 @@ Authentication is handled via JWT (JSON Web Tokens). The following endpoints are
 ### Login
 
 *   **Endpoint:** `POST /api/auth/login`
-*   **Content-Type:** `application/json`
-*   **Description:** Authenticates a user and returns an access token.
+*   **Content-Type:** `application/x-www-form-urlencoded`
+*   **Description:** Authenticates a user and returns an access token. The `username` field should contain the user's email address.
 *   **Fields:**
-    *   `email` (string)
+    *   `username` (string)
     *   `password` (string)
 
 ### Get Current User
 
-*   **Endpoint:** `GET /api/auth/me`
+*   **Endpoint:** `GET /api/users/me`
 *   **Description:** Retrieves the profile of the currently authenticated user.
 *   **Authentication:** Requires a valid access token.
 

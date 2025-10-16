@@ -26,34 +26,24 @@ This document tracks the integration testing process and any issues or bugs foun
     - Attempted to disable the Foojay resolver, which did not resolve the issue.
     - The build consistently fails with a C++ compilation error, indicating a fundamental incompatibility between the native modules and the build environment.
 
-### 1. API Convention: Password validation during registration
-- **Issue:** The backend enforces password complexity rules, but these are not explicitly documented for the API user. The registration endpoint requires at least one number in the anumber in the password.
-- **Status:** Identified. The long-term fix would be to document this requirement in the API specification.
-
-### 4. API Convention: Incorrect `Content-Type` for Login Endpoint
-- **Issue:** The `/api/auth/login` endpoint expects a `Content-Type` of `application/json`, but the common standard for token endpoints (OAuth2) is `application/x-www-form-urlencoded`. This can lead to confusion and integration errors.
-- **Status:** Identified. The workaround is to send the login credentials as JSON. The long-term fix would be to align with the OAuth2 standard or clearly document the expected content type.
-
-### 5. API Convention: Inconsistent Field Name for Login
-- **Issue:** The `/api/auth/login` endpoint requires the username to be passed in a field named `email`, while the registration uses `email` and many systems use `username`. The API should be consistent.
-- **Status:** Identified. The workaround is to use the `email` field. The long-term fix would be to accept both `username` and `email` or to be consistent across the API.
-
-### 6. API Convention: User Endpoint is at `/api/auth/me`, not `/api/users/me`
-- **Issue:** The endpoint to fetch the current user's data is located at `/api/auth/me`, which is not the conventional `/api/users/me`. This can cause confusion for developers integrating with the API.
-- **Status:** Identified. The workaround is to use the correct endpoint. The long-term fix would be to move the endpoint to a more conventional path for better API design.
-
 ---
 
 ## Backend API Testing Summary
 The backend API has been tested for the following functionalities:
 - **User Registration:** Works as expected. New users are correctly assigned the `doctor` role.
-- **User Login:** The login process works but has some minor inconsistencies in the API design (e.g., content type, field names).
-- **User Data Retrieval:** The endpoint for fetching user data is non-standard (`/api/auth/me` instead of `/api/users/me`).
+- **User Login:** The login process works as expected.
+- **User Data Retrieval:** The endpoint for fetching user data is at the standard `/api/users/me`.
 - **Patient CRUD:** All CRUD operations (Create, Read, Update, Delete) for patients are working correctly for authorized users (i.e., users with the `DOCTOR` role).
 
 ---
 
 ## Resolved Issues
+
+### API Convention Issues
+- **Status:** **Resolved.** The following API convention issues have been addressed:
+    - Password validation requirements are now documented in `backend/API_DOCUMENTATION.md`.
+    - The login endpoint now correctly uses `application/json` and expects an `email` field.
+    - The user data endpoint is now at the standard `/api/users/me`.
 
 ### New Users are Assigned 'patient' Role Instead of 'doctor'
 - **Status:** **Resolved.** Analysis of `backend/app/models/user.py` confirmed that the default role for new users is now correctly set to `UserRole.DOCTOR`.

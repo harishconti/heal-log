@@ -123,11 +123,11 @@ class MedicalContactsAPITester:
         """Test login with demo user"""
         try:
             login_data = {
-                "username": "dr.sarah@clinic.com",
+                "email": "dr.sarah@clinic.com",
                 "password": "password123"
             }
             
-            response = self.session.post(f"{API_BASE}/auth/login", data=login_data)
+            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
             success = response.status_code == 200
             
             if success:
@@ -561,9 +561,9 @@ class MedicalContactsAPITester:
             
             if success:
                 data = response.json()
-                if data.get('success') and data.get('patient'):
-                    patient = data['patient']
-                    self.log_result("Update Patient", True, 
+                patient = response.json()
+                if patient and patient.get('id'):
+                    self.log_result("Update Patient", True,
                                   f"Updated patient: {patient['name']}, New diagnosis: {patient['initial_diagnosis']}")
                 else:
                     success = False
@@ -595,9 +595,9 @@ class MedicalContactsAPITester:
             
             if success:
                 data = response.json()
-                if data.get('success') and data.get('note'):
-                    note = data['note']
-                    self.log_result("Add Patient Note", True, 
+                note = response.json()
+                if note and note.get('id'):
+                    self.log_result("Add Patient Note", True,
                                   f"Added note: {note['content'][:50]}..., Visit type: {note['visit_type']}")
                 else:
                     success = False
@@ -623,9 +623,9 @@ class MedicalContactsAPITester:
             
             if success:
                 data = response.json()
-                if data.get('success') and 'notes' in data:
-                    notes = data['notes']
-                    self.log_result("Get Patient Notes", True, 
+                notes = response.json()
+                if isinstance(notes, list):
+                    self.log_result("Get Patient Notes", True,
                                   f"Retrieved {len(notes)} notes for patient")
                 else:
                     success = False

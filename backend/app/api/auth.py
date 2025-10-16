@@ -104,3 +104,14 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )
+
+@router.get("/me", response_model=dict)
+async def read_users_me(current_user_id: str = Depends(get_current_user)):
+    """
+    Get the current authenticated user's information.
+    """
+    user = await user_service.get_user_by_id(current_user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"success": True, "user": user.to_response()}

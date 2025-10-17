@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from typing import List, Optional
 from app.core.security import get_current_user, require_pro_user, require_role
 from app.schemas.role import UserRole
-from app.services import patient_service, clinical_note_service
+from app.services.patient_service import patient_service
 from app.core.limiter import limiter
 from app.schemas.patient import (
     PatientCreate, PatientUpdate, PatientResponse
@@ -24,8 +24,10 @@ async def create_patient(
     Create a new patient record. (Doctor-only)
     """
     try:
-        patient = await patient_service.create_patient(patient_data, current_user_id)
+        patient = await patient_service.create(patient_data, current_user_id)
         return patient
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
         logging.error(f"Error creating patient for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(
@@ -53,6 +55,8 @@ async def get_all_patients(
             favorites_only=favorites_only
         )
         return patients
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logging.error(f"Error fetching patients for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(
@@ -70,7 +74,7 @@ async def get_patient_by_id(
     """
     Retrieve a single patient by their unique ID.
     """
-    patient = await patient_service.get_patient_by_id(id, current_user_id)
+    patient = await patient_service.get(id, user_id=current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return patient
@@ -86,7 +90,7 @@ async def update_patient(
     """
     Update a patient's details. (Doctor-only)
     """
-    patient = await patient_service.update_patient(id, patient_data, current_user_id)
+    patient = await patient_service.update(id, patient_data, current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return patient
@@ -101,7 +105,7 @@ async def delete_patient(
     """
     Delete a patient record. (Doctor-only)
     """
-    success = await patient_service.delete_patient(id, current_user_id)
+    success = await patient_service.delete(id, current_user_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return {"success": True, "message": "Patient deleted successfully"}
@@ -150,6 +154,8 @@ async def get_patient_groups(request: Request, current_user_id: str = Depends(ge
     try:
         groups = await patient_service.get_patient_groups(current_user_id)
         return {"success": True, "groups": groups}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         logging.error(f"Error fetching groups for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(
@@ -166,6 +172,8 @@ async def get_statistics(request: Request, current_user_id: str = Depends(get_cu
     try:
         stats = await patient_service.get_user_stats(current_user_id)
         return {"success": True, "stats": stats}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         logging.error(f"Error fetching stats for user {current_user_id}: {e}", exc_info=True)
         raise HTTPException(

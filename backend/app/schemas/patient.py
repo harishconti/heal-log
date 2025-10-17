@@ -1,9 +1,33 @@
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 from datetime import datetime
-import re
+import uuid
+from beanie import Document, Indexed
 
-class PatientBase(BaseModel):
+class Patient(Document):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    patient_id: Indexed(str, unique=True)
+    user_id: Indexed(str)
+    name: str = Field(..., min_length=2, max_length=100)
+    phone: Optional[str] = Field(default="", max_length=25)
+    email: Optional[EmailStr] = None
+    address: Optional[str] = Field(default="", max_length=255)
+    location: Optional[str] = Field(default="", max_length=100)
+    initial_complaint: Optional[str] = Field(default="", max_length=5000)
+    initial_diagnosis: Optional[str] = Field(default="", max_length=5000)
+    photo: Optional[str] = None
+    group: Optional[str] = Field(default="general", max_length=50)
+    is_favorite: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "patients"
+        indexes = [
+            [("user_id", 1), ("created_at", -1)]
+        ]
+
+class PatientCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     phone: Optional[str] = Field(default="", max_length=25)
     email: Optional[EmailStr] = None
@@ -15,22 +39,7 @@ class PatientBase(BaseModel):
     group: Optional[str] = Field(default="general", max_length=50)
     is_favorite: bool = False
 
-    @validator('name')
-    def name_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('Name must not be empty')
-        return v
-
-    @validator('phone')
-    def validate_phone_number(cls, v):
-        if v and not re.match(r'^\+?1?\d{9,15}$', v):
-            raise ValueError('Invalid phone number format.')
-        return v
-
-class PatientCreate(PatientBase):
-    pass
-
-class PatientUpdate(PatientBase):
+class PatientUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
@@ -42,13 +51,19 @@ class PatientUpdate(PatientBase):
     group: Optional[str] = None
     is_favorite: Optional[bool] = None
 
-
-class PatientResponse(PatientBase):
+class PatientResponse(BaseModel):
     id: str
     patient_id: str
     user_id: str
+    name: str
+    phone: Optional[str]
+    email: Optional[EmailStr]
+    address: Optional[str]
+    location: Optional[str]
+    initial_complaint: Optional[str]
+    initial_diagnosis: Optional[str]
+    photo: Optional[str]
+    group: Optional[str]
+    is_favorite: bool
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

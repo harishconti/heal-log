@@ -1,8 +1,17 @@
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.config import settings
 
-# Create a client instance
-client = AsyncIOMotorClient(settings.MONGO_URL)
+# Get connection pool settings from environment variables with defaults
+MAX_CONNECTIONS_COUNT = int(os.getenv("MAX_CONNECTIONS_COUNT", 100))
+MIN_CONNECTIONS_COUNT = int(os.getenv("MIN_CONNECTIONS_COUNT", 10))
+
+# Create a client instance with connection pooling options
+client = AsyncIOMotorClient(
+    settings.MONGO_URL,
+    maxPoolSize=MAX_CONNECTIONS_COUNT,
+    minPoolSize=MIN_CONNECTIONS_COUNT
+)
 
 # Get the database from the client
 # The database name is read from the environment variables

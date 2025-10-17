@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   SafeAreaView,
   Alert,
@@ -20,6 +19,8 @@ import { useRouter } from 'expo-router';
 import { useAppStore } from '../store/useAppStore';
 import { map } from 'rxjs/operators';
 import { sync } from '../services/sync';
+import { FlashList } from '@shopify/flash-list';
+import { useTheme } from '../contexts/ThemeContext';
 
 // WatermelonDB imports
 import { database } from '../models/database';
@@ -31,6 +32,7 @@ import { Q } from '@nozbe/watermelondb';
 function Index({ patients, groups, totalPatientCount }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
 
   const {
     searchQuery,
@@ -115,7 +117,7 @@ function Index({ patients, groups, totalPatientCount }) {
 
   const renderPatientCard = ({ item }: { item: Patient }) => (
     <TouchableOpacity
-      style={styles.patientCard}
+      style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}
       onPress={() => router.push(`/patient/${item.id}`)}
     >
       <View style={styles.cardContent}>
@@ -126,16 +128,16 @@ function Index({ patients, groups, totalPatientCount }) {
               style={styles.patientPhoto}
             />
           ) : (
-            <View style={styles.patientPhotoPlaceholder}>
-              <Ionicons name="person" size={24} color="#666" />
+            <View style={[styles.patientPhotoPlaceholder, { backgroundColor: theme.colors.background }]}>
+              <Ionicons name="person" size={24} color={theme.colors.textSecondary} />
             </View>
           )}
           <View style={styles.patientDetails}>
-            <Text style={styles.patientName}>{item.name}</Text>
-            <Text style={styles.patientId}>ID: {item.patientId}</Text>
-            {item.phone ? <Text style={styles.patientContact}>{item.phone}</Text> : null}
+            <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
+            <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
+            {item.phone ? <Text style={[styles.patientContact, { color: theme.colors.primary }]}>{item.phone}</Text> : null}
             {item.initialComplaint ? (
-              <Text style={styles.complaint} numberOfLines={1}>
+              <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                 {item.initialComplaint}
               </Text>
             ) : null}
@@ -149,11 +151,11 @@ function Index({ patients, groups, totalPatientCount }) {
             <Ionicons
               name={item.isFavorite ? 'heart' : 'heart-outline'}
               size={20}
-              color={item.isFavorite ? '#e74c3c' : '#666'}
+              color={item.isFavorite ? theme.colors.error : theme.colors.textSecondary}
             />
           </TouchableOpacity>
-          <View style={styles.groupBadge}>
-            <Text style={styles.groupText}>{item.group || 'General'}</Text>
+          <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
+            <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
           </View>
         </View>
       </View>
@@ -175,10 +177,10 @@ function Index({ patients, groups, totalPatientCount }) {
 
   if (authLoading || loading.patients) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#2ecc71" />
-          <Text style={styles.loadingText}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
             {authLoading ? 'Loading...' : 'Loading patients...'}
           </Text>
         </View>
@@ -191,9 +193,9 @@ function Index({ patients, groups, totalPatientCount }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header, Offline Banner, Search, Filters */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Medical Contacts</Text>
           <Text style={styles.headerSubtitle}>Welcome, {user?.full_name?.split(' ')[0]}</Text>
@@ -213,78 +215,83 @@ function Index({ patients, groups, totalPatientCount }) {
 
       {isOffline && (
         <View style={styles.offlineBanner}>
-          <Ionicons name="wifi-outline" size={16} color="#fff" />
+          <Ionicons name="cloud-offline-outline" size={16} color="#fff" />
           <Text style={styles.offlineText}>
             Offline Mode - {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}`: 'Never synced'}
           </Text>
         </View>
       )}
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
+        <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme.colors.text }]}
           placeholder="Search patients..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.colors.textSecondary}
         />
       </View>
 
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={filterButtons}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            key={item.filter}
-            style={[styles.filterButton, selectedFilter === item.filter && styles.activeFilterButton]}
-            onPress={() => {
-              triggerHaptic();
-              setSelectedFilter(item.filter);
-            }}
-          >
-            <Text style={[styles.filterText, selectedFilter === item.filter && styles.activeFilterText]}>
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item.filter}
-        contentContainerStyle={styles.filtersContainer}
-      />
+      <View>
+        <FlashList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={filterButtons}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              key={item.filter}
+              style={[styles.filterButton, { backgroundColor: selectedFilter === item.filter ? theme.colors.primary : theme.colors.surface }]}
+              onPress={() => {
+                triggerHaptic();
+                setSelectedFilter(item.filter);
+              }}
+            >
+              <Text style={[styles.filterText, { color: selectedFilter === item.filter ? '#fff' : theme.colors.textSecondary }]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item.filter}
+          contentContainerStyle={styles.filtersContainer}
+          estimatedItemSize={100}
+        />
+      </View>
 
-      <FlatList
+      <FlashList
         data={patients}
         renderItem={renderPatientCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.patientsList}
+        estimatedItemSize={150}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-        onRefresh={() => handleSync(true)}
-            colors={['#2ecc71']}
+            onRefresh={() => handleSync(true)}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="people-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyStateText}>No patients found</Text>
-            <Text style={styles.emptyStateSubtext}>
+            <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
+            <Text style={[styles.emptyStateText, { color: theme.colors.text }]}>No patients found</Text>
+            <Text style={[styles.emptyStateSubtext, { color: theme.colors.textSecondary }]}>
               {searchQuery ? 'Try adjusting your search' : 'Add your first patient to get started'}
             </Text>
           </View>
         }
       />
 
-      <View style={styles.statsFooter}>
-        <Text style={styles.statsText}>
+      <View style={[styles.statsFooter, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.statsText, { color: theme.colors.textSecondary }]}>
           {patients.length} of {totalPatientCount} patients
         </Text>
-        <Text style={styles.syncTimeText}>
+        <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
           {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}`: ''}
         </Text>
         {user?.subscription_plan && (
-          <Text style={styles.planText}>
+          <Text style={[styles.planText, { color: theme.colors.primary }]}>
             {user.subscription_plan.charAt(0).toUpperCase() + user.subscription_plan.slice(1)} Plan
           </Text>
         )}
@@ -338,7 +345,6 @@ export default IndexContainer;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
   centerContent: {
     flex: 1,
@@ -347,7 +353,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
     marginTop: 16,
   },
   header: {
@@ -356,7 +361,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#2ecc71',
     ...Platform.select({
       ios: {
         paddingTop: 8,
@@ -413,7 +417,6 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 12,
@@ -431,7 +434,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
   },
   filtersContainer: {
     paddingHorizontal: 16,
@@ -442,29 +444,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#e9ecef',
     marginRight: 8,
-  },
-  activeFilterButton: {
-    backgroundColor: '#2ecc71',
   },
   filterText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
   },
   syncTimeText: {
     fontSize: 12,
-    color: '#999',
-  },
-  activeFilterText: {
-    color: '#fff',
-    fontWeight: '600',
   },
   patientsList: {
     paddingHorizontal: 16,
   },
   patientCard: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 12,
     elevation: 2,
@@ -490,7 +482,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#e9ecef',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -501,22 +492,18 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4,
   },
   patientId: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 2,
   },
   patientContact: {
     fontSize: 14,
-    color: '#2ecc71',
     marginBottom: 4,
   },
   complaint: {
     fontSize: 14,
-    color: '#666',
     fontStyle: 'italic',
   },
   cardActions: {
@@ -530,12 +517,10 @@ const styles = StyleSheet.create({
   groupBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#e3f2fd',
     borderRadius: 12,
   },
   groupText: {
     fontSize: 12,
-    color: '#1976d2',
     fontWeight: '500',
   },
   emptyState: {
@@ -545,13 +530,11 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#999',
     textAlign: 'center',
     paddingHorizontal: 32,
   },
@@ -559,19 +542,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    backgroundColor: '#fff',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   statsText: {
     fontSize: 14,
-    color: '#666',
   },
   planText: {
     fontSize: 12,
-    color: '#2ecc71',
     fontWeight: '500',
   },
 });

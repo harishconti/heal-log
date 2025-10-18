@@ -20,6 +20,7 @@ async def init_dummy_data():
                 "id": "demo_user_1", "email": "dr.sarah@clinic.com", "phone": "+1234567890",
                 "full_name": "Dr. Sarah Johnson", "medical_specialty": "cardiology",
                 "password_hash": get_password_hash("password123"), "plan": UserPlan.PRO,
+                "role": "doctor",
                 "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.utcnow() + timedelta(days=365),
                 "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
             },
@@ -27,6 +28,7 @@ async def init_dummy_data():
                 "id": "demo_user_2", "email": "dr.mike@physio.com", "phone": "+1987654321",
                 "full_name": "Dr. Mike Chen", "medical_specialty": "physiotherapy",
                 "password_hash": get_password_hash("password123"), "plan": UserPlan.BASIC,
+                "role": "doctor",
                 "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.utcnow() + timedelta(days=30),
                 "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
             }
@@ -35,11 +37,19 @@ async def init_dummy_data():
         logger.info("Checking and inserting demo users...")
         for user_data in demo_users:
             if not await UserCollection.find_one({"email": user_data["email"]}):
-                await UserCollection.insert_one(user_data)
-                logger.info(f"Inserted user: {user_data['email']}")
+                try:
+                    result = await UserCollection.insert_one(user_data)
+                    logger.info(f"Inserted user: {user_data['email']} with result: {result.inserted_id}")
+                except Exception as e:
+                    logger.error(f"Error inserting user {user_data['email']}: {e}")
 
         # --- Create Dummy Patients for Dr. Sarah (demo_user_1) ---
-        user_id_sarah = "demo_user_1"
+        sarah_user = await UserCollection.find_one({"email": "dr.sarah@clinic.com"})
+        if not sarah_user:
+            logger.warning("Could not find dr.sarah@clinic.com to create patients for.")
+            return
+
+        user_id_sarah = sarah_user["_id"]
         if await PatientCollection.count_documents({"user_id": user_id_sarah}) > 0:
             logger.info(f"Patients for {user_id_sarah} already exist. Skipping creation.")
             return
@@ -85,8 +95,13 @@ async def init_dummy_data():
         ]
 
         if dummy_patients:
-            await PatientCollection.insert_many(dummy_patients)
-            logger.info(f"Inserted {len(dummy_patients)} patients.")
+            try:
+                result = await PatientCollection.insert_many(dummy_patients)
+                logger.info(f"Inserted {len(result.inserted_ids)} patients.")
+                print(f"Inserted {len(result.inserted_ids)} patients.")
+            except Exception as e:
+                logger.error(f"Error inserting patients: {e}")
+                print(f"Error inserting patients: {e}")
 
         # --- Set up Counters ---
         await CounterCollection.update_one(

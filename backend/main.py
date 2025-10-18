@@ -43,6 +43,7 @@ app.include_router(api.analytics.router, prefix="/api/analytics", tags=["Analyti
 app.include_router(api.payments.router, prefix="/api/payments", tags=["Payments"])
 app.include_router(api.webhooks.router, prefix="/api/webhooks", tags=["Webhooks"])
 app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
+app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
 
 # --- Event Handlers ---
 @app.on_event("startup")
@@ -55,7 +56,8 @@ async def on_startup():
     logging.info("Application starting up...")
     await init_beanie(
         database=client[settings.DB_NAME],
-        document_models=[User, Patient, ClinicalNote, Document]
+        document_models=[User, Patient, ClinicalNote, Document],
+        allow_index_dropping=True
     )
     await init_dummy_data()
     logging.info("Dummy data initialization complete.")

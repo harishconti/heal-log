@@ -191,7 +191,7 @@ The backend code is organized into a clean, service-oriented structure within `b
 ### 6.2. Production Recommendations
 - **Web Server:** A production-grade ASGI server like Gunicorn with Uvicorn workers, running in a container.
 - **Database:** A managed MongoDB cluster (e.g., MongoDB Atlas) is strongly recommended for automated backups, scaling, and monitoring.
-- **Caching:** A caching layer (e.g., Redis) should be used for frequently accessed data to reduce database load.
+- **Caching:** The application uses an in-memory, least-recently-used (LRU) cache via the `@alru_cache` decorator on service-layer functions. This is suitable for single-instance deployments. For multi-instance or serverless deployments, an external caching layer like Redis would be required. A debug endpoint (`/api/debug/clear-all-caches`) is available for clearing all caches during testing.
 - **Monitoring:** A solution like Prometheus/Grafana or a commercial APM (e.g., Datadog) to track performance.
 - **Logging:** Centralized logging (e.g., ELK stack, Google Cloud Logging).
 - **CI/CD:** An automated pipeline (e.g., GitHub Actions) for testing and deployment.

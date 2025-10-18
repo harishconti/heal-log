@@ -1,3 +1,4 @@
+import logging
 from async_lru import alru_cache
 from app.schemas.patient import PatientCreate, PatientUpdate, Patient
 from app.schemas.clinical_note import NoteCreate, ClinicalNote
@@ -53,13 +54,16 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         Builds the Beanie query for fetching patients based on filters.
         """
         query = [self.model.user_id == user_id]
+        logging.info(f"Building query for user {user_id} with search: {search}")
         if search:
             search_regex = {"$regex": search, "$options": "i"}
             query.append(
-                (self.model.name == search_regex) |
-                (self.model.patient_id == search_regex) |
-                (self.model.phone == search_regex) |
-                (self.model.email == search_regex)
+                {"$or": [
+                    {"name": search_regex},
+                    {"patient_id": search_regex},
+                    {"phone": search_regex},
+                    {"email": search_regex}
+                ]}
             )
         if group:
             query.append(self.model.group == group)
@@ -79,6 +83,8 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         Retrieves a list of patients for a user, with optional filters.
         """
         query = self._build_patient_query(user_id, search, group, favorites_only)
+        logging.info(f"Executing query: {query}")
+        print(f"Executing query: {query}")
         return await self.model.find(*query).sort(-self.model.created_at).to_list()
 
     async def update(self, patient_id: str, patient_data: PatientUpdate, user_id: str) -> Optional[Patient]:

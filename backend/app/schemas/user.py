@@ -1,10 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, BeforeValidator
+from typing import Optional, Annotated
 from datetime import datetime, timedelta
 import uuid
 from enum import Enum
 from beanie import Document, Indexed
 from .role import UserRole
+
+PyObjectId = Annotated[str, BeforeValidator(str)]
 
 class UserPlan(str, Enum):
     BASIC = "basic"
@@ -17,7 +19,7 @@ class SubscriptionStatus(str, Enum):
     PAST_DUE = "past_due"
 
 class User(Document):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: PyObjectId = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
     email: Indexed(EmailStr, unique=True)
     phone: Optional[str] = Field(default="", max_length=25)
     full_name: str = Field(..., min_length=2, max_length=100)
@@ -27,6 +29,7 @@ class User(Document):
     role: UserRole = UserRole.PATIENT
     subscription_status: SubscriptionStatus = SubscriptionStatus.TRIALING
     subscription_end_date: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=90))
+    status: str = "active"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

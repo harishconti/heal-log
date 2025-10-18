@@ -794,7 +794,7 @@ class MedicalContactsAPITester:
             ("Pro Feature Access", self.test_pro_feature_access),
             ("Demo Patients Loaded", self.test_demo_patients_loaded),
             ("Create Patient", self.test_create_patient),
-            # ("Document Feature Access", self.test_document_feature_access), # Temporarily disabled due to pre-existing issue
+            ("Document Feature Access", self.test_document_feature_access),
             ("Analytics Feature Access", self.test_analytics_feature_access),
             ("Payment Flow", self.test_payment_flow),
             ("Get Patients", self.test_get_patients),

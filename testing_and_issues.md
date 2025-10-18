@@ -19,13 +19,18 @@ This document tracks the major open issues and the overall testing status for th
 - **Impact:** This is the primary blocker for an Android release. Development is currently focused on **iOS and Web only**.
 - **Status:** **Unresolved.** Extensive troubleshooting—including dependency updates, Gradle configuration changes, and environment validation with `expo-doctor`—has failed to resolve the issue. The problem appears to be a fundamental incompatibility within the native build toolchain.
 
+### Demo User Login Failure (High)
+- **Issue:** The `Demo User Login` test is failing consistently. The test script is unable to authenticate as the demo user (`dr.sarah@clinic.com`), which causes a cascading failure in all tests that rely on this user's data (e.g., `Demo Patients Loaded`, `Search Patients`).
+- **Impact:** Prevents testing of features that rely on the pre-populated demo account.
+- **Status:** **Unresolved.** The root cause is likely an issue with the dummy data initialization script (`backend/app/db/init_db.py`) or a mismatch between the test credentials and the database state.
+
 ---
 
 ## 2. Testing Summary
 
 ### Backend API
-- **Status:** **Stable.**
-- **Details:** The backend API has been tested and confirmed to be stable. Key functionalities, including user registration, authentication, patient CRUD, and data synchronization, are working as expected. The `pytest` test suite provides comprehensive coverage and passes consistently.
+- **Status:** **Mostly Stable.**
+- **Details:** The backend API is largely stable, but the demo user login is currently broken, preventing a full test pass. The document management feature, previously disabled, is now confirmed to be working correctly.
 
 ### Frontend (iOS & Web)
 - **Status:** **In Development.**

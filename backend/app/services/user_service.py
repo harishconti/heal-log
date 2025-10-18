@@ -24,23 +24,13 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         await db_user.insert()
         return db_user
 
-import logging
-
 async def authenticate_user(email: str, password: str) -> Optional[User]:
     """
     Authenticates a user. Returns the user object if successful, otherwise None.
     """
-    logging.info(f"Attempting to authenticate user: {email}")
     user = await User.find_one({"email": email})
-    if not user:
-        logging.warning(f"Authentication failed: User not found for email {email}")
+    if not user or not verify_password(password, user.password_hash):
         return None
-
-    if not verify_password(password, user.password_hash):
-        logging.warning(f"Authentication failed: Invalid password for user {email}")
-        return None
-
-    logging.info(f"Successfully authenticated user: {email}")
     return user
 
 async def get_user_by_id(user_id: str) -> Optional[User]:

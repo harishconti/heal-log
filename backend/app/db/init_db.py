@@ -49,7 +49,7 @@ async def init_dummy_data():
             logger.warning("Could not find dr.sarah@clinic.com to create patients for.")
             return
 
-        user_id_sarah = sarah_user["_id"]
+        user_id_sarah = sarah_user["id"]
         if await PatientCollection.count_documents({"user_id": user_id_sarah}) > 0:
             logger.info(f"Patients for {user_id_sarah} already exist. Skipping creation.")
             return
@@ -95,13 +95,8 @@ async def init_dummy_data():
         ]
 
         if dummy_patients:
-            try:
-                result = await PatientCollection.insert_many(dummy_patients)
-                logger.info(f"Inserted {len(result.inserted_ids)} patients.")
-                print(f"Inserted {len(result.inserted_ids)} patients.")
-            except Exception as e:
-                logger.error(f"Error inserting patients: {e}")
-                print(f"Error inserting patients: {e}")
+            await PatientCollection.insert_many(dummy_patients)
+            logger.info(f"Inserted {len(dummy_patients)} patients.")
 
         # --- Set up Counters ---
         await CounterCollection.update_one(

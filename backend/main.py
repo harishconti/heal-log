@@ -1,12 +1,16 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 import logging
+from beanie import init_beanie
 
 from app import api
 from app.core.config import settings
-from app.db.session import shutdown_db_client
+from app.db.session import client, shutdown_db_client
 from app.db.init_db import init_dummy_data
-from app.db.indexing import create_indexes
+from app.schemas.user import User
+from app.schemas.patient import Patient
+from app.schemas.clinical_note import ClinicalNote
+from app.schemas.document import Document
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
@@ -45,10 +49,14 @@ app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
 async def on_startup():
     """
     Actions to perform on application startup.
+    - Initialize Beanie ODM.
     - Initialize dummy data for development environments.
     """
     logging.info("Application starting up...")
-    await create_indexes()
+    await init_beanie(
+        database=client[settings.DB_NAME],
+        document_models=[User, Patient, ClinicalNote, Document]
+    )
     await init_dummy_data()
     logging.info("Dummy data initialization complete.")
 

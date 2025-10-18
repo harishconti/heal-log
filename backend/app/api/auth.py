@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserResponse
 from app.core.limiter import limiter
 from app.schemas.token import Token, RefreshToken
-from app.services import user_service
+from app.services.user_service import user_service, authenticate_user
 from app.core.security import create_access_token, create_refresh_token, get_current_user
 import jwt
 import logging
@@ -18,7 +18,7 @@ async def register_user(request: Request, user_data: UserCreate):
     Register a new user and return an access token, refresh token, and user info.
     """
     try:
-        user = await user_service.create_user(user_data)
+        user = await user_service.create(user_data)
 
         access_token = create_access_token(subject=user.id, plan=user.plan, role=user.role)
         refresh_token = create_refresh_token(subject=user.id)
@@ -28,7 +28,7 @@ async def register_user(request: Request, user_data: UserCreate):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "user": user.to_response()
+            "user": UserResponse(**user.dict())
         }
     except ValueError as e:
         # This is for known errors, like "email already registered"
@@ -47,7 +47,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     """
     Authenticate a user and return tokens and user info.
     """
-    user = await user_service.authenticate_user(form_data.username, form_data.password)
+    user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,7 +63,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "user": user.to_response()
+        "user": UserResponse(**user.dict())
     }
 
 @router.post("/refresh", response_model=Token)
@@ -83,7 +83,7 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
                 detail="Invalid refresh token",
             )
 
-        user = await user_service.get_user_by_id(user_id)
+        user = await user_service.get(user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -110,8 +110,8 @@ async def read_users_me(current_user_id: str = Depends(get_current_user)):
     """
     Get the current authenticated user's information.
     """
-    user = await user_service.get_user_by_id(current_user_id)
+    user = await user_service.get(current_user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"success": True, "user": user.to_response()}
+    return {"success": True, "user": UserResponse(**user.dict())}

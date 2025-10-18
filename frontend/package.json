@@ -7,14 +7,14 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
+    "web": "expo start --web --port 8081",
     "lint": "expo lint"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
     "@expo/ngrok": "^4.1.3",
     "@expo/vector-icons": "^15.0.2",
-    "@hookform/resolvers": "^5.2.2",
+    "@hookform/resolvers": "^3.3.4",
     "@nozbe/sqlite": "^3.46.0",
     "@nozbe/watermelondb": "^0.28.0",
     "@nozbe/with-observables": "^1.6.0",
@@ -25,6 +25,7 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.8",
+    "@shopify/flash-list": "^2.1.0",
     "axios": "^1.12.2",
     "expo": "54.0.13",
     "expo-blur": "~15.0.7",
@@ -45,7 +46,7 @@
     "expo-web-browser": "~15.0.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-hook-form": "^7.63.0",
+    "react-hook-form": "^7.51.3",
     "react-native": "0.81.4",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.28.0",
@@ -59,8 +60,8 @@
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
-    "zod": "^4.1.11",
-    "zustand": "^5.0.8"
+    "zod": "^3.23.8",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

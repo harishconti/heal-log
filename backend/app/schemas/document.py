@@ -1,20 +1,28 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
 import uuid
+from beanie import Document as BeanieDocument, Indexed
 
-class DocumentBase(BaseModel):
+class Document(BeanieDocument):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    patient_id: Indexed(str)
+    user_id: Indexed(str)
     file_name: str = Field(..., description="The name of the uploaded file.")
     storage_url: str = Field(..., description="The URL of the file in cloud storage.")
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
 
-class DocumentCreate(DocumentBase):
+    class Settings:
+        name = "documents"
+
+class DocumentCreate(BaseModel):
     patient_id: str
+    file_name: str
+    storage_url: str
 
-class Document(DocumentBase):
+class DocumentResponse(BaseModel):
     id: str
     patient_id: str
     user_id: str
+    file_name: str
+    storage_url: str
     uploaded_at: datetime
-
-    class Config:
-        from_attributes = True

@@ -1,34 +1,34 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Literal
+import uuid
+from beanie import Document, Indexed
 
-class ClinicalNoteBase(BaseModel):
-    content: str = Field(..., min_length=1, max_length=5000, description="The content of the clinical note.")
+class ClinicalNote(Document):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    patient_id: Indexed(str)
+    user_id: Indexed(str)
+    content: str = Field(..., min_length=1, max_length=5000)
     visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    @validator('content')
-    def content_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('Content must not be empty')
-        return v
+    class Settings:
+        name = "clinical_notes"
 
-class NoteCreate(ClinicalNoteBase):
-    pass
-
-class ClinicalNoteCreate(ClinicalNoteBase):
-    patient_id: str
+class NoteCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=5000)
+    visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
 
 class ClinicalNoteUpdate(BaseModel):
     content: str | None = None
     visit_type: Literal["regular", "follow-up", "emergency"] | None = None
 
-
-class ClinicalNoteResponse(ClinicalNoteBase):
+class ClinicalNoteResponse(BaseModel):
     id: str
     patient_id: str
     user_id: str
+    content: str
+    visit_type: str
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

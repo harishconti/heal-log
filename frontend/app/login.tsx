@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from '@/lib/validation';
 import ControlledInput from '../components/forms/ControlledInput';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAppStore } from '../store/useAppStore';
 
 export default function LoginScreen() {
-  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
+  const { loading, setLoading } = useAppStore();
 
   const { control, handleSubmit, setValue } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -33,14 +36,14 @@ export default function LoginScreen() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
+    setLoading('login', true);
     try {
       await login(data.email, data.password);
       router.replace('/');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
     } finally {
-      setIsLoading(false);
+      setLoading('login', false);
     }
   };
 
@@ -58,6 +61,8 @@ export default function LoginScreen() {
     }
   };
 
+  const styles = getStyles(theme);
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
@@ -67,7 +72,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Ionicons name="medical" size={64} color="#2ecc71" />
+            <Ionicons name="medical" size={64} color={theme.colors.primary} />
             <Text style={styles.title}>Medical Contacts</Text>
             <Text style={styles.subtitle}>Professional Patient Management</Text>
           </View>
@@ -97,27 +102,25 @@ export default function LoginScreen() {
               control={control}
               name="email"
               placeholder="Email Address"
-              iconName="mail"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.textSecondary}
             />
             <ControlledInput
               control={control}
               name="password"
               placeholder="Password"
-              iconName="lock-closed"
               isPassword
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.textSecondary}
             />
 
             <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+              style={[styles.loginButton, loading.login && styles.loginButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
-              disabled={isLoading}
+              disabled={loading.login}
             >
-              {isLoading ? (
+              {loading.login ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
@@ -141,15 +144,15 @@ export default function LoginScreen() {
           {/* Features */}
           <View style={styles.features}>
             <View style={styles.feature}>
-              <Ionicons name="people" size={24} color="#2ecc71" />
+              <Ionicons name="people" size={24} color={theme.colors.primary} />
               <Text style={styles.featureText}>Patient Management</Text>
             </View>
             <View style={styles.feature}>
-              <Ionicons name="document-text" size={24} color="#2ecc71" />
+              <Ionicons name="document-text" size={24} color={theme.colors.primary} />
               <Text style={styles.featureText}>Medical Notes</Text>
             </View>
             <View style={styles.feature}>
-              <Ionicons name="cloud" size={24} color="#2ecc71" />
+              <Ionicons name="cloud" size={24} color={theme.colors.primary} />
               <Text style={styles.featureText}>Cloud Sync</Text>
             </View>
           </View>
@@ -159,10 +162,10 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   keyboardAvoid: {
     flex: 1,
@@ -179,17 +182,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   demoSection: {
-    backgroundColor: '#e8f5e8',
+    backgroundColor: theme.colors.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 32,
@@ -197,7 +200,7 @@ const styles = StyleSheet.create({
   demoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2ecc71',
+    color: theme.colors.primary,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   demoButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -219,33 +222,8 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: 32,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: '#333',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
   loginButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -257,7 +235,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   loginButtonDisabled: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: theme.colors.primaryMuted,
   },
   loginButtonText: {
     color: '#fff',
@@ -272,22 +250,22 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: theme.colors.border,
   },
   dividerText: {
     paddingHorizontal: 16,
-    color: '#999',
+    color: theme.colors.textSecondary,
     fontSize: 14,
   },
   registerButton: {
     borderWidth: 2,
-    borderColor: '#2ecc71',
+    borderColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   registerButtonText: {
-    color: '#2ecc71',
+    color: theme.colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -301,7 +279,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginTop: 8,
     textAlign: 'center',
   },

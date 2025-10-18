@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAppStore } from '../../store/useAppStore';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { patientFormSchema, PatientFormValues } from '../../lib/validation';
+import { ControlledInput } from './ControlledInput';
 
 const MEDICAL_GROUPS = [
   'general',
@@ -40,38 +44,15 @@ const LOCATIONS = [
   'Telemedicine'
 ];
 
-export interface PatientFormData {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  location: string;
-  initial_complaint: string;
-  initial_diagnosis: string;
-  photo: string;
-  group: string;
-  is_favorite: boolean;
-}
-
 export interface PatientFormProps {
   mode: 'create' | 'edit';
-  initialData?: Partial<PatientFormData>;
-  onSubmit: (data: PatientFormData) => Promise<void>;
+  initialData?: Partial<PatientFormValues>;
+  onSubmit: (data: PatientFormValues) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
   submitButtonText?: string;
 }
 
-/**
- * Reusable PatientForm component for both adding and editing patients
- * 
- * @param mode - Whether creating new patient or editing existing
- * @param initialData - Initial form data for edit mode
- * @param onSubmit - Function called when form is submitted
- * @param onCancel - Function called when form is cancelled
- * @param loading - Whether form is in loading state
- * @param submitButtonText - Custom text for submit button
- */
 export const PatientForm: React.FC<PatientFormProps> = ({
   mode,
   initialData = {},
@@ -83,41 +64,30 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   const { theme } = useTheme();
   const { settings } = useAppStore();
   
-  const [formData, setFormData] = useState<PatientFormData>({
-    name: initialData.name || '',
-    phone: initialData.phone || '',
-    email: initialData.email || '',
-    address: initialData.address || '',
-    location: initialData.location || 'Clinic',
-    initial_complaint: initialData.initial_complaint || '',
-    initial_diagnosis: initialData.initial_diagnosis || '',
-    photo: initialData.photo || '',
-    group: initialData.group || 'general',
-    is_favorite: initialData.is_favorite || false
+  const { control, handleSubmit, formState: { errors, isDirty }, setValue, watch } = useForm<PatientFormValues>({
+    resolver: zodResolver(patientFormSchema),
+    defaultValues: {
+      name: initialData.name || '',
+      phone: initialData.phone || '',
+      email: initialData.email || '',
+      address: initialData.address || '',
+      location: initialData.location || 'Clinic',
+      initial_complaint: initialData.initial_complaint || '',
+      initial_diagnosis: initialData.initial_diagnosis || '',
+      photo: initialData.photo || '',
+      group: initialData.group || 'general',
+      is_favorite: initialData.is_favorite || false
+    }
   });
 
-  const [hasChanges, setHasChanges] = useState(false);
+  const photo = watch('photo');
+  const isFavorite = watch('is_favorite');
+  const location = watch('location');
+  const group = watch('group');
 
-  useEffect(() => {
-    // Check if form has changes (for edit mode)
-    if (mode === 'edit') {
-      const changed = Object.keys(formData).some(key => {
-        return formData[key as keyof PatientFormData] !== (initialData[key as keyof PatientFormData] || '');
-      });
-      setHasChanges(changed);
-    } else {
-      // For create mode, check if any field has content
-      const hasContent = Object.values(formData).some(value => 
-        typeof value === 'string' ? value.trim().length > 0 : value
-      );
-      setHasChanges(hasContent);
-    }
-  }, [formData, initialData, mode]);
-
-  const updateFormData = async (field: keyof PatientFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const updateFormData = async (field: keyof PatientFormValues, value: string | boolean) => {
+    setValue(field, value, { shouldDirty: true });
     
-    // Optional haptic feedback for form interactions
     if (settings.hapticEnabled) {
       try {
         await Haptics.selectionAsync();
@@ -175,7 +145,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
       { text: 'Cancel', style: 'cancel' as const }
     ];
 
-    if (formData.photo && mode === 'edit') {
+    if (photo && mode === 'edit') {
       options.splice(2, 0, { 
         text: 'Remove Photo', 
         onPress: () => updateFormData('photo', ''),
@@ -188,47 +158,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({
       'Choose how to add patient photo',
       options
     );
-  };
-
-  const validateForm = (): string | null => {
-    if (!formData.name.trim()) {
-      return 'Patient name is required';
-    }
-    
-    if (formData.email && !formData.email.includes('@')) {
-      return 'Please enter a valid email address';
-    }
-
-    if (formData.phone && formData.phone.length < 10) {
-      return 'Please enter a valid phone number';
-    }
-    
-    return null;
-  };
-
-  const handleSubmit = async () => {
-    const validationError = validateForm();
-    if (validationError) {
-      Alert.alert('Validation Error', validationError);
-      return;
-    }
-
-    if (mode === 'edit' && !hasChanges) {
-      Alert.alert('No Changes', 'No changes to save');
-      return;
-    }
-
-    try {
-      await onSubmit(formData);
-      
-      // Success haptic feedback
-      if (settings.hapticEnabled) {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-    } catch (error) {
-      // Error handling is done by parent component
-      console.error('Form submission error:', error);
-    }
   };
 
   const showLocationPicker = () => {
@@ -262,9 +191,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         {/* Photo Section */}
         <View style={[styles.photoSection, { backgroundColor: theme.colors.surface }]}>
           <TouchableOpacity style={styles.photoContainer} onPress={showImagePicker}>
-            {formData.photo ? (
+            {photo ? (
               <Image 
-                source={{ uri: `data:image/jpeg;base64,${formData.photo}` }}
+                source={{ uri: `data:image/jpeg;base64,${photo}` }}
                 style={styles.patientPhoto}
               />
             ) : (
@@ -275,7 +204,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 </Text>
               </View>
             )}
-            {mode === 'edit' && formData.photo && (
+            {mode === 'edit' && photo && (
               <View style={[styles.photoOverlay, { backgroundColor: theme.colors.primary }]}>
                 <Ionicons name="camera" size={20} color="#fff" />
               </View>
@@ -287,73 +216,48 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Basic Information</Text>
           
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Full Name *</Text>
-            <TextInput
-              style={[styles.textInput, { 
-                backgroundColor: theme.colors.background, 
-                borderColor: theme.colors.border,
-                color: theme.colors.text 
-              }]}
-              placeholder="Enter patient's full name"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.name}
-              onChangeText={(value) => updateFormData('name', value)}
-              autoCapitalize="words"
-            />
-          </View>
+          <ControlledInput
+            control={control}
+            name="name"
+            label="Full Name *"
+            placeholder="Enter patient's full name"
+            error={errors.name?.message}
+          />
 
           <View style={styles.inputRow}>
             <View style={styles.inputHalf}>
-              <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Phone</Text>
-              <TextInput
-                style={[styles.textInput, { 
-                  backgroundColor: theme.colors.background, 
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text 
-                }]}
+              <ControlledInput
+                control={control}
+                name="phone"
+                label="Phone"
                 placeholder="Phone number"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={formData.phone}
-                onChangeText={(value) => updateFormData('phone', value)}
                 keyboardType="phone-pad"
+                error={errors.phone?.message}
               />
             </View>
             
             <View style={styles.inputHalf}>
-              <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Email</Text>
-              <TextInput
-                style={[styles.textInput, { 
-                  backgroundColor: theme.colors.background, 
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text 
-                }]}
+              <ControlledInput
+                control={control}
+                name="email"
+                label="Email"
                 placeholder="Email address"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                error={errors.email?.message}
               />
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Address</Text>
-            <TextInput
-              style={[styles.textAreaInput, { 
-                backgroundColor: theme.colors.background, 
-                borderColor: theme.colors.border,
-                color: theme.colors.text 
-              }]}
-              placeholder="Patient's address"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.address}
-              onChangeText={(value) => updateFormData('address', value)}
-              multiline
-              numberOfLines={2}
-            />
-          </View>
+          <ControlledInput
+            control={control}
+            name="address"
+            label="Address"
+            placeholder="Patient's address"
+            multiline
+            numberOfLines={2}
+            error={errors.address?.message}
+          />
         </View>
 
         {/* Medical Information */}
@@ -371,7 +275,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 onPress={showLocationPicker}
               >
                 <Text style={[styles.pickerText, { color: theme.colors.text }]}>
-                  {formData.location}
+                  {location}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
@@ -387,48 +291,34 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 onPress={showGroupPicker}
               >
                 <Text style={[styles.pickerText, { color: theme.colors.text }]}>
-                  {formData.group.charAt(0).toUpperCase() + formData.group.slice(1).replace('_', ' ')}
+                  {group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' ')}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Initial Complaint</Text>
-            <TextInput
-              style={[styles.textAreaInput, { 
-                backgroundColor: theme.colors.background, 
-                borderColor: theme.colors.border,
-                color: theme.colors.text 
-              }]}
-              placeholder="Describe the patient's initial complaint or symptoms..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.initial_complaint}
-              onChangeText={(value) => updateFormData('initial_complaint', value)}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
+          <ControlledInput
+            control={control}
+            name="initial_complaint"
+            label="Initial Complaint"
+            placeholder="Describe the patient's initial complaint or symptoms..."
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+            error={errors.initial_complaint?.message}
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Initial Diagnosis</Text>
-            <TextInput
-              style={[styles.textAreaInput, { 
-                backgroundColor: theme.colors.background, 
-                borderColor: theme.colors.border,
-                color: theme.colors.text 
-              }]}
-              placeholder="Enter initial diagnosis or assessment..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.initial_diagnosis}
-              onChangeText={(value) => updateFormData('initial_diagnosis', value)}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
+          <ControlledInput
+            control={control}
+            name="initial_diagnosis"
+            label="Initial Diagnosis"
+            placeholder="Enter initial diagnosis or assessment..."
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+            error={errors.initial_diagnosis?.message}
+          />
         </View>
 
         {/* Options */}
@@ -437,13 +327,13 @@ export const PatientForm: React.FC<PatientFormProps> = ({
           
           <TouchableOpacity 
             style={styles.favoriteOption}
-            onPress={() => updateFormData('is_favorite', !formData.is_favorite)}
+            onPress={() => updateFormData('is_favorite', !isFavorite)}
           >
             <View style={styles.favoriteLeft}>
               <Ionicons 
-                name={formData.is_favorite ? 'heart' : 'heart-outline'} 
+                name={isFavorite ? 'heart' : 'heart-outline'}
                 size={24} 
-                color={formData.is_favorite ? theme.colors.error : theme.colors.textSecondary} 
+                color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
               />
               <Text style={[styles.favoriteText, { color: theme.colors.text }]}>Mark as Favorite</Text>
             </View>
@@ -467,10 +357,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             style={[
               styles.submitButton, 
               { backgroundColor: theme.colors.primary },
-              (!hasChanges || loading) && styles.disabledButton
+              (!isDirty || loading) && styles.disabledButton
             ]}
-            onPress={handleSubmit}
-            disabled={!hasChanges || loading}
+            onPress={handleSubmit(onSubmit)}
+            disabled={!isDirty || loading}
           >
             <Text style={styles.submitButtonText}>
               {loading ? 'Saving...' : (submitButtonText || (mode === 'edit' ? 'Save Changes' : 'Add Patient'))}

@@ -13,3 +13,9 @@ requests==2.32.4
 gunicorn
 slowapi
 async-lru
+beanie==1.26.0
+pytest
+pytest-asyncio
+mongomock-motor
+httpx
+python-multipart

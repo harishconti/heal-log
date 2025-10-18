@@ -7,7 +7,9 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent  # This should be the b
 load_dotenv(ROOT_DIR / '.env')
 
 # --- Core Settings ---
-SECRET_KEY = os.getenv("SECRET_KEY", "medical_contacts_secret_key_2025")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("No SECRET_KEY set for the application")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7

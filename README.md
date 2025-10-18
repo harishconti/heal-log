@@ -1,72 +1,55 @@
 # Clinic OS Lite
 
-Welcome to Clinic OS Lite, a comprehensive patient management system designed for medical professionals. This application provides a secure and efficient way to manage patient information, track medical notes, and streamline communication. The system is comprised of a FastAPI backend, a React Native mobile app, and a React.js web dashboard for Pro users.
+Welcome to Clinic OS Lite, a comprehensive patient management system designed for medical professionals. This application provides a secure and efficient way to manage patient information, track medical notes, and streamline communication. The system is comprised of a FastAPI backend and a cross-platform React Native application that targets **Web** and **iOS**.
 
 ## ✨ Core Features
 
 ### Subscription Tiers
-
-The application operates on a two-tier subscription model to cater to different needs:
-
-- **Basic Plan:** Ideal for individual practitioners. New users are automatically enrolled in a 90-day free trial of the Basic Plan.
-  - **Includes:** Full access to the mobile app for complete patient management on the go.
-- **Pro Plan:** Designed for professionals who require advanced data insights and document management capabilities.
-  - **Includes:** All Basic features, plus exclusive access to the web dashboard and secure document storage.
+The application operates on a two-tier subscription model:
+- **Basic Plan:** Ideal for individual practitioners. New users are automatically enrolled in a 90-day free trial. Includes full access to the mobile and web app for complete patient management.
+- **Pro Plan:** Designed for professionals who require advanced data insights and document management. Includes all Basic features, plus exclusive access to a future web dashboard and secure document storage.
 
 ### Patient Management (All Plans)
 - **Full CRUD Operations:** Create, read, update, and delete patient records.
-- **Detailed Patient Profiles:** Store comprehensive patient information, including contact details and medical history.
+- **Detailed Patient Profiles:** Store comprehensive patient information.
 - **Clinical Notes System:** Add and view time-stamped clinical notes for each patient.
+- **Offline-First:** The mobile app is fully functional offline, with data synchronized automatically upon reconnection.
 
 ### Pro Features
-
-Pro subscribers unlock powerful tools designed for deeper analysis and streamlined administration:
-
-- **Web Dashboard (Planned):** A comprehensive, desktop-optimized interface that will provide:
-  - **Advanced Analytics:** Visualize patient growth and other key metrics with interactive charts.
-  - **Comprehensive Data Management:** View and manage all patient records in a powerful, searchable data grid.
-- **Secure Document Storage:** Securely upload and manage patient-related documents, such as lab reports and prescriptions, from the mobile app.
+- **Secure Document Storage:** Securely upload and manage patient-related documents from the mobile app.
+- **Web Dashboard (Planned):** A future desktop-optimized interface for advanced analytics and comprehensive data management.
 
 ### Professional & UX Features
-- **Secure Authentication:** Robust JWT-based authentication with secure token storage for both mobile and web platforms.
-- **User Data Isolation:** Each medical professional can only see and manage their own patient data.
-- **Dark Mode:** Supports light, dark, and system default themes in the mobile app.
-- **Search and Filter:** Easily find patients with powerful search and filtering tools.
+- **Secure Authentication:** Robust JWT-based authentication with secure token storage.
+- **Data Isolation:** Each user can only access their own patient data.
+- **Dark Mode:** Supports light, dark, and system default themes.
+- **Search and Filter:** Powerful tools to find patients quickly.
 
 ## 🏗️ Technical Architecture
-
-The application is built with a modern, modular architecture designed for scalability and maintainability. For a detailed overview, please see [`Architecture.md`](./Architecture.md). For the development roadmap and feature status, see [`ROADMAP.md`](./ROADMAP.md).
-
-- **Backend:** A FastAPI application serves as the core of the system, providing a robust API for all client applications.
-- **Database:** MongoDB is used as the database, accessed asynchronously via `motor`.
-- **Modularity:** The backend code is organized into a clean, service-oriented structure.
-- **Cross-Platform Clients:** The architecture supports a React Native mobile app and a React.js web dashboard.
-- **Authentication:** JWT (JSON Web Tokens) are used for securing the API.
+The application is built with a modern, modular architecture. For a detailed overview, see [`Architecture.md`](./Architecture.md). For the development roadmap, see [`ROADMAP.md`](./ROADMAP.md).
+- **Backend:** A FastAPI application provides a robust, secure API.
+- **Database:** MongoDB is used for data storage.
+- **Frontend:** A single React Native codebase powers the mobile app (iOS) and a responsive web app.
+- **Authentication:** JWTs are used for securing the API.
 
 ## 💻 Tech Stack
 
-### Current Stack
-- **Backend:** Python, FastAPI
-- **Database:** MongoDB
-- **Authentication:** JWT, passlib, python-jose
-- **Data Validation:** Pydantic
-- **Async Support:** `motor` for non-blocking database calls
-- **Frontend (Mobile):** React Native, Expo, Zustand, WatermelonDB
-- **Frontend (Web):** React.js (Planned)
+- **Backend:** Python, FastAPI, MongoDB (via `motor`), Pydantic
+- **Authentication:** JWT, `passlib`, `python-jose`
+- **Frontend:** React Native, Expo (SDK 49), Zustand, WatermelonDB, Expo Router
+- **Testing:** Pytest, Pytest-AsyncIO
 
-## 🔴 Known Issues
+## 🔴 Known Issues & Limitations
 
-**The Android build is currently broken.** All attempts to fix the native Android build have failed due to a complex C++ compilation issue. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
+**The Android build is non-functional.** All attempts to compile the native Android application have failed due to a persistent C++ compilation error. As a result, development and testing are focused exclusively on **iOS and Web** platforms. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
 
 ## 🚀 Getting Started
-
-Follow these instructions to set up the development environment.
 
 ### Prerequisites
 - Python 3.9+
 - MongoDB
 - `pip` for package management
-- Node.js and `npm` for the frontend
+- Node.js and `yarn` for the frontend
 
 ### 1. Clone the Repository
 ```bash
@@ -74,64 +57,43 @@ git clone <repository-url>
 cd <repository-directory>
 ```
 
-### 2. Set Up the Backend Environment
-
-**a. Install Dependencies**
-Navigate to the `backend` directory and install the required Python packages:
+### 2. Backend Setup
 ```bash
+# Navigate to the backend directory
 cd backend
+
+# Install dependencies
 pip install -r requirements.txt
-```
 
-**b. Configure Environment Variables**
-Create a `.env` file in the `backend` directory.
-```
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=clinic_os_lite
-SECRET_KEY=<A_VERY_SECRET_KEY>
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
+# Create a .env file (see backend/.env.example) and add your configuration
+cp .env.example .env
 
-**c. Run the Backend Server**
-```bash
-# From the backend/ directory
+# Run the server
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 3. Set Up the Frontend Environment
-
-**a. Install Dependencies**
-Navigate to the `frontend` directory and install the required Node.js packages:
+### 3. Frontend Setup
 ```bash
+# Navigate to the frontend directory
 cd frontend
-npm install
-```
 
-**b. Configure Environment Variables**
-Create a `.env` file in the `frontend` directory.
-```
-EXPO_PUBLIC_BACKEND_URL=http://localhost:8000
-```
+# Install dependencies
+yarn install
 
-**c. Run the Frontend Development Server**
-```bash
-# From the frontend/ directory
-npm run start
+# Create a .env file (see frontend/.env.example)
+cp .env.example .env
+
+# Run the web development server
+yarn web
 ```
 
 ## 🧪 Testing
-
-A comprehensive test suite is available to verify the functionality of the backend API.
-
-To run the tests, first ensure the backend server is running, and then execute the following command from the root directory:
+The backend includes a comprehensive test suite using `pytest`. To run the tests, execute the following command from the repository root:
 ```bash
-python3 backend_test.py
+PYTHONPATH=backend pytest backend/tests/
 ```
 
 ## 🧑‍⚕️ Demo Accounts
-
-You can use the following demo accounts to test the application.
 
 | Role                          | Email                  | Password      | Notes                               |
 | ----------------------------- | ---------------------- | ------------- | ----------------------------------- |
@@ -140,12 +102,9 @@ You can use the following demo accounts to test the application.
 | **New User (Trial)**          | `test.doctor@medical.com` | `TestPass123` | 90-day trial, no patients           |
 
 ## 🗺️ Project History
-
-This project has evolved from a basic application with placeholder functionality into a feature-complete patient management system.
-
-### Key Milestones Achieved
+This project has evolved from a basic prototype into a feature-rich patient management system.
 - **Robust Authentication:** Secure, cross-platform JWT authentication with fixed state hydration.
-- **Offline-First Data Layer:** Implemented WatermelonDB for offline data management.
-- **Code Quality:** Significant improvements in state management (Zustand), error handling, and component reusability.
-- **UI/UX:** Added dark mode, skeleton loaders, and optimistic UI updates for a more responsive feel.
+- **Offline-First Data Layer:** Implemented WatermelonDB with a complete backend synchronization API (`/api/sync/pull` and `/api/sync/push`).
+- **Code Quality:** Improved state management (Zustand), form handling (`react-hook-form`), and component reusability.
+- **UI/UX:** Added dark mode, skeleton loaders, and optimistic UI updates.
 - **Backend Stability:** Hardened the backend with RBAC, rate limiting, and improved validation.

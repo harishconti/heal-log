@@ -1,36 +1,37 @@
 # Project Roadmap: Clinic OS Lite
+**Version:** 2.1
+**Date:** 2025-10-18
 
 This document outlines the development status and future roadmap for all components of the Clinic OS Lite application. It serves as the single source of truth for tracking progress toward the beta release and beyond.
 
 ---
 
-## 1. Mobile App (React Native)
+## 1. Cross-Platform App (React Native for iOS & Web)
 
 ### ✅ Completed Features
-
 - **Core Subscription & Auth:**
-  - [x] Enhanced global state (Zustand) to store user's subscription plan, status, and trial end date.
-  - [x] Login process correctly populates subscription state from the backend.
-  - [x] Fixed critical state hydration issue, ensuring the app loads correctly.
+  - [x] Integrated Zustand for global state management (user, plan, status).
+  - [x] Login flow correctly hydrates state from the backend JWT.
+  - [x] Fixed critical state hydration issue to prevent infinite loading screens.
 - **Conditional UI:**
   - [x] Profile screen displays the user's current plan and trial status.
-  - [x] Pro-level features are visually locked for Basic/Trial users.
+  - [x] Pro-level features (e.g., Document Uploads) are visually locked for Basic/Trial users.
   - [x] UI elements like "Upgrade" buttons are displayed conditionally.
 - **Payment Integration:**
   - [x] A dedicated "Upgrade" screen outlines Pro plan benefits.
-  - [x] The checkout flow is implemented, calling the backend to create a secure checkout session.
-- **Data Layer:**
-  - [x] **Offline Support:** Initial WatermelonDB setup is complete and configured correctly for web builds. *(Note: Full functionality is blocked by the missing backend sync API).*
-- **Input Validation:**
-    - [x] The Zod validation schema for patients (`patientSchema`) is now in place, allowing for patient creation and editing.
+  - [x] The checkout flow is implemented, securely calling the backend to create a payment session.
+- **Data Layer & Offline-First:**
+  - [x] **WatermelonDB:** Fully configured for both iOS and Web, providing a robust offline-first data layer.
+  - [x] **Data Synchronization:** The app now correctly uses the backend's `/api/sync/pull` and `/api/sync/push` endpoints to keep local and remote data in sync.
+- **Forms & Validation:**
+    - [x] Implemented `react-hook-form` and `zod` for robust, schema-based validation on patient forms.
 
 ### ⏳ Pending Features
-
 - **Document Management (Pro Feature):** *(Depends on: Backend Image Storage)*
-  - [ ] Implement the document upload UI on the patient detail screen. 
-  - [ ] Implement a view to list, download, and manage a patient's uploaded documents.
+  - [ ] Implement the document upload UI on the patient detail screen.
+  - [ ] Implement a view to list and manage a patient's uploaded documents.
 - **General Improvements:**
-  - [ ] **UI/UX:** Add haptic feedback and more advanced loading states.
+  - [ ] **UI/UX:** Add haptic feedback and more advanced loading skeletons.
 
 ---
 

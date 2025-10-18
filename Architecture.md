@@ -1,25 +1,23 @@
 # Technical Architecture: Clinic OS Lite
-**Version:** 2.0 (Consolidated)
-**Date:** 2025-10-06
+**Version:** 2.1
+**Date:** 2025-10-18
 
 ## 1. Overview
-This document outlines the technical architecture, data models, and core workflows for the **Clinic OS Lite** application. It serves as a guide for understanding the system's design and components. For a detailed development plan and feature status, please see [`ROADMAP.md`](./ROADMAP.md).
+This document outlines the technical architecture, data models, and core workflows for the **Clinic OS Lite** application. It serves as a guide for understanding the system's design and components. For the development roadmap, see [`ROADMAP.md`](./ROADMAP.md).
 
 ---
 
 ## 2. High-Level System Architecture
 
 ### 2.1. Architectural Overview
-The application uses a decoupled, three-tier architecture composed of two client applications, a central backend service, and managed cloud services. This model promotes separation of concerns, allowing for independent development and scaling.
-
-The system's core is the **FastAPI backend**, which serves as the single source of truth and handles all business logic. It communicates with a **React Native mobile app** (for all users) and a planned **React.js web dashboard** (for Pro subscribers).
+The application uses a decoupled, three-tier architecture. The core is a **FastAPI backend** that serves as the single source of truth and handles all business logic. It communicates with a **cross-platform React Native client** that targets iOS and Web, providing a consistent user experience across devices. A separate, pro-only web dashboard is planned for future development.
 
 ### 2.2. Architectural Diagram
 ```mermaid
 graph TD
     subgraph "Clients (User-Facing Layer)"
-        A[<b>Android App (React Native)</b><br><i>Target: All Users (Basic & Pro)</i><br>Handles core patient management and on-the-go tasks.]
-        B[<b>Web Dashboard (React.js)</b><br><i>Status: Planned</i><br>Provides advanced analytics and data management for Pro users.]
+        A[<b>Cross-Platform App (React Native)</b><br><i>Targets: iOS & Web</i><br>Handles core patient management for all users.]
+        B[<b>Pro Web Dashboard (React.js)</b><br><i>Status: Planned</i><br>Provides advanced analytics and data management for Pro users.]
     end
 
     subgraph "Backend Service (Application Layer)"
@@ -32,9 +30,9 @@ graph TD
         F[<b>Cloud Storage (e.g., AWS S3)</b><br><i>File Storage (Pro Feature)</i><br>Stores user-uploaded documents like lab reports.]
     end
 
-    A -- "REST API Calls over HTTPS (JWT Auth)" --> C
-    B -- "REST API Calls over HTTPS (JWT Auth)" --> C
-    C -- "Database Operations (Motor Driver)" --> D
+    A -- "REST API Calls (HTTPS, JWT)" --> C
+    B -- "REST API Calls (HTTPS, JWT)" --> C
+    C -- "Database Operations (Motor)" --> D
     C -- "Webhooks & API Calls" --> E
     C -- "Secure File Operations (SDK)" --> F
 ```
@@ -42,23 +40,24 @@ graph TD
 ### 2.3. Architectural Principles
 - **Stateless Backend:** The FastAPI application is stateless, enabling seamless horizontal scaling. State is managed via JWTs or retrieved from the database on demand.
 - **Secure by Design:** Communication is enforced over HTTPS. Authentication relies on JWTs. Authorization is handled at the API level using a **Role-Based Access Control (RBAC)** system and pro-tier feature flags. The API is also protected from abuse via **rate limiting**.
-- **Scalability & Cost-Effectiveness:** The architecture is designed for serverless compute platforms (e.g., Google Cloud Run, AWS Lambda) and leverages managed services (MongoDB Atlas, AWS S3) to reduce operational overhead.
+- **Offline-First:** The React Native client uses WatermelonDB to provide a robust offline experience, synchronizing data with the backend via a dedicated sync API.
 
 ---
 
 ## 3. Component Breakdown
 
 ### 3.1. Backend Service (FastAPI)
-- **Role:** The backend is the central brain of the application. It is responsible for all business logic, data persistence, user authentication, and secure communication with third-party services.
+- **Role:** The central brain of the application. It is responsible for all business logic, data persistence, user authentication, and secure communication with third-party services.
 - **Core Technologies:** Python 3.9+, FastAPI, Pydantic, Motor, `python-jose` and `passlib` for JWT authentication, and `slowapi` for rate limiting.
-- **Status:** Largely complete. Provides APIs for authentication, patient management, clinical notes, and payments. It includes a robust RBAC system, rate limiting, enhanced server-side validation, and protected endpoints for documents and analytics.
+- **Status:** Largely complete. Provides APIs for authentication, patient management, clinical notes, data synchronization, and payments. Includes a robust RBAC system and protected endpoints for pro-tier features.
 
-### 3.2. Mobile Client (React Native)
-- **Role:** The primary, on-the-go interface for all users (Basic and Pro). It is optimized for a mobile-first experience, focusing on daily tasks like patient management and note-taking.
-- **Core Technologies:** React Native, Expo, Zustand for state management, and Expo Router for navigation.
-- **Status:** In development. Core features like authentication, patient management, and the upgrade-to-pro flow are implemented. Document management UI is pending.
+### 3.2. Cross-Platform Client (React Native)
+- **Role:** The primary interface for all users on iOS and Web. It is optimized for both mobile and desktop use, focusing on daily tasks like patient management and note-taking.
+- **Core Technologies:** React Native, Expo, Zustand, WatermelonDB, Expo Router.
+- **Status:** In development. Core features like authentication, offline-first data sync, patient management, and the upgrade-to-pro flow are implemented. Document management UI is pending.
+- **Limitation:** The **Android build is non-functional** due to a persistent native compilation error.
 
-### 3.3. Web Client (React.js Dashboard)
+### 3.3. Pro Web Dashboard (React.js)
 - **Role:** A premium, Pro-exclusive interface designed for desktop use. It will provide a broader, more analytical view of the practice.
 - **Core Technologies:** React.js (or a framework like Next.js), a component library (e.g., MUI), and a charting library (e.g., Recharts).
 - **Status:** Planned. This application has not been built yet.

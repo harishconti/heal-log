@@ -20,7 +20,7 @@ This document tracks the major open issues and the overall testing status for th
 - **Status:** **Unresolved.** Extensive troubleshooting—including dependency updates, Gradle configuration changes, and environment validation with `expo-doctor`—has failed to resolve the issue. The problem appears to be a fundamental incompatibility within the native build toolchain.
 
 ### Data Access and Caching Issues (High)
-- **Issue:** After fixing the demo user login, a new set of critical issues has been uncovered. The backend tests are still failing because the application is unable to access the dummy data (e.g., patients for the demo user) that is confirmed to be present in the database.
+- **Issue:** After fixing the demo user login, a new set of critical issues has been uncovered. The backend tests are still failing because the application is unable to access the dummy data (e.g., patients for the demo user) that is confirmed to be present in the database. The "Pro Feature Access" test is also failing, likely for the same reason.
 - **Impact:** This is a major blocker, as it prevents the entire test suite from passing. All tests that rely on the demo user's data are failing.
 - **Status:** **Unresolved.** The root cause is suspected to be an issue with the application's caching layer (`@alru_cache`). The tests appear to be hitting a stale cache that does not reflect the newly inserted demo data, even after a cache-clearing mechanism was implemented. Further investigation is needed to resolve this.
 

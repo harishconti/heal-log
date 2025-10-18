@@ -3,6 +3,7 @@ from . import users
 from . import patients
 from . import webhooks
 from . import documents
+from . import debug
 from . import analytics
 from . import payments
 from . import sync

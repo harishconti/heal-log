@@ -21,11 +21,9 @@ Pro-tier features, such as document management and the web dashboard, are out of
 ### 3.1. Overall Status
 The application's backend is stable and feature-complete for the beta's scope. The cross-platform frontend (React Native) is functional on iOS and Web, with most of the required features implemented. However, the project is currently at a **standstill** regarding the Android target.
 
-### 3.2. Critical Blocker: Android Build Failure
-The single most significant obstacle is the **complete failure of the Android build process**.
-- **Problem:** The build consistently fails with a native C++ compilation error.
-- **Impact:** It is currently impossible to produce an Android application package (APK or AAB) for testing or release.
-- **Conclusion:** **No progress can be made on an Android beta until this issue is resolved.** All development efforts are currently focused on the functional iOS and Web builds.
+### 3.2. Critical Blockers
+1.  **Android Build Failure:** The single most significant obstacle is the **complete failure of the Android build process**. It is currently impossible to produce an Android application package (APK or AAB).
+2.  **Backend Data Access Issues:** A newly discovered issue is preventing the backend from accessing dummy data during tests, even though the data is present in the database. This is a major blocker for verifying the application's stability and must be resolved.
 
 For a detailed history of the troubleshooting attempts, please see [`testing_and_issues.md`](./testing_and_issues.md).
 

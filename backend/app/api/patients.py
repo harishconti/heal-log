@@ -47,6 +47,8 @@ async def get_all_patients(
     """
     Retrieve all patients for the current user, with optional filters.
     """
+    logging.info(f"Getting all patients for user {current_user_id}")
+    print(f"Getting all patients for user {current_user_id}")
     try:
         patients = await patient_service.get_patients_by_user_id(
             user_id=current_user_id,
@@ -54,6 +56,9 @@ async def get_all_patients(
             group=group,
             favorites_only=favorites_only
         )
+        logging.info(f"Found {len(patients)} patients for user {current_user_id}")
+        print(f"Found {len(patients)} patients for user {current_user_id}")
+        print(patients)
         return patients
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

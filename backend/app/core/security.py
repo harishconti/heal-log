@@ -63,7 +63,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
                 detail="Invalid authentication credentials: user ID not in token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return user_id
+
+        user = await user_service.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        return user.id
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

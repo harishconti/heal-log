@@ -375,7 +375,8 @@ class MedicalContactsAPITester:
                 "type": "checkout.session.completed",
                 "data": {
                     "object": {
-                        "client_reference_id": self.test_user_id
+                        "client_reference_id": self.test_user_id,
+                        "user_id": self.test_user_id
                     }
                 }
             }
@@ -774,6 +775,23 @@ class MedicalContactsAPITester:
             self.log_result("Delete Patient", False, f"Exception: {str(e)}")
             return False
     
+    def clear_caches(self):
+        """Clear all application caches via the debug endpoint"""
+        import time
+        for i in range(5):
+            try:
+                response = self.session.post(f"{API_BASE}/debug/clear-all-caches")
+                if response.status_code == 200:
+                    print("✅ Caches cleared successfully.")
+                    return
+                else:
+                    print(f"❌ Failed to clear caches: {response.status_code} - {response.text}")
+            except Exception as e:
+                print(f"❌ Exception while clearing caches: {e}")
+            time.sleep(2)
+        print("❌ Could not clear caches after multiple attempts.")
+        print()
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("=" * 80)
@@ -782,6 +800,9 @@ class MedicalContactsAPITester:
         print(f"Testing API at: {API_BASE}")
         print()
         
+        # Clear caches before starting tests
+        self.clear_caches()
+
         # Test sequence
         tests = [
             ("Health Check", self.test_health_check),

@@ -47,7 +47,7 @@ async def stripe_webhook(request: Request):
     event_type = payload.get("type")
 
     if event_type == "checkout.session.completed":
-        user_id = payload.get("data", {}).get("object", {}).get("client_reference_id")
+        user_id = payload.get("data", {}).get("object", {}).get("user_id")
         if user_id:
             updated_user = await user_service.update_user(
                 user_id,

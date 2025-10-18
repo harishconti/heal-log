@@ -6,6 +6,10 @@ from app.core.config import settings
 MAX_CONNECTIONS_COUNT = int(os.getenv("MAX_CONNECTIONS_COUNT", 100))
 MIN_CONNECTIONS_COUNT = int(os.getenv("MIN_CONNECTIONS_COUNT", 10))
 
+import logging
+
+logging.info(f"Connecting to MongoDB at {settings.MONGO_URL} with DB_NAME {settings.DB_NAME}")
+
 # Create a client instance with connection pooling options
 client = AsyncIOMotorClient(
     settings.MONGO_URL,

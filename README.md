@@ -65,8 +65,14 @@ cd backend
 # Install dependencies
 pip install -r requirements.txt
 
-# Create a .env file (see backend/.env.example) and add your configuration
+# Create a .env file and add your configuration.
+# You can copy the example file as a starting point:
 cp .env.example .env
+
+# Your .env file must contain the following variables:
+# SECRET_KEY: A long, random string used for signing JWTs.
+# MONGO_URL: The connection string for your MongoDB instance.
+# DB_NAME: The name of the database to use.
 
 # Run the server
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload

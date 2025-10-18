@@ -47,9 +47,9 @@ class MedicalContactsAPITester:
     def test_health_check(self):
         """Test API health check"""
         try:
-            response = self.session.get(f"{API_BASE}/")
+            response = self.session.get(API_BASE)
             success = response.status_code == 200 and "Medical Contacts API" in response.text
-            self.log_result("Health Check", success, 
+            self.log_result("Health Check", success,
                           f"Status: {response.status_code}, Response: {response.json()}" if success else "API not responding correctly",
                           response)
             return success
@@ -123,11 +123,11 @@ class MedicalContactsAPITester:
         """Test login with demo user"""
         try:
             login_data = {
-                "email": "dr.sarah@clinic.com",
+                "username": "dr.sarah@clinic.com",
                 "password": "password123"
             }
             
-            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+            response = self.session.post(f"{API_BASE}/auth/login", data=login_data)
             success = response.status_code == 200
             
             if success:

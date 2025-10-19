@@ -1,8 +1,10 @@
 # Project Roadmap: Clinic OS Lite
-**Version:** 2.1
-**Date:** 2025-10-18
+**Version:** 2.2
+**Date:** 2025-10-19
 
 This document outlines the development status and future roadmap for all components of the Clinic OS Lite application. It serves as the single source of truth for tracking progress toward the beta release and beyond.
+
+**CURRENT STATUS: BLOCKED.** All forward progress is currently blocked by two critical issues: the Android Build Failure and a Backend Data Access/Caching issue. Refer to `testing_and_issues.md` for details.
 
 ---
 
@@ -26,8 +28,8 @@ This document outlines the development status and future roadmap for all compone
 - **Forms & Validation:**
     - [x] Implemented `react-hook-form` and `zod` for robust, schema-based validation on patient forms.
 
-### ⏳ Pending Features
-- **Document Management (Pro Feature):** *(Depends on: Backend Image Storage)*
+### ⏳ Pending Features (All Blocked)
+- **Document Management (Pro Feature):** *(Blocked by: Backend Data Access and Image Storage)*
   - [ ] Implement the document upload UI on the patient detail screen.
   - [ ] Implement a view to list and manage a patient's uploaded documents.
 - **General Improvements:**
@@ -39,13 +41,13 @@ This document outlines the development status and future roadmap for all compone
 
 This is a new, Pro-exclusive application to be built from scratch.
 
-### ⏳ Pending Features
+### ⏳ Pending Features (All Blocked)
 
-- **Core Architecture:**
+- **Core Architecture:** *(Blocked by: Backend Data Access Issue)*
   - [ ] Set up a new React.js project (e.g., with Next.js).
   - [ ] Implement shared authentication logic to connect to the existing backend.
   - [ ] Implement a "Pro User" route guard to protect the entire dashboard.
-- **Feature Development:**
+- **Feature Development:** *(Blocked by: Backend Data Access Issue)*
   - [ ] **Analytics Dashboard:** Develop components to visualize key practice metrics from the `/api/analytics` endpoints.
   - [ ] **Advanced Patient Management:** Build a comprehensive data grid (e.g., MUI X, AG Grid) for searching, sorting, and filtering patients.
   - [ ] **Appointment Calendar:** Implement a full-featured calendar for appointment management using a library like FullCalendar. *(Depends on: Backend Appointments API)*
@@ -72,15 +74,15 @@ This is a new, Pro-exclusive application to be built from scratch.
 - **Data Synchronization API:**
   - [x] Implemented `/api/sync/pull` and `/api/sync/push` endpoints required by the frontend's WatermelonDB client.
 
-### ⏳ Pending Features
+### ⏳ Pending Features (All Blocked)
 
-- **Core Functionality:**
+- **Core Functionality:** *(Blocked by: Backend Data Access Issue)*
   - [ ] **Appointments:** Develop API endpoints for appointment management.
   - [ ] **Image Storage:** Integrate with a cloud storage service (e.g., AWS S3, Cloudinary) for document files.
 
 ---
 
-## 4. General / Cross-Cutting Concerns
+## 4. General / Cross-Cutting Concerns (All Blocked)
 
 - [ ] **Error Handling:** Integrate a monitoring service like Sentry or Firebase Crashlytics across both frontend and backend.
 - [ ] **Performance:** Conduct performance analysis and implement optimizations like code splitting.

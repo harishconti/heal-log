@@ -1,6 +1,6 @@
 # Integration Testing and Issues
-**Version:** 2.1
-**Date:** 2025-10-18
+**Version:** 2.2
+**Date:** 2025-10-19
 
 This document tracks the major open issues and the overall testing status for the Clinic OS Lite application.
 
@@ -14,23 +14,23 @@ This document tracks the major open issues and the overall testing status for th
 
 ## 1. Open Issues
 
-### Android Build Failure (Critical)
-- **Issue:** The native Android build is **non-functional**. It consistently fails with a C++ compilation error related to the project's native modules.
-- **Impact:** This is the primary blocker for an Android release. Development is currently focused on **iOS and Web only**.
-- **Status:** **Unresolved.** Extensive troubleshooting—including dependency updates, Gradle configuration changes, and environment validation with `expo-doctor`—has failed to resolve the issue. The problem appears to be a fundamental incompatibility within the native build toolchain.
+### Android Build Failure (Critical Blocker)
+- **Issue:** The native Android build is **completely non-functional**. It consistently fails with a low-level C++ compilation error related to the project's native modules, making it impossible to generate an APK or run the app on any Android device.
+- **Impact:** This is the **primary blocker** for the planned Android beta release. All Android-related development is halted. Development is currently focused on **iOS and Web only**.
+- **Status:** **Unresolved and Critical.** Extensive troubleshooting—including dependency updates, Gradle configuration changes, and environment validation with `expo-doctor`—has failed to yield a solution. The problem points to a fundamental incompatibility within the native build toolchain that is beyond a simple fix.
 
-### Data Access and Caching Issues (High)
-- **Issue:** After fixing the demo user login, a new set of critical issues has been uncovered. The backend tests are still failing because the application is unable to access the dummy data (e.g., patients for the demo user) that is confirmed to be present in the database. The "Pro Feature Access" test is also failing, likely for the same reason.
-- **Impact:** This is a major blocker, as it prevents the entire test suite from passing. All tests that rely on the demo user's data are failing.
-- **Status:** **Unresolved.** The root cause is suspected to be an issue with the application's caching layer (`@alru_cache`). The tests appear to be hitting a stale cache that does not reflect the newly inserted demo data, even after a cache-clearing mechanism was implemented. Further investigation is needed to resolve this.
+### Data Access and Caching Issues (Critical Blocker)
+- **Issue:** A severe issue prevents the application from accessing dummy data during backend tests. Critical tests, including "Pro Feature Access," are failing because the application cannot retrieve records (e.g., patient data for the demo user) that are confirmed to be present in the database.
+- **Impact:** This is a **major blocker** that prevents the entire backend test suite from passing, making it impossible to validate the stability of the application. All tests that rely on the demo user's data are failing.
+- **Status:** **Unresolved and Critical.** The root cause is strongly suspected to be an issue with the application's caching layer (`@alru_cache`). The tests appear to be hitting a stale or incorrect cache that does not reflect the newly inserted demo data, even after a cache-clearing mechanism was implemented. This requires immediate and deep investigation.
 
 ---
 
 ## 2. Testing Summary
 
 ### Backend API
-- **Status:** **Mostly Stable.**
-- **Details:** The backend API is largely stable, but the demo user login is currently broken, preventing a full test pass. The document management feature, previously disabled, is now confirmed to be working correctly.
+- **Status:** **Mostly Stable, but Blocked.**
+- **Details:** The backend API is largely stable, but the data access issue described above is preventing a full test pass. The document management feature, previously disabled, is now confirmed to be working correctly in isolation.
 
 ### Frontend (iOS & Web)
 - **Status:** **In Development.**

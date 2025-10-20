@@ -1,6 +1,6 @@
 # Beta Release Plan: Android & Basic Plan Users
-**Version:** 1.1
-**Date:** 2025-10-19
+**Version:** 1.2
+**Date:** 2025-10-20
 
 ## 1. Introduction
 This document outlines the strategy, current status, and remaining work required to launch a beta version of the Clinic OS Lite application. The primary target for this beta release is **Android users on the Basic/Trial plan**. The goal is to provide a stable, feature-complete mobile experience for patient management.
@@ -19,11 +19,11 @@ Pro-tier features, such as document management and the web dashboard, are out of
 ## 3. Current Status & Major Blockers
 
 ### 3.1. Overall Status
-**RELEASE BLOCKED.** The application's backend is stable and feature-complete for the beta's scope. The cross-platform frontend (React Native) is functional on iOS and Web. However, the project is at a **complete standstill** due to two critical, unresolved issues that prevent any progress toward the Android beta.
+**RELEASE BLOCKED.** The application's backend is now stable and feature-complete for the beta's scope. However, the project is at a **complete standstill** due to two critical, unresolved issues that prevent any progress toward the Android beta.
 
 ### 3.2. Critical Blockers
-1.  **Android Build Failure:** The single most significant obstacle is the **complete failure of the Android build process**. It is currently impossible to produce an Android application package (APK or AAB) due to a low-level C++ compilation error. This is a hard gate for the entire release.
-2.  **Backend Data Access Issues:** A newly discovered critical issue is preventing the backend from accessing dummy data during tests, even though the data is confirmed to be in the database. This prevents us from validating application stability and blocks all backend development and testing.
+1.  **Frontend Infinite Loading Screen:** The frontend application is **unusable** as it gets stuck on an infinite loading screen and never renders the login interface. This is a hard gate for any further development or testing.
+2.  **Android Build Failure:** The single most significant obstacle is the **complete failure of the Android build process**. It is currently impossible to produce an Android application package (APK or AAB) due to a low-level C++ compilation error. This is a hard gate for the entire release.
 
 For a detailed history of the troubleshooting attempts, please see [`testing_and_issues.md`](./testing_and_issues.md).
 
@@ -31,11 +31,11 @@ For a detailed history of the troubleshooting attempts, please see [`testing_and
 The roadmap to a successful beta release is linear and strictly sequential. **No progress can be made until both critical blockers are resolved.**
 
 ### Step 1: Resolve Critical Blockers (Immediate and Sole Priority)
-- **Objective:** Achieve a state where the application can be built for Android and the backend test suite passes completely.
-- **Sub-step 1a: Resolve the Android Build Failure:**
+- **Objective:** Achieve a state where the application can be built for Android and the frontend is usable.
+- **Sub-step 1a: Resolve the Frontend Infinite Loading Screen:**
+    - **Actions:** Continue to investigate the root cause of the infinite loading screen. This may involve a deep dive into the application's state management, initialization process, and the interaction between the frontend and backend.
+- **Sub-step 1b: Resolve the Android Build Failure:**
     - **Actions:** Continue deep-dive dependency analysis, attempt to isolate the offending module in a clean project, explore lower-level build configuration changes, and seek external expertise.
-- **Sub-step 1b: Resolve the Backend Data Access Issue:**
-    - **Actions:** Perform an in-depth investigation of the caching layer (`@alru_cache`), analyze database connection and query logic, and ensure the test environment is being set up and torn down correctly.
 
 ### Step 2: Android-Specific Testing and QA (Blocked)
 - **Objective:** Ensure the application is stable and performs well on the Android platform.
@@ -52,4 +52,4 @@ The roadmap to a successful beta release is linear and strictly sequential. **No
     3. **Iterate:** Release updates based on feedback until the application is deemed stable for a public launch.
 
 ## 5. Conclusion
-While the backend and core application logic are theoretically ready, the **Android build failure and the backend data access issue are hard gates**. All development resources and focus must be directed at resolving these two issues. No other work on the beta release is possible until they are fixed.
+While the backend and core application logic are now stable, the **frontend infinite loading screen and the Android build failure are hard gates**. All development resources and focus must be directed at resolving these two issues. No other work on the beta release is possible until they are fixed.

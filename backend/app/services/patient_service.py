@@ -36,9 +36,9 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await db_obj.insert()
 
         # Invalidate caches
-        self.get_patients_by_user_id.cache_clear()
-        self.get_patient_groups.cache_clear()
-        self.get_user_stats.cache_clear()
+        PatientService.get_patients_by_user_id.cache_clear()
+        PatientService.get_patient_groups.cache_clear()
+        PatientService.get_user_stats.cache_clear()
         analytics_service.get_patient_growth_analytics.cache_clear()
 
         return db_obj
@@ -93,9 +93,9 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         updated_patient = await super().update(patient, patient_data)
 
         # Invalidate caches
-        self.get_patients_by_user_id.cache_clear()
-        self.get_patient_groups.cache_clear()
-        self.get_user_stats.cache_clear()
+        PatientService.get_patients_by_user_id.cache_clear()
+        PatientService.get_patient_groups.cache_clear()
+        PatientService.get_user_stats.cache_clear()
 
         return updated_patient
 
@@ -110,9 +110,9 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await super().delete(patient.id)
 
         # Invalidate caches
-        self.get_patients_by_user_id.cache_clear()
-        self.get_patient_groups.cache_clear()
-        self.get_user_stats.cache_clear()
+        PatientService.get_patients_by_user_id.cache_clear()
+        PatientService.get_patient_groups.cache_clear()
+        PatientService.get_user_stats.cache_clear()
         analytics_service.get_patient_growth_analytics.cache_clear()
 
         return True

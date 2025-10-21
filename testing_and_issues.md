@@ -1,5 +1,5 @@
 # Integration Testing and Issues
-**Version:** 2.4
+**Version:** 2.5
 **Date:** 2025-10-21
 
 This document tracks the major open issues and the overall testing status for the Clinic OS Lite application.

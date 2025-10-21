@@ -136,6 +136,37 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
+import { useFonts } from 'expo-font';
+
+export const useInitializeTheme = () => {
+  const { settings } = useAppStore();
+  const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(
+    Appearance.getColorScheme()
+  );
+
+  const [fontsLoaded] = useFonts({
+    'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystemColorScheme(colorScheme);
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const getEffectiveTheme = (): 'light' | 'dark' => {
+    if (settings.theme === 'system') {
+      return systemColorScheme === 'dark' ? 'dark' : 'light';
+    }
+    return settings.theme;
+  };
+
+  const theme = getEffectiveTheme() === 'dark' ? darkTheme : lightTheme;
+
+  return { theme, fontsLoaded };
+};
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { settings, updateSettings } = useAppStore();
   const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(

@@ -1,12 +1,17 @@
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider, useInitializeTheme } from '../contexts/ThemeContext';
+import { ActivityIndicator, View } from 'react-native';
 
 const AppLayout = () => {
-  const { theme, fontsLoaded } = useInitializeTheme();
+  const { fontsLoaded } = useInitializeTheme();
 
   if (!fontsLoaded) {
-    return null; // Or a loading spinner
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
@@ -17,7 +22,7 @@ const AppLayout = () => {
       <Stack.Screen name="profile" />
     </Stack>
   );
-}
+};
 
 export default function RootLayout() {
   return (

@@ -28,7 +28,7 @@ async def register_user(request: Request, user_data: UserCreate):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "user": UserResponse(**user.dict())
+            "user": UserResponse(**user.model_dump())
         }
     except ValueError as e:
         # This is for known errors, like "email already registered"
@@ -63,7 +63,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "user": UserResponse(**user.dict())
+        "user": UserResponse(**user.model_dump())
     }
 
 @router.post("/refresh", response_model=Token)
@@ -114,4 +114,4 @@ async def read_users_me(current_user_id: str = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"success": True, "user": UserResponse(**user.dict())}
+    return {"success": True, "user": UserResponse(**user.model_dump())}

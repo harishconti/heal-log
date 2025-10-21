@@ -7,7 +7,7 @@ Tests all authentication, subscription, and patient management endpoints
 import requests
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Get backend URL from environment
@@ -204,7 +204,7 @@ class MedicalContactsAPITester:
                 date_ok = False
                 if end_date_str:
                     end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
-                    time_diff_days = (end_date - datetime.utcnow().replace(tzinfo=end_date.tzinfo)).days
+                    time_diff_days = (end_date - datetime.now(timezone.utc).replace(tzinfo=end_date.tzinfo)).days
                     date_ok = 89 <= time_diff_days <= 90 # Check if it's within the 90-day window
                     self.log_result("User Registration Details - Trial End Date", date_ok, f"Expected ~90 days, got {time_diff_days} days")
                 else:

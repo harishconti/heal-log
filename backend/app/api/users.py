@@ -14,4 +14,4 @@ async def read_users_me(current_user_id: str = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"success": True, "user": UserResponse(**user.dict())}
+    return {"success": True, "user": UserResponse(**user.model_dump())}

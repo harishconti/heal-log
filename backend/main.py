@@ -15,12 +15,38 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
 from app.core.limiter import limiter
+from contextlib import asynccontextmanager
+
+# --- Lifespan Management ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Actions to perform on application startup and shutdown.
+    - Initialize Beanie ODM on startup.
+    - Initialize dummy data for development environments on startup.
+    - Close database connections gracefully on shutdown.
+    """
+    logging.info("Application starting up...")
+    await init_beanie(
+        database=client[settings.DB_NAME],
+        document_models=[User, Patient, ClinicalNote, Document],
+        allow_index_dropping=True
+    )
+    await init_dummy_data()
+    logging.info("Dummy data initialization complete.")
+
+    yield
+
+    logging.info("Application shutting down...")
+    await shutdown_db_client()
+    logging.info("Database connections closed.")
 
 # --- App Initialization ---
 app = FastAPI(
     title="Medical Contacts API",
     version="3.0",
-    description="Refactored API for managing medical contacts with advanced features."
+    description="Refactored API for managing medical contacts with advanced features.",
+    lifespan=lifespan
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -44,33 +70,6 @@ app.include_router(api.payments.router, prefix="/api/payments", tags=["Payments"
 app.include_router(api.webhooks.router, prefix="/api/webhooks", tags=["Webhooks"])
 app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
 app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
-
-# --- Event Handlers ---
-@app.on_event("startup")
-async def on_startup():
-    """
-    Actions to perform on application startup.
-    - Initialize Beanie ODM.
-    - Initialize dummy data for development environments.
-    """
-    logging.info("Application starting up...")
-    await init_beanie(
-        database=client[settings.DB_NAME],
-        document_models=[User, Patient, ClinicalNote, Document],
-        allow_index_dropping=True
-    )
-    await init_dummy_data()
-    logging.info("Dummy data initialization complete.")
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    """
-    Actions to perform on application shutdown.
-    - Close database connections gracefully.
-    """
-    logging.info("Application shutting down...")
-    await shutdown_db_client()
-    logging.info("Database connections closed.")
 
 # --- Root Endpoint ---
 @app.get("/api")

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from beanie import Document as BeanieDocument, Indexed
 
@@ -9,7 +9,7 @@ class Document(BeanieDocument):
     user_id: Indexed(str)
     file_name: str = Field(..., description="The name of the uploaded file.")
     storage_url: str = Field(..., description="The URL of the file in cloud storage.")
-    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "documents"

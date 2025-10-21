@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from app.models.patient import Patient
 from app.models.clinical_note import ClinicalNote
@@ -21,7 +21,7 @@ async def pull_changes_endpoint(
     """
     try:
         changes = await pull_changes(sync_request.last_pulled_at, current_user_id)
-        return {"changes": changes, "timestamp": int(datetime.utcnow().timestamp() * 1000)}
+        return {"changes": changes, "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000)}
     except Exception as e:
         logging.error(f"Error during pull sync: {e}")
         raise HTTPException(status_code=500, detail="Error processing pull sync")

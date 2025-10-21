@@ -48,3 +48,11 @@ Numerous issues have been resolved to reach the current stable state, including:
 - **API and Data Integrity:** Corrected API conventions, fixed a user role assignment bug, and implemented robust server-side validation.
 - **Data Synchronization:** Implemented the full backend sync API and resolved multiple configuration issues with the WatermelonDB setup (adapters, options).
 - **Demo User Login:** Resolved a critical login failure for the primary demo user (`dr.sarah@clinic.com`).
+
+### Comprehensive Backend Functional Tests
+- **Status:** **Complete.**
+- **Details:** A comprehensive suite of functional tests for the backend has been implemented, covering authentication, session handling, CRUD operations, and data synchronization. This test suite has significantly improved the stability and reliability of the backend.
+- **Bugs Fixed:**
+    - **`DuplicateKeyError`:** Resolved a critical bug where the `patient_id` was not unique per user, causing database errors. The fix involved changing the unique index on the `patients` collection to be a compound index on both `user_id` and `patient_id`.
+    - **`OperationFailure`:** Fixed a bug where the `BaseService.get` method was passing `user_id` as a keyword argument to a database find method that doesn't accept it, instead of including it in the filter dictionary.
+    - **`ResponseValidationError`:** Resolved a bug where the sync endpoint was not serializing the `_id` field to `id`, causing a validation error.

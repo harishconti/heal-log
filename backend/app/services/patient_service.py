@@ -5,7 +5,7 @@ from app.schemas.clinical_note import NoteCreate, ClinicalNote
 from app.services import clinical_note_service, analytics_service
 from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from .base_service import BaseService
 
 class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
@@ -25,9 +25,16 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         """
         Overrides the base create method to add user_id and a sequential patient_id.
         """
+        existing_patient = await self.model.find_one(
+            self.model.user_id == user_id,
+            self.model.name == obj_in.name
+        )
+        if existing_patient:
+            raise ValueError("A patient with this name already exists.")
+
         patient_id = await self.get_next_patient_id(user_id)
 
-        patient_data = obj_in.dict()
+        patient_data = obj_in.model_dump()
         patient_data["id"] = str(uuid.uuid4())
         patient_data["patient_id"] = patient_id
         patient_data["user_id"] = user_id
@@ -39,7 +46,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         PatientService.get_patients_by_user_id.cache_clear()
         PatientService.get_patient_groups.cache_clear()
         PatientService.get_user_stats.cache_clear()
-        analytics_service.get_patient_growth_analytics.cache_clear()
+        analytics_service.AnalyticsService.get_patient_growth_analytics.cache_clear()
 
         return db_obj
 
@@ -107,13 +114,13 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         if not patient:
             return False
 
-        await super().delete(patient.id)
+        await super().delete(patient)
 
         # Invalidate caches
         PatientService.get_patients_by_user_id.cache_clear()
         PatientService.get_patient_groups.cache_clear()
         PatientService.get_user_stats.cache_clear()
-        analytics_service.get_patient_growth_analytics.cache_clear()
+        analytics_service.AnalyticsService.get_patient_growth_analytics.cache_clear()
 
         return True
 
@@ -127,7 +134,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         note = await clinical_note_service.create_note(patient_id, note_data, user_id)
 
-        patient.updated_at = datetime.utcnow()
+        patient.updated_at = datetime.now(timezone.utc)
         await patient.save()
 
         return note

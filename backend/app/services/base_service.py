@@ -13,8 +13,14 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
 
     async def get(self, id: str, **kwargs: Any) -> Optional[ModelType]:
-        # Add any additional filters from kwargs
-        return await self.model.get(id, **kwargs)
+        """
+        Get a single document by its ID and optional extra filters.
+        This uses Beanie's query builder to handle field name mapping (e.g., id -> _id).
+        """
+        expressions = [getattr(self.model, "id") == id]
+        for key, value in kwargs.items():
+            expressions.append(getattr(self.model, key) == value)
+        return await self.model.find_one(*expressions)
 
     async def get_multi(self, **kwargs: Any) -> List[ModelType]:
         return await self.model.find(kwargs).to_list()
@@ -29,26 +35,26 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def update(
         self, db_obj: ModelType, obj_in: UpdateSchemaType
     ) -> ModelType:
-        update_data = obj_in.dict(exclude_unset=True)
+        """
+        Update a document in the database.
+        This method is more efficient and uses modern Pydantic V2 methods.
+        """
+        update_data = obj_in.model_dump(exclude_unset=True)
         if not update_data:
-            return db_obj # No changes
+            return db_obj  # No changes
 
         update_data["updated_at"] = datetime.utcnow()
 
-        await db_obj.update({"$set": update_data})
-        # Beanie's update doesn't refresh the object in place, so we need to reload it.
-        # This is a bit inefficient, but ensures consistency.
-        # A better approach might be to apply updates to the model in memory and then save.
-        # Let's try that.
+        # Update the model in-memory
+        updated_obj = db_obj.model_copy(update=update_data)
 
-        updated_obj = db_obj.copy(update=update_data)
+        # Save the changes to the database
         await updated_obj.save()
         return updated_obj
 
 
-    async def delete(self, id: str, **kwargs: Any) -> Optional[ModelType]:
-        db_obj = await self.get(id, **kwargs)
-        if not db_obj:
-            return None
+    async def delete(self, db_obj: ModelType) -> None:
+        """
+        Delete a document from the database.
+        """
         await db_obj.delete()
-        return db_obj

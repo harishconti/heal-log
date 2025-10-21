@@ -3,10 +3,11 @@ from typing import Optional
 from datetime import datetime
 import uuid
 from beanie import Document, Indexed
+from pymongo import IndexModel
 
 class Patient(Document):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    patient_id: Indexed(str, unique=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    patient_id: str
     user_id: Indexed(str)
     name: str = Field(..., min_length=2, max_length=100)
     phone: Optional[str] = Field(default="", max_length=25)
@@ -24,8 +25,12 @@ class Patient(Document):
     class Settings:
         name = "patients"
         indexes = [
+            IndexModel([("user_id", 1), ("patient_id", 1)], unique=True),
             [("user_id", 1), ("created_at", -1)]
         ]
+
+    class Config:
+        populate_by_name = True
 
 class PatientCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)

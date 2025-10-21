@@ -1,10 +1,10 @@
 # Project Roadmap: Clinic OS Lite
-**Version:** 2.3
-**Date:** 2025-10-20
+**Version:** 2.4
+**Date:** 2025-10-21
 
 This document outlines the development status and future roadmap for all components of the Clinic OS Lite application. It serves as the single source of truth for tracking progress toward the beta release and beyond.
 
-**CURRENT STATUS: BLOCKED.** All forward progress is currently blocked by two critical issues: the Frontend Infinite Loading Screen and the Android Build Failure. Refer to `testing_and_issues.md` for details.
+**CURRENT STATUS: PARTIALLY BLOCKED.** Frontend development for iOS and Web can now proceed. However, the project is blocked from a full cross-platform release by the critical **Android Build Failure**. Refer to `testing_and_issues.md` for details.
 
 ---
 
@@ -28,11 +28,11 @@ This document outlines the development status and future roadmap for all compone
 - **Forms & Validation:**
     - [x] Implemented `react-hook-form` and `zod` for robust, schema-based validation on patient forms.
 
-### ⏳ Pending Features (All Blocked)
-- **Document Management (Pro Feature):** *(Blocked by: Frontend Infinite Loading Screen)*
+### ⏳ Pending Features
+- **Document Management (Pro Feature):**
   - [ ] Implement the document upload UI on the patient detail screen.
   - [ ] Implement a view to list and manage a patient's uploaded documents.
-- **General Improvements:** *(Blocked by: Frontend Infinite Loading Screen)*
+- **General Improvements:**
   - [ ] **UI/UX:** Add haptic feedback and more advanced loading skeletons.
 
 ---
@@ -41,13 +41,13 @@ This document outlines the development status and future roadmap for all compone
 
 This is a new, Pro-exclusive application to be built from scratch.
 
-### ⏳ Pending Features (All Blocked)
+### ⏳ Pending Features
 
-- **Core Architecture:** *(Blocked by: Frontend Infinite Loading Screen)*
+- **Core Architecture:**
   - [ ] Set up a new React.js project (e.g., with Next.js).
   - [ ] Implement shared authentication logic to connect to the existing backend.
   - [ ] Implement a "Pro User" route guard to protect the entire dashboard.
-- **Feature Development:** *(Blocked by: Frontend Infinite Loading Screen)*
+- **Feature Development:**
   - [ ] **Analytics Dashboard:** Develop components to visualize key practice metrics from the `/api/analytics` endpoints.
   - [ ] **Advanced Patient Management:** Build a comprehensive data grid (e.g., MUI X, AG Grid) for searching, sorting, and filtering patients.
   - [ ] **Appointment Calendar:** Implement a full-featured calendar for appointment management using a library like FullCalendar. *(Depends on: Backend Appointments API)*
@@ -82,7 +82,7 @@ This is a new, Pro-exclusive application to be built from scratch.
 
 ---
 
-## 4. General / Cross-Cutting Concerns (All Blocked)
+## 4. General / Cross-Cutting Concerns
 
 - [ ] **Error Handling:** Integrate a monitoring service like Sentry or Firebase Crashlytics across both frontend and backend.
 - [ ] **Performance:** Conduct performance analysis and implement optimizations like code splitting.

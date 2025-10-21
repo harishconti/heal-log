@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.schemas.clinical_note import ClinicalNoteResponse
@@ -11,8 +11,8 @@ class ClinicalNote(BaseModel):
     user_id: str
     content: str
     visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_response(self) -> ClinicalNoteResponse:
         return ClinicalNoteResponse(
@@ -24,9 +24,3 @@ class ClinicalNote(BaseModel):
             created_at=self.created_at,
             updated_at=self.updated_at
         )
-
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat()
-        }

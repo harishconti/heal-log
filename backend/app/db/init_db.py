@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.core.hashing import get_password_hash
 from app.db.session import UserCollection, PatientCollection, CounterCollection
 from app.schemas.user import UserPlan, SubscriptionStatus
@@ -21,16 +21,16 @@ async def init_dummy_data():
                 "full_name": "Dr. Sarah Johnson", "medical_specialty": "cardiology",
                 "password_hash": get_password_hash("password123"), "plan": UserPlan.PRO,
                 "role": "doctor",
-                "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.utcnow() + timedelta(days=365),
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.now(timezone.utc) + timedelta(days=365),
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             },
             {
                 "id": "demo_user_2", "email": "dr.mike@physio.com", "phone": "+1987654321",
                 "full_name": "Dr. Mike Chen", "medical_specialty": "physiotherapy",
                 "password_hash": get_password_hash("password123"), "plan": UserPlan.BASIC,
                 "role": "doctor",
-                "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.utcnow() + timedelta(days=30),
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "subscription_status": SubscriptionStatus.ACTIVE, "subscription_end_date": datetime.now(timezone.utc) + timedelta(days=30),
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             }
         ]
 
@@ -61,36 +61,36 @@ async def init_dummy_data():
                 "phone": "+1555123456", "email": "john.wilson@email.com", "address": "123 Main St, Springfield",
                 "location": "Clinic Room 1", "initial_complaint": "Chest pain", "initial_diagnosis": "Suspected angina", "photo": "",
                 "group": "cardiology", "is_favorite": True,
-                "notes": [{"id": str(uuid.uuid4()), "content": "Initial consultation.", "timestamp": datetime.utcnow(), "visit_type": "initial", "created_by": "Dr. Sarah Johnson"}],
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "notes": [{"id": str(uuid.uuid4()), "content": "Initial consultation.", "timestamp": datetime.now(timezone.utc), "visit_type": "initial", "created_by": "Dr. Sarah Johnson"}],
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             },
             {
                 "id": str(uuid.uuid4()), "patient_id": "PAT002", "user_id": user_id_sarah, "name": "Emma Rodriguez",
                 "phone": "+1555987654", "email": "emma.r@email.com", "address": "456 Oak Ave, Springfield",
                 "location": "Clinic Room 2", "initial_complaint": "High blood pressure review", "initial_diagnosis": "Hypertension", "photo": "",
                 "group": "cardiology", "is_favorite": False, "notes": [],
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             },
             {
                 "id": str(uuid.uuid4()), "patient_id": "PAT003", "user_id": user_id_sarah, "name": "Robert Chang",
                 "phone": "+1555456789", "email": "robert.chang@email.com", "address": "789 Pine St, Springfield",
                 "location": "Home Visit", "initial_complaint": "Diabetic foot care", "initial_diagnosis": "Diabetic neuropathy", "photo": "",
                 "group": "endocrinology", "is_favorite": False, "notes": [],
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             },
             {
                 "id": str(uuid.uuid4()), "patient_id": "PAT004", "user_id": user_id_sarah, "name": "Lisa Thompson",
                 "phone": "+1555654321", "email": "lisa.thompson@email.com", "address": "321 Elm Dr, Springfield",
                 "location": "Clinic Room 1", "initial_complaint": "Pregnancy cardiac monitoring", "initial_diagnosis": "Benign heart murmur", "photo": "",
                 "group": "obstetric_cardiology", "is_favorite": True, "notes": [],
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             },
             {
                 "id": str(uuid.uuid4()), "patient_id": "PAT005", "user_id": user_id_sarah, "name": "David Miller",
                 "phone": "+1555789012", "email": "david.miller@email.com", "address": "654 Maple Ave, Springfield",
                 "location": "Clinic Room 3", "initial_complaint": "Post-cardiac surgery follow-up", "initial_diagnosis": "Post-operative recovery", "photo": "",
                 "group": "post_surgical", "is_favorite": False, "notes": [],
-                "created_at": datetime.utcnow(), "updated_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)
             }
         ]
 

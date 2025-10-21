@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, BeforeValidator
 from typing import Optional, Annotated
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 from enum import Enum
 from beanie import Document, Indexed
@@ -28,10 +28,10 @@ class User(Document):
     plan: UserPlan = UserPlan.BASIC
     role: UserRole = UserRole.PATIENT
     subscription_status: SubscriptionStatus = SubscriptionStatus.TRIALING
-    subscription_end_date: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=90))
+    subscription_end_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=90))
     status: str = "active"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "users"

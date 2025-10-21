@@ -2,7 +2,7 @@ from typing import Type, TypeVar, Generic, Optional, List, Dict, Any
 from beanie import Document
 from pydantic import BaseModel
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 ModelType = TypeVar("ModelType", bound=Document)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -26,7 +26,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return await self.model.find(kwargs).to_list()
 
     async def create(self, obj_in: CreateSchemaType, **kwargs: Any) -> ModelType:
-        obj_in_data = obj_in.dict()
+        obj_in_data = obj_in.model_dump()
         # Add id and any other kwargs
         db_obj = self.model(**obj_in_data, id=str(uuid.uuid4()), **kwargs)
         await db_obj.insert()
@@ -43,7 +43,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if not update_data:
             return db_obj  # No changes
 
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc)
 
         # Update the model in-memory
         updated_obj = db_obj.model_copy(update=update_data)

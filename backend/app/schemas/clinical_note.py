@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 import uuid
 from beanie import Document, Indexed
@@ -10,8 +10,8 @@ class ClinicalNote(Document):
     user_id: Indexed(str)
     content: str = Field(..., min_length=1, max_length=5000)
     visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "clinical_notes"

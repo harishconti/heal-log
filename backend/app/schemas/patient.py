@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from beanie import Document, Indexed
 from pymongo import IndexModel
@@ -19,8 +19,8 @@ class Patient(Document):
     photo: Optional[str] = None
     group: Optional[str] = Field(default="general", max_length=50)
     is_favorite: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "patients"

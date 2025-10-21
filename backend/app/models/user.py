@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 from bson import ObjectId
 from app.schemas.user import UserPlan, SubscriptionStatus
@@ -15,23 +15,7 @@ class User(BaseModel):
     plan: UserPlan = UserPlan.BASIC
     role: UserRole = UserRole.DOCTOR
     subscription_status: SubscriptionStatus = SubscriptionStatus.TRIALING
-    subscription_end_date: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=90))
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    subscription_end_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=90))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     password_hash: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-        # Helper to convert MongoDB's `_id` to `id`
-        json_encoders = {
-            ObjectId: str
-        }
-
-    def to_response(self):
-        """
-        Returns a dictionary representation of the user for API responses,
-        excluding sensitive information like the password hash.
-        """
-        user_dict = self.dict()
-        user_dict.pop("password_hash", None)
-        return user_dict

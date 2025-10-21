@@ -69,7 +69,7 @@ async def test_create_duplicate_patient(db):
         # Create the first patient
         response1 = await ac.post(
             "/api/patients/",
-            json=patient_data.dict(),
+            json=patient_data.model_dump(),
             headers={"Authorization": f"Bearer {token}"}
         )
         assert response1.status_code == 201
@@ -77,7 +77,7 @@ async def test_create_duplicate_patient(db):
         # Attempt to create the same patient again
         response2 = await ac.post(
             "/api/patients/",
-            json=patient_data.dict(),
+            json=patient_data.model_dump(),
             headers={"Authorization": f"Bearer {token}"}
         )
 
@@ -114,7 +114,7 @@ async def test_database_error_handling(db):
         async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
             response = await ac.post(
                 "/api/patients/",
-                json=patient_data.dict(),
+                json=patient_data.model_dump(),
                 headers={"Authorization": f"Bearer {token}"}
             )
 

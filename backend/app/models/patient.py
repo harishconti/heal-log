@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from bson import ObjectId
 
@@ -20,8 +20,8 @@ class Patient(BaseModel):
     photo: Optional[str] = ""
     group: Optional[str] = "general"
     is_favorite: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_response(self) -> PatientResponse:
         return PatientResponse(
@@ -41,9 +41,3 @@ class Patient(BaseModel):
             created_at=self.created_at,
             updated_at=self.updated_at
         )
-
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            ObjectId: str
-        }

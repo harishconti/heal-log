@@ -95,17 +95,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // 1. Load token from secure storage
         const storedToken = await SecureStorageAdapter.getItem('auth_token');
         if (storedToken) {
-          setToken(storedToken);
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          // 2. Fetch user data with the token
+          try {
+            const response = await axios.get(`${BACKEND_URL}/api/auth/me`);
+            const userData = response.data;
+            // 3. Set token and user state
+            setToken(storedToken);
+            setUser(userData);
+          } catch (error) {
+            console.error('Token validation failed, clearing stale token.', error);
+            // If the token is invalid, clear it
+            await SecureStorageAdapter.removeItem('auth_token');
+            delete axios.defaults.headers.common['Authorization'];
+          }
         }
 
-        // 2. Explicitly rehydrate the store and wait for it to finish
+        // 4. Rehydrate the rest of the store
         await useAppStore.persist.rehydrate();
 
       } catch (e) {
         console.error("Initialization error:", e);
       } finally {
-        // 3. Only set loading to false after all async operations are done
+        // 5. Loading is complete
         setIsLoading(false);
       }
     };

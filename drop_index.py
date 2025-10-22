@@ -1,7 +1,8 @@
 import pymongo
+import os
 
 # --- Configuration ---
-MONGO_URL = "mongodb://localhost:27017"
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = "medical_contacts"
 COLLECTION_NAME = "users"
 INDEX_NAME_TO_DROP = "email_1" # The conflicting index name from the logs

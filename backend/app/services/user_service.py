@@ -31,6 +31,7 @@ async def authenticate_user(email: str, password: str) -> Optional[User]:
     user = await User.find_one({"email": email})
     if not user or not verify_password(password, user.password_hash):
         return None
+
     return user
 
 async def get_user_by_id(user_id: str) -> Optional[User]:

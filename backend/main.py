@@ -16,6 +16,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
 from app.core.limiter import limiter
 from contextlib import asynccontextmanager
+from app.core.errors import APIException, api_exception_handler, generic_exception_handler
 
 # --- Lifespan Management ---
 @asynccontextmanager
@@ -50,6 +51,8 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(APIException, api_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 # --- Middleware ---
 app.add_middleware(

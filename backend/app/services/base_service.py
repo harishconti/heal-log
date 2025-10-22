@@ -23,7 +23,9 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return await self.model.find_one(*expressions)
 
     async def get_multi(self, **kwargs: Any) -> List[ModelType]:
-        return await self.model.find(kwargs).to_list()
+        skip = kwargs.pop("skip", 0)
+        limit = kwargs.pop("limit", 100)
+        return await self.model.find(kwargs).skip(skip).limit(limit).to_list()
 
     async def create(self, obj_in: CreateSchemaType, **kwargs: Any) -> ModelType:
         obj_in_data = obj_in.model_dump()

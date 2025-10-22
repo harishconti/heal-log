@@ -300,8 +300,11 @@ function Index({ patients, groups, totalPatientCount }) {
   );
 }
 
-const enhance = withObservables(['searchQuery', 'selectedFilter'], ({ searchQuery, selectedFilter }) => {
+const enhance = withObservables([], () => {
   const patientCollection = database.collections.get<Patient>('patients');
+  const searchQuery = useAppStore.getState().searchQuery;
+  const selectedFilter = useAppStore.getState().selectedFilter;
+
   let query = patientCollection.query();
 
   if (searchQuery) {
@@ -326,21 +329,7 @@ const enhance = withObservables(['searchQuery', 'selectedFilter'], ({ searchQuer
   };
 });
 
-// Create the enhanced component *outside* of the render function
-const EnhancedIndex = enhance(Index);
-
-const IndexContainer = () => {
-  // Pull the props from the Zustand store
-  const { searchQuery, selectedFilter } = useAppStore(
-    (state) => ({ searchQuery: state.searchQuery, selectedFilter: state.selectedFilter }),
-    // Using shallow compare is better for performance when selecting multiple values
-  );
-
-  // Render the enhanced component, passing the reactive props to it
-  return <EnhancedIndex searchQuery={searchQuery} selectedFilter={selectedFilter} />;
-};
-
-export default IndexContainer;
+export default enhance(Index);
 
 const styles = StyleSheet.create({
   container: {

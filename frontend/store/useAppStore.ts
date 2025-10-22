@@ -120,8 +120,8 @@ const initialErrorState: ErrorState = {
   upload: null,
 };
 
-export const useAppStore = create<AppState>()(
-  persist(
+export const useAppStore = create(
+  persist<AppState>(
     (set, get) => ({
       // Initial state
       user: null,

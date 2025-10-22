@@ -24,12 +24,16 @@ const AppLayout = () => {
   );
 };
 
+import AppInitializer from '../contexts/AppInitializer';
+
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    // <AuthProvider>
       <ThemeProvider>
-        <AppLayout />
+        <AppInitializer>
+          <AppLayout />
+        </AppInitializer>
       </ThemeProvider>
-    </AuthProvider>
+    // </AuthProvider>
   );
 }

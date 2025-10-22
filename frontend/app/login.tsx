@@ -16,7 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, LoginFormData } from '@/lib/validation';
+import { loginSchema, LoginFormData } from '../lib/validation';
 import ControlledInput from '../components/forms/ControlledInput';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAppStore } from '../store/useAppStore';

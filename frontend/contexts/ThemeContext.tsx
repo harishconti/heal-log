@@ -138,15 +138,18 @@ interface ThemeProviderProps {
 
 import { useFonts } from 'expo-font';
 
+import { useFonts } from 'expo-font';
+
 export const useInitializeTheme = () => {
   const { settings } = useAppStore();
   const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme()
   );
 
-  const [fontsLoaded] = useFonts({
-    'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  // const [fontsLoaded] = useFonts({
+  //   'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
+  // });
+  const fontsLoaded = true;
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {

@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import jwt
+import uuid
 
 from app.core.config import settings
 from app.schemas.user import UserPlan
@@ -37,12 +38,19 @@ def create_access_token(subject: str, plan: str, role: str, expires_delta: Optio
 
 def create_refresh_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
     """Creates a new refresh token."""
+    now = datetime.now(timezone.utc)
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "iat": now,
+        "type": "refresh",
+        "jti": str(uuid.uuid4())
+    }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 

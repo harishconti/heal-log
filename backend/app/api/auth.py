@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.user import UserCreate, UserResponse
+from app.core.errors import APIException
 from app.core.limiter import limiter
 from app.schemas.token import Token, RefreshToken
 from app.services.user_service import user_service, authenticate_user
@@ -32,11 +33,11 @@ async def register_user(request: Request, user_data: UserCreate):
         }
     except ValueError as e:
         # This is for known errors, like "email already registered"
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         # This is for unexpected errors
         logging.error(f"Unhandled exception during user registration: {e}", exc_info=True)
-        raise HTTPException(
+        raise APIException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred during registration."
         )
@@ -49,10 +50,9 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     """
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(
+        raise APIException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
         )
 
     access_token = create_access_token(subject=user.id, plan=user.plan, role=user.role)
@@ -76,31 +76,37 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
         payload = jwt.decode(
             refresh_token_data.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        if payload.get("type") != "refresh":
+            raise APIException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+            )
         user_id = payload.get("sub")
         if not user_id:
-            raise HTTPException(
+            raise APIException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token",
             )
 
         user = await user_service.get(user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise APIException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         access_token = create_access_token(subject=user.id, plan=user.plan, role=user.role)
+        new_refresh_token = create_refresh_token(subject=user.id)
 
         return {
             "access_token": access_token,
-            "refresh_token": refresh_token_data.refresh_token, # Return the same refresh token
+            "refresh_token": new_refresh_token,
             "token_type": "bearer",
         }
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
+        raise APIException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token has expired",
         )
     except jwt.PyJWTError:
-        raise HTTPException(
+        raise APIException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )

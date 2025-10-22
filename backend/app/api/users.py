@@ -1,9 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.user_service import user_service
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_role
 from app.schemas.user import UserResponse
+from app.schemas.role import UserRole
+from typing import List
 
 router = APIRouter()
+
+@router.get("/", response_model=List[UserResponse])
+async def read_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user_id: str = Depends(require_role(UserRole.ADMIN)),
+):
+    """
+    Retrieve all users. Admin role required.
+    """
+    users = await user_service.get_multi(skip=skip, limit=limit)
+    return users
 
 @router.get("/me", response_model=dict)
 async def read_users_me(current_user_id: str = Depends(get_current_user)):

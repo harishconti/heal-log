@@ -16,7 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, RegisterFormData } from '@/lib/validation';
+import { registerSchema, RegisterFormData } from '../lib/validation';
 import ControlledInput from '../components/forms/ControlledInput';
 
 const SPECIALTIES = [

@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { patientSchema, PatientFormData } from '../lib/validation';
+import { patientSchema, PatientFormData } from '@/lib/validation';
 import ControlledInput from '../components/forms/ControlledInput';
 import { database } from '../models/database';
 import Patient from '../models/Patient';

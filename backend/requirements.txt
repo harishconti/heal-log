@@ -19,3 +19,5 @@ pytest-asyncio
 mongomock-motor
 httpx
 python-multipart
+pydantic-settings==2.1.0
+tenacity==8.2.3

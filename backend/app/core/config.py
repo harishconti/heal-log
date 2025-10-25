@@ -30,7 +30,10 @@ class Settings(BaseSettings):
     MONGO_URL: str
     DB_NAME: str
 
-    @validator("MONGO_URL", "DB_NAME", "SECRET_KEY")
+    # --- Cache Settings ---
+    REDIS_URL: str = "redis://localhost:6379"
+
+    @validator("MONGO_URL", "DB_NAME", "SECRET_KEY", "REDIS_URL")
     def not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Environment variable cannot be empty")

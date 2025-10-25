@@ -5,7 +5,7 @@ from beanie import init_beanie
 
 from app import api
 from app.core.config import settings
-from app.db.session import client, shutdown_db_client
+from app.db.session import connect_to_mongo, close_mongo_connection, get_database
 from app.db.init_db import init_dummy_data
 from app.schemas.user import User
 from app.schemas.patient import Patient
@@ -28,8 +28,10 @@ async def lifespan(app: FastAPI):
     - Close database connections gracefully on shutdown.
     """
     logging.info("Application starting up...")
+    await connect_to_mongo()
+    db = await get_database()
     await init_beanie(
-        database=client[settings.DB_NAME],
+        database=db,
         document_models=[User, Patient, ClinicalNote, Document],
         allow_index_dropping=True
     )
@@ -39,7 +41,7 @@ async def lifespan(app: FastAPI):
     yield
 
     logging.info("Application shutting down...")
-    await shutdown_db_client()
+    await close_mongo_connection()
     logging.info("Database connections closed.")
 
 # --- App Initialization ---

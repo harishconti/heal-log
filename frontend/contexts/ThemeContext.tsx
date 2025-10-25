@@ -138,8 +138,6 @@ interface ThemeProviderProps {
 
 import { useFonts } from 'expo-font';
 
-import { useFonts } from 'expo-font';
-
 export const useInitializeTheme = () => {
   const { settings } = useAppStore();
   const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(

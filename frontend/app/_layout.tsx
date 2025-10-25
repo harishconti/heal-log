@@ -28,12 +28,12 @@ import AppInitializer from '../contexts/AppInitializer';
 
 export default function RootLayout() {
   return (
-    // <AuthProvider>
+    <AuthProvider>
       <ThemeProvider>
         <AppInitializer>
           <AppLayout />
         </AppInitializer>
       </ThemeProvider>
-    // </AuthProvider>
+    </AuthProvider>
   );
 }

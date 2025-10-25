@@ -1,12 +1,13 @@
 import logging
-from async_lru import alru_cache
+from fastapi_cache.decorator import cache
 from app.schemas.patient import PatientCreate, PatientUpdate, Patient
 from app.schemas.clinical_note import NoteCreate, ClinicalNote
-from app.services import clinical_note_service, analytics_service
+from app.services import clinical_note_service
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 from .base_service import BaseService
+from fastapi_cache import FastAPICache
 
 class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
@@ -43,10 +44,10 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await db_obj.insert()
 
         # Invalidate caches
-        PatientService.get_patients_by_user_id.cache_clear()
-        PatientService.get_patient_groups.cache_clear()
-        PatientService.get_user_stats.cache_clear()
-        analytics_service.AnalyticsService.get_patient_growth_analytics.cache_clear()
+        await FastAPICache.clear(namespace="get_patients_by_user_id")
+        await FastAPICache.clear(namespace="get_patient_groups")
+        await FastAPICache.clear(namespace="get_user_stats")
+        await FastAPICache.clear(namespace="get_patient_growth_analytics")
 
         return db_obj
 
@@ -78,7 +79,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
             query.append(self.model.is_favorite == True)
         return query
 
-    @alru_cache(maxsize=128)
+    @cache(namespace="get_patients_by_user_id", expire=60)
     async def get_patients_by_user_id(
         self,
         user_id: str,
@@ -100,9 +101,9 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         updated_patient = await super().update(patient, patient_data)
 
         # Invalidate caches
-        PatientService.get_patients_by_user_id.cache_clear()
-        PatientService.get_patient_groups.cache_clear()
-        PatientService.get_user_stats.cache_clear()
+        await FastAPICache.clear(namespace="get_patients_by_user_id")
+        await FastAPICache.clear(namespace="get_patient_groups")
+        await FastAPICache.clear(namespace="get_user_stats")
 
         return updated_patient
 
@@ -117,10 +118,10 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await super().delete(patient)
 
         # Invalidate caches
-        PatientService.get_patients_by_user_id.cache_clear()
-        PatientService.get_patient_groups.cache_clear()
-        PatientService.get_user_stats.cache_clear()
-        analytics_service.AnalyticsService.get_patient_growth_analytics.cache_clear()
+        await FastAPICache.clear(namespace="get_patients_by_user_id")
+        await FastAPICache.clear(namespace="get_patient_groups")
+        await FastAPICache.clear(namespace="get_user_stats")
+        await FastAPICache.clear(namespace="get_patient_growth_analytics")
 
         return True
 
@@ -149,17 +150,17 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         return await clinical_note_service.get_notes_for_patient(patient_id, user_id)
 
-    @alru_cache(maxsize=32)
+    @cache(namespace="get_patient_groups", expire=60)
     async def get_patient_groups(self, user_id: str) -> List[str]:
         """
         Retrieves all unique patient groups for a user.
         """
         return await self.model.distinct(self.model.group, {"user_id": user_id})
 
-    @alru_cache(maxsize=32)
+    @cache(namespace="get_user_stats", expire=60)
     async def get_user_stats(self, user_id: str) -> Dict[str, any]:
         """
-        Retrieves statistics for a user.
+        Retrieve statistics for a user.
         """
         total_patients = await self.model.find({"user_id": user_id}).count()
         favorite_patients = await self.model.find({"user_id": user_id, "is_favorite": True}).count()

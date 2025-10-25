@@ -15,11 +15,15 @@ def event_loop():
     yield loop
     loop.close()
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def db_client():
     """
     Initializes the in-memory database connection for the test session.
     """
+    from fastapi_cache import FastAPICache
+    from fastapi_cache.backends.inmemory import InMemoryBackend
+
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     client = AsyncMongoMockClient()
     database = client["test_medical_contacts"]
 

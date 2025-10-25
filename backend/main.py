@@ -17,6 +17,9 @@ from starlette.requests import Request
 from app.core.limiter import limiter
 from contextlib import asynccontextmanager
 from app.core.errors import APIException, api_exception_handler, generic_exception_handler
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis import asyncio as aioredis
 
 # --- Lifespan Management ---
 @asynccontextmanager
@@ -28,6 +31,12 @@ async def lifespan(app: FastAPI):
     - Close database connections gracefully on shutdown.
     """
     logging.info("Application starting up...")
+
+    # Initialize Redis cache
+    redis = aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    logging.info("Redis cache initialized.")
+
     await connect_to_mongo()
     db = await get_database()
     await init_beanie(

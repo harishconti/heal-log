@@ -74,8 +74,8 @@ cp .env.example .env
 # MONGO_URL: The connection string for your MongoDB instance.
 # DB_NAME: The name of the database to use.
 
-# Run the server
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# Run the server from the repository root
+PYTHONPATH=backend uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 3. Frontend Setup
@@ -88,6 +88,9 @@ yarn install
 
 # Create a .env file (see frontend/.env.example)
 cp .env.example .env
+
+# Your .env file must contain the following variable:
+# EXPO_PUBLIC_BACKEND_URL: The full URL of your running backend (e.g., http://localhost:8000)
 
 # Run the web development server
 yarn web

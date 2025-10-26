@@ -30,6 +30,7 @@ This document tracks the major open issues and the overall testing status for th
 ### Frontend (iOS & Web)
 - **Status:** **Operational.**
 - **Details:** The frontend is now rendering and operational after fixing the infinite loading screen issue. Further testing can now proceed.
+- **Testing:** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
 
 ---
 

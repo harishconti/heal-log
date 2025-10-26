@@ -43,6 +43,8 @@ The application is built with a modern, modular architecture. For a detailed ove
 
 **The Android build is non-functional.** All attempts to compile the native Android application have failed due to a persistent C++ compilation error. As a result, development and testing are focused exclusively on **iOS and Web** platforms. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
 
+**Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -94,6 +96,12 @@ cp .env.example .env
 
 # Run the web development server
 yarn web
+
+### 4. Testing
+The backend includes a comprehensive test suite using `pytest`. To run the tests, execute the following command from the repository root:
+```bash
+PYTHONPATH=backend pytest backend/tests/
+```
 ```
 
 ## 🧪 Testing

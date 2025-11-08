@@ -4,11 +4,11 @@
 
 This document outlines the development status and future roadmap for all components of the Clinic OS Lite application. It serves as the single source of truth for tracking progress toward the beta release and beyond.
 
-**CURRENT STATUS: PARTIALLY BLOCKED.** Frontend development for iOS and Web can now proceed. However, the project is blocked from a full cross-platform release by the critical **Android Build Failure**. Refer to `testing_and_issues.md` for details.
+**CURRENT STATUS: UNBLOCKED.** Frontend development for iOS, Android, and Web can now proceed. The critical Android build failure has been resolved.
 
 ---
 
-## 1. Cross-Platform App (React Native for iOS & Web)
+## 1. Cross-Platform App (React Native for iOS, Android & Web)
 
 ### ✅ Completed Features
 - **Core Subscription & Auth:**

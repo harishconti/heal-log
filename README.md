@@ -1,6 +1,6 @@
 # Clinic OS Lite
 
-Welcome to Clinic OS Lite, a comprehensive patient management system designed for medical professionals. This application provides a secure and efficient way to manage patient information, track medical notes, and streamline communication. The system is comprised of a FastAPI backend and a cross-platform React Native application that targets **Web** and **iOS**.
+Welcome to Clinic OS Lite, a comprehensive patient management system designed for medical professionals. This application provides a secure and efficient way to manage patient information, track medical notes, and streamline communication. The system is comprised of a FastAPI backend and a cross-platform React Native application that targets **Web, iOS and Android**.
 
 ## ✨ Core Features
 
@@ -40,8 +40,6 @@ The application is built with a modern, modular architecture. For a detailed ove
 - **Testing:** Pytest, Pytest-AsyncIO
 
 ## 🔴 Known Issues & Limitations
-
-**The Android build is non-functional.** All attempts to compile the native Android application have failed due to a persistent C++ compilation error. As a result, development and testing are focused exclusively on **iOS and Web** platforms. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
 
 **Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
 
@@ -96,6 +94,40 @@ cp .env.example .env
 
 # Run the web development server
 yarn web
+
+# Run the iOS development server
+yarn ios
+
+# Run the Android development server
+yarn android
+
+### Android Development Setup
+Building the Android application requires a specific setup due to the use of native modules. Follow these steps to configure your environment:
+
+1.  **Install the Android SDK:**
+    *   Download and install the Android SDK Command-Line Tools from the official [Android developer website](https://developer.android.com/studio#command-line-tools-only).
+    *   Create a directory for the SDK (e.g., `~/Android/sdk`) and unzip the tools into it.
+    *   The tools must be placed in a `cmdline-tools/latest` subdirectory (e.g., `~/Android/sdk/cmdline-tools/latest`).
+
+2.  **Set Environment Variables:**
+    *   Set the `ANDROID_HOME` environment variable to your SDK's root directory.
+    *   Add the `cmdline-tools/latest/bin` and `platform-tools` directories to your `PATH`.
+
+    ```bash
+    export ANDROID_HOME=~/Android/sdk
+    export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+    ```
+
+3.  **Install SDK Packages:**
+    *   Use the `sdkmanager` to accept all licenses and install the required packages:
+
+    ```bash
+    yes | sdkmanager --licenses
+    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
+    ```
+
+4.  **Enable the New Architecture:**
+    *   The project requires the React Native New Architecture. It is enabled by default in `frontend/android/gradle.properties` (`newArchEnabled=true`).
 
 ### 4. Testing
 The backend includes a comprehensive test suite using `pytest`. To run the tests, execute the following command from the repository root:

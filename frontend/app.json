@@ -10,14 +10,14 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.frontend"
+      "bundleIdentifier": "com.clinicoslite.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.anonymous.frontend",
+      "package": "com.clinicoslite.app",
       "versionCode": 1,
       "edgeToEdgeEnabled": true
     },

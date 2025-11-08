@@ -10,13 +10,13 @@ This document outlines the technical architecture, data models, and core workflo
 ## 2. High-Level System Architecture
 
 ### 2.1. Architectural Overview
-The application uses a decoupled, three-tier architecture. The core is a **FastAPI backend** that serves as the single source of truth and handles all business logic. It communicates with a **cross-platform React Native client** that targets iOS and Web, providing a consistent user experience across devices. A separate, pro-only web dashboard is planned for future development.
+The application uses a decoupled, three-tier architecture. The core is a **FastAPI backend** that serves as the single source of truth and handles all business logic. It communicates with a **cross-platform React Native client** that targets iOS, Android, and Web, providing a consistent user experience across devices. A separate, pro-only web dashboard is planned for future development.
 
 ### 2.2. Architectural Diagram
 ```mermaid
 graph TD
     subgraph "Clients (User-Facing Layer)"
-        A[<b>Cross-Platform App (React Native)</b><br><i>Targets: iOS & Web</i><br>Handles core patient management for all users.]
+        A[<b>Cross-Platform App (React Native)</b><br><i>Targets: iOS, Android & Web</i><br>Handles core patient management for all users.]
         B[<b>Pro Web Dashboard (React.js)</b><br><i>Status: Planned</i><br>Provides advanced analytics and data management for Pro users.]
     end
 
@@ -52,10 +52,10 @@ graph TD
 - **Status:** Largely complete. Provides APIs for authentication, patient management, clinical notes, data synchronization, and payments. Includes a robust RBAC system and protected endpoints for pro-tier features.
 
 ### 3.2. Cross-Platform Client (React Native)
-- **Role:** The primary interface for all users on iOS and Web. It is optimized for both mobile and desktop use, focusing on daily tasks like patient management and note-taking.
+- **Role:** The primary interface for all users on iOS, Android, and Web. It is optimized for both mobile and desktop use, focusing on daily tasks like patient management and note-taking.
 - **Core Technologies:** React Native, Expo, Zustand, WatermelonDB, Expo Router.
 - **Status:** In development. Core features like authentication, offline-first data sync, patient management, and the upgrade-to-pro flow are implemented. Document management UI is pending.
-- **Limitation:** The **Android build is non-functional** due to a persistent native compilation error.
+- **Architecture:** The Android build utilizes the **React Native New Architecture** to support the latest native modules.
 
 ### 3.3. Pro Web Dashboard (React.js)
 - **Role:** A premium, Pro-exclusive interface designed for desktop use. It will provide a broader, more analytical view of the practice.

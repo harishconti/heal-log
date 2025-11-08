@@ -6,18 +6,14 @@ This document tracks the major open issues and the overall testing status for th
 
 ## Testing Environment
 - **Backend:** FastAPI server running on `http://localhost:8000`
-- **Frontend:** React Native app (iOS/Web) running on `http://localhost:8081`
+- **Frontend:** React Native app (iOS/Android/Web) running on `http://localhost:8081`
 - **Database:** Local MongoDB instance
 - **Backend Tests:** `pytest` running from the project root
 
 ---
 
 ## 1. Open Issues
-
-### Android Build Failure (Critical Blocker)
-- **Issue:** The native Android build is **completely non-functional**. It consistently fails with a low-level C++ compilation error related to the project's native modules, making it impossible to generate an APK or run the app on any Android device.
-- **Impact:** This is the **primary blocker** for the planned Android beta release. All Android-related development is halted. Development is currently focused on **iOS and Web only**.
-- **Status:** **Unresolved and Critical.** Extensive troubleshooting—including dependency updates, Gradle configuration changes, and environment validation with `expo-doctor`—has failed to yield a solution. The problem points to a fundamental incompatibility within the native build toolchain that is beyond a simple fix.
+- **Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
 
 ---
 
@@ -27,15 +23,19 @@ This document tracks the major open issues and the overall testing status for th
 - **Status:** **Stable.**
 - **Details:** The backend API is stable and all tests are passing.
 
-### Frontend (iOS & Web)
+### Frontend (iOS, Android & Web)
 - **Status:** **Operational.**
-- **Details:** The frontend is now rendering and operational after fixing the infinite loading screen issue. Further testing can now proceed.
+- **Details:** The frontend is now rendering and operational after fixing the infinite loading screen issue. The Android build is now functional.
 - **Testing:** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
 
 ---
 
 ## 3. Resolved Issues Summary
 Numerous issues have been resolved to reach the current stable state, including:
+- **Android Build Failure:** Resolved the critical blocker that prevented the Android build from compiling. The solution involved:
+    - Correcting the Babel configuration to support WatermelonDB's decorators.
+    - Installing and configuring a complete Android SDK and NDK.
+    - Resolving a complex dependency conflict with `react-native-reanimated` by enabling the React Native New Architecture.
 - **Frontend Infinite Loading Screen:** Resolved the critical blocker that prevented the frontend from rendering. The fix involved multiple steps:
     - Corrected the `AuthContext` to properly fetch user data when a token is loaded from storage, which fixed the primary cause of the loading screen hang.
     - Added the missing `lib/validation/index.ts` file with `zod` schemas, which was causing a module resolution crash in the Metro bundler.

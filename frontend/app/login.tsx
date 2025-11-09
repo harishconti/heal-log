@@ -20,6 +20,7 @@ import { loginSchema, LoginFormData } from '../lib/validation';
 import ControlledInput from '../components/forms/ControlledInput';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAppStore } from '../store/useAppStore';
+import { addBreadcrumb } from '../utils/monitoring';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -37,6 +38,7 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading('login', true);
+    addBreadcrumb('auth', `User login attempt: ${data.email}`);
     try {
       await login(data.email, data.password);
       router.replace('/');

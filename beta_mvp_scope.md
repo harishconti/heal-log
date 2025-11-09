@@ -42,7 +42,7 @@ To ensure a focused and stable beta, the following features will be deferred.
 These features are critical for managing the beta program effectively.
 
 - **🔴 In-App Feedback Form:** A simple form to allow beta users to submit feedback and bug reports directly within the app.
-- **🔴 Error Reporting Integration:** Integrate a service like Sentry or Bugsnag to automatically capture and report crashes and errors.
+- **✅ Error Reporting Integration:** Integrated Sentry for error monitoring.
 - **🟡 Beta User Welcome Screen:** A one-time welcome screen that thanks users for participating and provides key information.
 - **🟡 Known Issues Disclaimer:** A small, accessible screen or notice that lists known issues to manage user expectations.
 - **🟡 "Report a Bug" Button:** A persistent, easily accessible button (e.g., in the app settings) that links to the feedback form.
@@ -58,7 +58,7 @@ A final checklist to ensure all critical tasks are completed before the launch.
 - [ ] **Security Audit:** Perform a final review of authentication, authorization, and data handling.
 - [ ] **API Configuration:** Verify API rate limits and production environment settings are correctly configured.
 - [ ] **Database Backups:** Confirm that the automated database backup mechanism is active and tested.
-- [ ] **Error Monitoring:** Ensure the selected error monitoring service is active and correctly configured.
+- [x] **Error Monitoring:** Ensure the selected error monitoring service is active and correctly configured.
 - [ ] **Feedback Mechanism:** Verify the in-app feedback form is functional and sending data to the expected destination.
 
 ---

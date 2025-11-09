@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { trackScreenView, trackFeatureAdoption } from '../services/analytics';
 import { useAppStore } from '../store/useAppStore';
 import { map } from 'rxjs/operators';
 import { sync } from '../services/sync';
@@ -59,6 +60,8 @@ function Index({ patients, groups, totalPatientCount }) {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.replace('/login');
+    } else if (isAuthenticated) {
+      trackScreenView('index');
     }
   }, [authLoading, isAuthenticated]);
 
@@ -75,6 +78,7 @@ function Index({ patients, groups, totalPatientCount }) {
 
       await sync();
       setOffline(false);
+      trackFeatureAdoption('sync');
 
     } catch (error) {
       console.log('Sync failed, using local DB:', error);
@@ -112,6 +116,7 @@ function Index({ patients, groups, totalPatientCount }) {
 
   const addNewPatient = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    trackFeatureAdoption('add-patient');
     router.push('/add-patient');
   };
 

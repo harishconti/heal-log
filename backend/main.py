@@ -25,6 +25,10 @@ from app.schemas.document import Document
 from app.schemas.feedback import Feedback
 from app.schemas.patient import Patient
 from app.schemas.user import User
+from app.schemas.telemetry import Telemetry
+from app.schemas.error_event import ErrorEvent
+from app.schemas.query_performance_event import QueryPerformanceEvent
+from app.schemas.sync_event import SyncEvent
 
 
 # --- Lifespan Management ---
@@ -51,7 +55,7 @@ async def lifespan(app: FastAPI):
     db = await get_database()
     await init_beanie(
         database=db,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback],
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, Telemetry, ErrorEvent, QueryPerformanceEvent, SyncEvent],
         allow_index_dropping=True
     )
     await init_dummy_data()
@@ -118,6 +122,7 @@ app.include_router(api.webhooks.router, prefix="/api/webhooks", tags=["Webhooks"
 app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
 app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
 app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
 
 # --- Root Endpoint ---
 @app.get("/api")

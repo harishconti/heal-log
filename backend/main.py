@@ -20,6 +20,7 @@ from app.core.errors import APIException, api_exception_handler, generic_excepti
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
+from app.core.monitoring import init_monitoring
 
 # --- Lifespan Management ---
 @asynccontextmanager
@@ -31,6 +32,9 @@ async def lifespan(app: FastAPI):
     - Close database connections gracefully on shutdown.
     """
     logging.info("Application starting up...")
+
+    # Initialize Sentry Monitoring
+    init_monitoring()
 
     # Initialize Redis cache
     redis = aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)

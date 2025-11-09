@@ -1,162 +1,102 @@
 # Clinic OS Lite
 
-Welcome to Clinic OS Lite, a comprehensive patient management system designed for medical professionals. This application provides a secure and efficient way to manage patient information, track medical notes, and streamline communication. The system is comprised of a FastAPI backend and a cross-platform React Native application that targets **Web, iOS and Android**.
+Clinic OS Lite is a modern, offline-first patient management system designed for doctors and small clinics. It features a robust FastAPI backend and a cross-platform React Native frontend for Web, iOS, and Android.
 
-## ✨ Core Features
+## Features
 
-### Subscription Tiers
-The application operates on a two-tier subscription model:
-- **Basic Plan:** Ideal for individual practitioners. New users are automatically enrolled in a 90-day free trial. Includes full access to the mobile and web app for complete patient management.
-- **Pro Plan:** Designed for professionals who require advanced data insights and document management. Includes all Basic features, plus exclusive access to a future web dashboard and secure document storage.
+*   **Offline-First:** Continue working without an internet connection. Data syncs automatically when you're back online.
+*   **Patient Management:** Create, edit, and manage patient records with ease.
+*   **Clinical Notes:** Keep detailed clinical notes for each patient.
+*   **Cross-Platform:** Use the app on your phone, tablet, or web browser.
+*   **Secure:** Your data is protected with JWT-based authentication and role-based access control.
 
-### Patient Management (All Plans)
-- **Full CRUD Operations:** Create, read, update, and delete patient records.
-- **Detailed Patient Profiles:** Store comprehensive patient information.
-- **Clinical Notes System:** Add and view time-stamped clinical notes for each patient.
-- **Offline-First:** The mobile app is fully functional offline, with data synchronized automatically upon reconnection.
+## Architecture Overview
 
-### Pro Features
-- **Secure Document Storage:** Securely upload and manage patient-related documents from the mobile app.
-- **Web Dashboard (Planned):** A future desktop-optimized interface for advanced analytics and comprehensive data management.
+### Frontend
 
-### Professional & UX Features
-- **Secure Authentication:** Robust JWT-based authentication with secure token storage.
-- **Data Isolation:** Each user can only access their own patient data.
-- **Dark Mode:** Supports light, dark, and system default themes.
-- **Search and Filter:** Powerful tools to find patients quickly.
+The frontend is a React Native application built with Expo. It uses:
 
-## 🏗️ Technical Architecture
-The application is built with a modern, modular architecture. For a detailed overview, see [`Architecture.md`](./Architecture.md). For the development roadmap, see [`ROADMAP.md`](./ROADMAP.md).
-- **Backend:** A FastAPI application provides a robust, secure API.
-- **Database:** MongoDB is used for data storage.
-- **Frontend:** A single React Native codebase powers the mobile app (iOS) and a responsive web app.
-- **Authentication:** JWTs are used for securing the API.
+*   **Expo Router** for file-based routing.
+*   **WatermelonDB** for offline data storage.
+*   **Zustand** for global state management.
+*   **React Hook Form** and **Zod** for form handling and validation.
+*   **Axios** for making API requests.
+*   **Sentry** for error monitoring.
 
-## 💻 Tech Stack
+### Backend
 
-- **Backend:** Python, FastAPI, MongoDB (via `motor`), Pydantic
-- **Authentication:** JWT, `passlib`, `python-jose`
-- **Frontend:** React Native, Expo (SDK 49), Zustand, WatermelonDB, Expo Router
-- **Testing:** Pytest, Pytest-AsyncIO
+The backend is a Python-based FastAPI application. It uses:
 
-## 🔴 Known Issues & Limitations
+*   **MongoDB** as the primary database.
+*   **Beanie** as the ODM for MongoDB.
+*   **JWT** for authentication.
+*   **Pydantic** for data validation.
+*   **Sentry** for error monitoring.
+*   **FastAPI Cache** with a Redis backend for caching.
+*   **SlowAPI** for rate limiting.
 
-**Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful due to complex issues with the Metro bundler and module resolution. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
-
-## 🚀 Getting Started
+## Setup and Installation
 
 ### Prerequisites
-- Python 3.9+
-- MongoDB
-- `pip` for package management
-- Node.js and `yarn` for the frontend
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd <repository-directory>
-```
+*   Node.js (v18 or higher)
+*   Yarn
+*   Python (v3.10 or higher)
+*   Pip
+*   MongoDB
+*   Redis
 
-### 2. Backend Setup
-```bash
-# Navigate to the backend directory
-cd backend
+### Backend Setup
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Create a .env file and add your configuration.
-# You can copy the example file as a starting point:
-cp .env.example .env
-
-# Your .env file must contain the following variables:
-# SECRET_KEY: A long, random string used for signing JWTs.
-# MONGO_URL: The connection string for your MongoDB instance.
-# DB_NAME: The name of the database to use.
-
-# Run the server from the repository root
-PYTHONPATH=backend uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### 3. Frontend Setup
-```bash
-# Navigate to the frontend directory
-cd frontend
-
-# Install dependencies
-yarn install
-
-# Create a .env file (see frontend/.env.example)
-cp .env.example .env
-
-# Your .env file must contain the following variable:
-# EXPO_PUBLIC_BACKEND_URL: The full URL of your running backend (e.g., http://localhost:8000)
-
-# Run the web development server
-yarn web
-
-# Run the iOS development server
-yarn ios
-
-# Run the Android development server
-yarn android
-
-### Android Development Setup
-Building the Android application requires a specific setup due to the use of native modules. Follow these steps to configure your environment:
-
-1.  **Install the Android SDK:**
-    *   Download and install the Android SDK Command-Line Tools from the official [Android developer website](https://developer.android.com/studio#command-line-tools-only).
-    *   Create a directory for the SDK (e.g., `~/Android/sdk`) and unzip the tools into it.
-    *   The tools must be placed in a `cmdline-tools/latest` subdirectory (e.g., `~/Android/sdk/cmdline-tools/latest`).
-
-2.  **Set Environment Variables:**
-    *   Set the `ANDROID_HOME` environment variable to your SDK's root directory.
-    *   Add the `cmdline-tools/latest/bin` and `platform-tools` directories to your `PATH`.
-
+1.  **Clone the repository:**
     ```bash
-    export ANDROID_HOME=~/Android/sdk
-    export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+    git clone https://github.com/your-username/doctor-log.git
+    cd doctor-log
     ```
 
-3.  **Install SDK Packages:**
-    *   Use the `sdkmanager` to accept all licenses and install the required packages:
-
+2.  **Install Python dependencies:**
     ```bash
-    yes | sdkmanager --licenses
-    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
+    pip install -r backend/requirements.txt
     ```
 
-4.  **Enable the New Architecture:**
-    *   The project requires the React Native New Architecture. It is enabled by default in `frontend/android/gradle.properties` (`newArchEnabled=true`).
+3.  **Create a `.env` file** in the root directory and add the following environment variables:
+    ```
+    SECRET_KEY=your_secret_key
+    ALGORITHM=HS256
+    ACCESS_TOKEN_EXPIRE_MINUTES=30
+    REFRESH_TOKEN_EXPIRE_DAYS=7
+    MONGO_URL=mongodb://localhost:27017
+    DB_NAME=clinic_os_lite
+    REDIS_URL=redis://localhost:6379
+    ```
 
-### 4. Testing
-The backend includes a comprehensive test suite using `pytest`. To run the tests, execute the following command from the repository root:
-```bash
-PYTHONPATH=backend pytest backend/tests/
-```
-```
+4.  **Run the backend server:**
+    ```bash
+    PYTHONPATH=backend uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ```
 
-## 🧪 Testing
-The backend includes a comprehensive test suite using `pytest`. To run the tests, execute the following command from the repository root:
-```bash
-PYTHONPATH=backend pytest backend/tests/
-```
+### Frontend Setup
 
-## 🧑‍⚕️ Demo Accounts
+1.  **Navigate to the `frontend` directory:**
+    ```bash
+    cd frontend
+    ```
 
-| Role                          | Email                  | Password      | Notes                               |
-| ----------------------------- | ---------------------- | ------------- | ----------------------------------- |
-| **Dr. Sarah Johnson (Pro)**   | `dr.sarah@clinic.com`  | `password123` | Pro Plan, 5 patients (Cardiology)   |
-| **Dr. Mike Chen (Basic)**     | `dr.mike@physio.com`   | `password123` | Basic Plan, 2 patients (Physio)   |
-| **New User (Trial)**          | `test.doctor@medical.com` | `TestPass123` | 90-day trial, no patients           |
+2.  **Install Node.js dependencies:**
+    ```bash
+    yarn install
+    ```
 
-## 🗺️ Project History
-This project has evolved from a basic prototype into a feature-rich patient management system.
-- **Robust Authentication:** Secure, cross-platform JWT authentication with fixed state hydration.
-- **Offline-First Data Layer:** Implemented WatermelonDB with a complete backend synchronization API (`/api/sync/pull` and `/api/sync/push`).
-- **Code Quality:** Improved state management (Zustand), form handling (`react-hook-form`), and component reusability.
-- **UI/UX:** Added dark mode, skeleton loaders, and optimistic UI updates.
-- **Backend Stability:** Hardened the backend with RBAC, rate limiting, and improved validation.
+3.  **Create a `.env` file** in the `frontend` directory and add the following environment variable:
+    ```
+    EXPO_PUBLIC_BACKEND_URL=http://localhost:8000
+    ```
 
-## 📈 Current Status
-**READY FOR TESTING.** The application's backend and frontend are now stable and feature-complete for the beta's scope. The critical Android build failure has been resolved, unblocking the path to release.
+4.  **Start the frontend development server:**
+    ```bash
+    yarn start
+    ```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a pull request or open an issue.

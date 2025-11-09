@@ -11,6 +11,7 @@ from app.schemas.user import User
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.document import Document
+from app.schemas.feedback import Feedback
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
@@ -45,7 +46,7 @@ async def lifespan(app: FastAPI):
     db = await get_database()
     await init_beanie(
         database=db,
-        document_models=[User, Patient, ClinicalNote, Document],
+        document_models=[User, Patient, ClinicalNote, Document, Feedback],
         allow_index_dropping=True
     )
     await init_dummy_data()
@@ -88,6 +89,7 @@ app.include_router(api.payments.router, prefix="/api/payments", tags=["Payments"
 app.include_router(api.webhooks.router, prefix="/api/webhooks", tags=["Webhooks"])
 app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
 app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
+app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"])
 
 # --- Root Endpoint ---
 @app.get("/api")

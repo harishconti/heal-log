@@ -7,3 +7,4 @@ from . import debug
 from . import analytics
 from . import payments
 from . import sync
+from . import feedback

@@ -1,7 +1,9 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
+from typing import Optional
 from app.core.monitoring import capture_exception_with_boundary
+from app.schemas.error_event import ErrorEvent
+from app.core.security import get_optional_current_user
 
 
 class APIException(Exception):
@@ -37,6 +39,19 @@ async def api_exception_handler(request: Request, exc: APIException):
 
 async def generic_exception_handler(request: Request, exc: Exception):
     capture_exception_with_boundary(exc)
+
+    user_id = await get_optional_current_user(request)
+
+    error_event = ErrorEvent(
+        user_id=user_id,
+        request_id=request.state.request_id if hasattr(request.state, 'request_id') else None,
+        path=request.url.path,
+        method=request.method,
+        status_code=500,
+        error=str(exc),
+    )
+    await error_event.insert()
+
     return JSONResponse(
         status_code=500,
         content={

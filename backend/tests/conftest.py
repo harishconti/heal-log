@@ -7,6 +7,10 @@ from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.document import Document
 from app.schemas.feedback import Feedback
+from app.schemas.error_event import ErrorEvent
+from app.schemas.query_performance_event import QueryPerformanceEvent
+from app.schemas.sync_event import SyncEvent
+from app.schemas.telemetry import Telemetry
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
@@ -31,7 +35,7 @@ async def db_client():
     # Initialize Beanie with all the document models
     await init_beanie(
         database=database,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback]
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry]
     )
 
     yield client
@@ -46,10 +50,10 @@ async def db(db_client):
     """
     await init_beanie(
         database=db_client.test_medical_contacts,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback],
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry],
         allow_index_dropping=True
     )
-    collections = [User, Patient, ClinicalNote, Document, Feedback]
+    collections = [User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry]
     for collection in collections:
         await collection.delete_all()
     yield

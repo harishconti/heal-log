@@ -6,6 +6,8 @@ import { initMonitoring, ErrorBoundary } from '../utils/monitoring';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BetaWelcomeScreen from './screens/BetaWelcomeScreen';
+import NetInfo from "@react-native-community/netinfo";
+import { trackOfflineOnlineTime } from '../services/analytics';
 
 initMonitoring();
 
@@ -27,6 +29,16 @@ const AppLayout = () => {
     };
 
     checkFirstLaunch();
+
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isInternetReachable !== null) {
+        trackOfflineOnlineTime(state.isInternetReachable);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   if (!fontsLoaded) {

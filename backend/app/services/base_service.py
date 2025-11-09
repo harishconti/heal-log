@@ -3,15 +3,31 @@ from beanie import Document
 from pydantic import BaseModel
 import uuid
 from datetime import datetime, timezone
+import time
+from functools import wraps
+from app.schemas.query_performance_event import QueryPerformanceEvent
 
 ModelType = TypeVar("ModelType", bound=Document)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
+def log_query_performance(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        query = f"{func.__name__} on {args[0].model.__name__}"
+        await QueryPerformanceEvent(query=query, execution_time=execution_time).insert()
+        return result
+    return wrapper
+
 class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
+    @log_query_performance
     async def get(self, id: str, **kwargs: Any) -> Optional[ModelType]:
         """
         Get a single document by its ID and optional extra filters.
@@ -22,11 +38,13 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             expressions.append(getattr(self.model, key) == value)
         return await self.model.find_one(*expressions)
 
+    @log_query_performance
     async def get_multi(self, **kwargs: Any) -> List[ModelType]:
         skip = kwargs.pop("skip", 0)
         limit = kwargs.pop("limit", 100)
         return await self.model.find(kwargs).skip(skip).limit(limit).to_list()
 
+    @log_query_performance
     async def create(self, obj_in: CreateSchemaType, **kwargs: Any) -> ModelType:
         obj_in_data = obj_in.model_dump()
         # Add id and any other kwargs
@@ -34,6 +52,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await db_obj.insert()
         return db_obj
 
+    @log_query_performance
     async def update(
         self, db_obj: ModelType, obj_in: UpdateSchemaType
     ) -> ModelType:
@@ -54,7 +73,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await updated_obj.save()
         return updated_obj
 
-
+    @log_query_performance
     async def delete(self, db_obj: ModelType) -> None:
         """
         Delete a document from the database.

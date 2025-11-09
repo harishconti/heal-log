@@ -22,6 +22,7 @@ import ControlledInput from '../components/forms/ControlledInput';
 import { database } from '../models/database';
 import Patient from '../models/Patient';
 import uuid from 'react-native-uuid';
+import { addBreadcrumb } from '../utils/monitoring';
 
 const MEDICAL_GROUPS = [
   'general',
@@ -114,6 +115,7 @@ export default function AddPatientScreen() {
 
   const onSubmit = async (data: PatientFormData) => {
     setLoading(true);
+    addBreadcrumb('patient', `Attempting to add new patient: ${data.full_name}`);
     try {
       await database.write(async () => {
         await database.collections.get<Patient>('patients').create(patient => {

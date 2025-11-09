@@ -2,6 +2,9 @@ import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider, useInitializeTheme } from '../contexts/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
+import { initMonitoring, ErrorBoundary } from '../utils/monitoring';
+
+initMonitoring();
 
 const AppLayout = () => {
   const { fontsLoaded } = useInitializeTheme();
@@ -28,12 +31,14 @@ import AppInitializer from '../contexts/AppInitializer';
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <AppInitializer>
-          <AppLayout />
-        </AppInitializer>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider>
+          <AppInitializer>
+            <AppLayout />
+          </AppInitializer>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

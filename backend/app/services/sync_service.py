@@ -19,7 +19,6 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
     updated_patients_cursor = Patient.find(
         Patient.user_id == user_id,
         Patient.updated_at > last_pulled_at_dt,
-        Patient.created_at <= last_pulled_at_dt
     )
 
     created_notes_cursor = ClinicalNote.find(

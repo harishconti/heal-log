@@ -38,7 +38,7 @@ async def clear_all_caches(request: Request):
         )
 
 import sentry_sdk
-from app.core.errors import APIException
+from app.core.exceptions import APIException
 
 @router.get("/sentry-test")
 async def sentry_test():

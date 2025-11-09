@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
-from app.models.patient import Patient
-from app.models.clinical_note import ClinicalNote
-from app.schemas.sync import SyncRequest, SyncResponse, PullChangesResponse
-from app.services.sync_service import pull_changes, push_changes
+
+from fastapi import APIRouter, Depends
+
+from app.core.exceptions import SyncConflictException
 from app.core.security import get_current_user
-from app.models.user import User
+from app.schemas.sync import PullChangesResponse, SyncRequest
+from app.services.sync_service import pull_changes, push_changes
+
 
 router = APIRouter()
 
@@ -22,9 +23,9 @@ async def pull_changes_endpoint(
     try:
         changes = await pull_changes(sync_request.last_pulled_at, current_user_id)
         return {"changes": changes, "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000)}
-    except Exception as e:
-        logging.error(f"Error during pull sync: {e}")
-        raise HTTPException(status_code=500, detail="Error processing pull sync")
+    except ValueError as e:
+        logging.error(f"Pull sync validation error: {e}", exc_info=True)
+        raise SyncConflictException(detail=str(e))
 
 @router.post("/push")
 async def push_changes_endpoint(
@@ -36,8 +37,8 @@ async def push_changes_endpoint(
     The client sends its local changes, and the server applies them.
     """
     try:
-        await push_changes(sync_request.changes, current_user_id)
+        await push_changes(sync_request.changes, current__user_id)
         return {"status": "ok"}
-    except Exception as e:
-        logging.error(f"Error during push sync: {e}")
-        raise HTTPException(status_code=500, detail="Error processing push sync")
+    except ValueError as e:
+        logging.error(f"Push sync validation error: {e}", exc_info=True)
+        raise SyncConflictException(detail=str(e))

@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+import logging
+
+from fastapi import APIRouter, Depends, Request, status
+
+from app.core.exceptions import BetaUserException, NotFoundException
+from app.core.limiter import limiter
 from app.core.security import get_current_user
 from app.services import user_service
-from app.core.limiter import limiter
-import logging
+
 
 router = APIRouter()
 
@@ -21,13 +25,17 @@ async def create_checkout_session(
     # 1. Get the user from the database.
     user = await user_service.get_user_by_id(current_user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise NotFoundException(detail="User not found")
 
-    # 2. Check if the user is already on the PRO plan.
+    # 2. Check if the user is a beta user.
+    if user.role != "beta":
+        raise BetaUserException()
+
+    # 3. Check if the user is already on the PRO plan.
     if user.plan == "pro":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already on the PRO plan.")
+        raise BetaUserException(detail="User is already on the PRO plan.")
 
-    # 3. Simulate the creation of a checkout session.
+    # 4. Simulate the creation of a checkout session.
     # In a real app, you would get a session ID and URL from the payment provider.
     checkout_session_url = f"https://example.com/checkout?user_id={user.id}"
 
@@ -55,7 +63,7 @@ async def stripe_webhook(request: Request):
             )
             if not updated_user:
                 logging.error(f"Failed to upgrade subscription for user: {user_id}")
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+                raise NotFoundException(detail="User not found")
             logging.info(f"Successfully upgraded subscription for user: {user_id}")
 
     return {"status": "received"}

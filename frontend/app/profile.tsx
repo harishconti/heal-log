@@ -449,6 +449,15 @@ export default function ProfileScreen() {
             <Text style={styles.actionText}>Contacts Integration</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/feedback')}
+          >
+            <Ionicons name="bug" size={24} color="#666" />
+            <Text style={styles.actionText}>Report Bug</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="settings" size={24} color="#666" />

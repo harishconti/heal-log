@@ -44,9 +44,48 @@ async def db(db_client):
     This fixture ensures that the database is initialized for every test
     and clears all collections before each test run to ensure isolation.
     """
+    await init_beanie(
+        database=db_client.test_medical_contacts,
+        document_models=[User, Patient, ClinicalNote, Document, Feedback],
+        allow_index_dropping=True
+    )
     collections = [User, Patient, ClinicalNote, Document, Feedback]
     for collection in collections:
         await collection.delete_all()
     yield
     for collection in collections:
         await collection.delete_all()
+
+import time
+import pytest
+from app.schemas.user import UserCreate
+
+@pytest_asyncio.fixture
+def limiter():
+    """
+    Returns a fresh Limiter instance for each test.
+    """
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+
+    return Limiter(key_func=get_remote_address)
+
+@pytest.fixture
+def beta_user() -> UserCreate:
+    return UserCreate(
+        email="beta@example.com",
+        full_name="Beta User",
+        password="password",
+        plan="beta"
+    )
+
+@pytest.fixture(autouse=True)
+def mock_sentry(mocker):
+    mocker.patch("sentry_sdk.capture_exception")
+
+@pytest.fixture(autouse=True)
+def time_test(request):
+    start_time = time.time()
+    yield
+    end_time = time.time()
+    print(f"Test {request.node.name} took {end_time - start_time:.2f}s")

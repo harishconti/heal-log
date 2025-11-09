@@ -32,6 +32,10 @@ class Patient(Document):
     class Config:
         populate_by_name = True
 
+    async def save(self, *args, **kwargs):
+        self.updated_at = datetime.now(timezone.utc)
+        await super().save(*args, **kwargs)
+
 class PatientCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     phone: Optional[str] = Field(default="", max_length=25)

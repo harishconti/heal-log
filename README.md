@@ -41,7 +41,7 @@ The application is built with a modern, modular architecture. For a detailed ove
 
 ## 🔴 Known Issues & Limitations
 
-**Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
+**Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful due to complex issues with the Metro bundler and module resolution. For more details, see [`testing_and_issues.md`](./testing_and_issues.md).
 
 ## 🚀 Getting Started
 
@@ -157,3 +157,6 @@ This project has evolved from a basic prototype into a feature-rich patient mana
 - **Code Quality:** Improved state management (Zustand), form handling (`react-hook-form`), and component reusability.
 - **UI/UX:** Added dark mode, skeleton loaders, and optimistic UI updates.
 - **Backend Stability:** Hardened the backend with RBAC, rate limiting, and improved validation.
+
+## 📈 Current Status
+**READY FOR TESTING.** The application's backend and frontend are now stable and feature-complete for the beta's scope. The critical Android build failure has been resolved, unblocking the path to release.

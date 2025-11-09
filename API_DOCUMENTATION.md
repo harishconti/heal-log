@@ -11,7 +11,7 @@ Register a new user. New users are automatically assigned the `DOCTOR` role and 
 
 - **Request Body:**
   - `email` (string, required): The user's email address.
-  - `password` (string, required): The user's password.
+  - `password` (string, required): The user's password. Must be at least 8 characters long and contain at least one letter and one number.
   - `full_name` (string, required): The user's full name.
   - `phone` (string, optional): The user's phone number.
   - `medical_specialty` (string, optional): The user's medical specialty.
@@ -51,6 +51,11 @@ Get the currently authenticated user's information.
 - **Response:**
   - `success`: `true`
   - `user` (UserResponse object): The current user's information.
+
+### `GET /api/users/me`
+Retrieves the profile of the currently authenticated user.
+
+- **Authentication:** Requires a valid access token.
 
 ---
 
@@ -193,3 +198,11 @@ Clear all application-level caches. This endpoint is intended for use in a testi
 - **Response:**
   - `success`: `true`
   - `message`: "All caches have been cleared."
+
+---
+
+## Frontend Notes
+
+### WatermelonDB Adapter
+
+The `useIncrementalIndexedDB` option for the `LokiJSAdapter` is correctly configured in `frontend/models/adapters/index.ts`. No further action is required for this issue.

@@ -84,6 +84,6 @@ This is a new, Pro-exclusive application to be built from scratch.
 
 ## 4. General / Cross-Cutting Concerns
 
-- [ ] **Error Handling:** Integrate a monitoring service like Sentry or Firebase Crashlytics across both frontend and backend.
+- [x] **Error Handling:** Integrated Sentry for error monitoring across both frontend and backend.
 - [ ] **Performance:** Conduct performance analysis and implement optimizations like code splitting.
 - [ ] **Accessibility:** Enhance accessibility to meet standard guidelines (WCAG).

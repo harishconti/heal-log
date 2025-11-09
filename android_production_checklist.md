@@ -7,7 +7,7 @@ This document outlines the verification results for the Android build configurat
 | Item | Status | Notes |
 |---|---|---|
 | **`app/build.gradle`** | | |
-| Signing Configuration | :x: Needs Attention | The `release` build is currently using the `debug` signing key. A new release keystore must be generated and configured. |
+| Signing Configuration | :x: Needs Attention | The `release` build is currently using the `debug` signing key. A new release keystore must be generated and configured for a production release. **This is not a blocker for the beta.** |
 | `minSdkVersion` | :white_check_mark: OK | Using value from root project properties. |
 | `targetSdkVersion` | :white_check_mark: OK | Using value from root project properties. |
 | Proguard | :question: Needs Verification | Proguard is enabled for release builds. The rules in `proguard-rules.pro` need to be reviewed to ensure they are sufficient for WatermelonDB and other dependencies. |
@@ -16,7 +16,7 @@ This document outlines the verification results for the Android build configurat
 | Gradle Version | :white_check_mark: OK | Managed by the Expo and React Native Gradle plugins. |
 | NDK Version | :white_check_mark: OK | Managed by the Expo and React Native Gradle plugins. |
 | **`app.json`** | | |
-| Package Name | :x: Needs Attention | The `package` is set to `com.anonymous.frontend` and needs to be changed to `com.clinicoslite.app`. |
+| Package Name | :x: Needs Attention | The `package` is set to `com.anonymous.frontend` and needs to be changed to `com.clinicoslite.app` for a production release. **This is not a blocker for the beta.** |
 | `versionCode` | :white_check_mark: OK | Set to `1`. |
 | `version` | :white_check_mark: OK | Set to `1.0.0`. |
 | Android Permissions | :question: Needs Verification | No permissions are explicitly defined. A review of the app's functionality is needed to determine if any permissions are required. |
@@ -32,7 +32,7 @@ This document outlines the verification results for the Android build configurat
 
 **2/5**
 
-The current configuration is not production-ready due to critical issues with the signing configuration and package name.
+The current configuration is not production-ready due to critical issues with the signing configuration and package name. However, the build is functional for beta testing.
 
 ## Steps Needed Before Building Release APK
 

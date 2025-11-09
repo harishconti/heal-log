@@ -15,6 +15,8 @@ from app.models.user import User
 # --- JWT Bearer Scheme ---
 # We instantiate it once and reuse it in our dependency
 reusable_oauth2 = HTTPBearer()
+optional_oauth2 = HTTPBearer(auto_error=False)
+
 
 async def authenticate_user(email: str, password: str) -> User | None:
     user = await user_service.get_user_by_email(email=email)
@@ -131,6 +133,33 @@ async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(r
         )
 
 # --- Dependency Factory for Role-Based Access ---
+async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2)) -> Optional[str]:
+    """
+    Dependency to get the current user from a JWT token if present.
+    Returns the user ID if the token is valid, otherwise returns None.
+    Does not raise HTTPException for missing or invalid tokens.
+    """
+    if credentials is None:
+        return None
+    try:
+        payload = jwt.decode(
+            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+
+        user = await user_service.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        return user.id
+    except (jwt.PyJWTError, HTTPException):
+        # Broadly catch JWT errors or HTTPExceptions from nested dependencies
+        # and return None, effectively making authentication optional.
+        return None
+
+
 def require_role(required_role: UserRole):
     """
     Dependency factory to ensure the user has a specific role.

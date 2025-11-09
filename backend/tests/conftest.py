@@ -6,6 +6,7 @@ from app.schemas.user import User
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.document import Document
+from app.schemas.feedback import Feedback
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
@@ -30,7 +31,7 @@ async def db_client():
     # Initialize Beanie with all the document models
     await init_beanie(
         database=database,
-        document_models=[User, Patient, ClinicalNote, Document]
+        document_models=[User, Patient, ClinicalNote, Document, Feedback]
     )
 
     yield client
@@ -40,7 +41,12 @@ async def db_client():
 @pytest_asyncio.fixture(autouse=True)
 async def db(db_client):
     """
-    This fixture ensures that the database is initialized for every test.
-    It depends on db_client, so it will run after the db connection is set up.
+    This fixture ensures that the database is initialized for every test
+    and clears all collections before each test run to ensure isolation.
     """
-    pass
+    collections = [User, Patient, ClinicalNote, Document, Feedback]
+    for collection in collections:
+        await collection.delete_all()
+    yield
+    for collection in collections:
+        await collection.delete_all()

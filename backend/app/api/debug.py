@@ -36,3 +36,13 @@ async def clear_all_caches(request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to clear caches."
         )
+
+import sentry_sdk
+from app.core.errors import APIException
+
+@router.get("/sentry-test")
+async def sentry_test():
+    """
+    Raises an exception to test Sentry's automatic error reporting.
+    """
+    raise Exception("Sentry test exception from debug endpoint.")

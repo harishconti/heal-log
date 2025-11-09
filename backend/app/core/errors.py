@@ -12,7 +12,10 @@ async def api_exception_handler(request: Request, exc: APIException):
         content={"success": False, "error": {"message": exc.detail}},
     )
 
+from app.core.monitoring import capture_exception_with_boundary
+
 async def generic_exception_handler(request: Request, exc: Exception):
+    capture_exception_with_boundary(exc)
     return JSONResponse(
         status_code=500,
         content={"success": False, "error": {"message": "An unexpected error occurred."}},

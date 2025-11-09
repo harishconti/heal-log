@@ -22,3 +22,4 @@ python-multipart
 pydantic-settings==2.1.0
 tenacity==8.2.3
 fastapi-cache2[redis]
+sentry-sdk[fastapi]==2.18.0

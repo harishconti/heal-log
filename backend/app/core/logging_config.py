@@ -43,7 +43,7 @@ def setup_logging():
     root_logger.addHandler(file_handler)
 
     # Sentry handler
-    if settings.SENTRY_DSN:
+    if getattr(settings, 'SENTRY_DSN', None):
         from sentry_sdk.integrations.logging import SentryHandler
         sentry_handler = SentryHandler(level=logging.ERROR)
         root_logger.addHandler(sentry_handler)

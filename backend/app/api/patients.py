@@ -13,16 +13,24 @@ router = APIRouter()
 
 import logging
 
-@router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=PatientResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new patient",
+    description="Creates a new patient record for the currently authenticated user. This endpoint is restricted to users with the DOCTOR role.",
+    responses={
+        201: {"description": "Patient created successfully."},
+        403: {"description": "User does not have permission to create a patient."},
+        422: {"description": "Validation error."},
+    },
+)
 @limiter.limit("20/minute")
 async def create_patient(
     request: Request,
     patient_data: PatientCreate,
     current_user_id: str = Depends(require_role(UserRole.DOCTOR))
 ):
-    """
-    Create a new patient record. (Doctor-only)
-    """
     try:
         patient = await patient_service.create(patient_data, current_user_id)
         return patient
@@ -35,7 +43,12 @@ async def create_patient(
             detail="An unexpected error occurred while creating the patient."
         )
 
-@router.get("/", response_model=List[PatientResponse])
+@router.get(
+    "/",
+    response_model=List[PatientResponse],
+    summary="Get all patients for the current user",
+    description="Retrieves a list of all patients for the currently authenticated user. This endpoint supports filtering by search term, group, and favorites.",
+)
 @limiter.limit("60/minute")
 async def get_all_patients(
     request: Request,
@@ -44,9 +57,6 @@ async def get_all_patients(
     favorites_only: bool = False,
     current_user_id: str = Depends(get_current_user)
 ):
-    """
-    Retrieve all patients for the current user, with optional filters.
-    """
     try:
         patients = await patient_service.get_patients_by_user_id(
             user_id=current_user_id,
@@ -64,22 +74,39 @@ async def get_all_patients(
             detail="An unexpected error occurred while fetching patients."
         )
 
-@router.get("/{id}", response_model=PatientResponse)
+@router.get(
+    "/{id}",
+    response_model=PatientResponse,
+    summary="Get a single patient by ID",
+    description="Retrieves a single patient by their unique ID.",
+    responses={
+        200: {"description": "Patient found."},
+        404: {"description": "Patient not found."},
+    },
+)
 @limiter.limit("120/minute")
 async def get_patient_by_id(
     request: Request,
     id: str,
     current_user_id: str = Depends(get_current_user)
 ):
-    """
-    Retrieve a single patient by their unique ID.
-    """
     patient = await patient_service.get(id, user_id=current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return patient
 
-@router.put("/{id}", response_model=PatientResponse)
+@router.put(
+    "/{id}",
+    response_model=PatientResponse,
+    summary="Update a patient's details",
+    description="Updates a patient's details. This endpoint is restricted to users with the DOCTOR role.",
+    responses={
+        200: {"description": "Patient updated successfully."},
+        403: {"description": "User does not have permission to update this patient."},
+        404: {"description": "Patient not found."},
+        422: {"description": "Validation error."},
+    },
+)
 @limiter.limit("30/minute")
 async def update_patient(
     request: Request,
@@ -87,24 +114,28 @@ async def update_patient(
     patient_data: PatientUpdate,
     current_user_id: str = Depends(require_role(UserRole.DOCTOR))
 ):
-    """
-    Update a patient's details. (Doctor-only)
-    """
     patient = await patient_service.update(id, patient_data, current_user_id)
     if not patient:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return patient
 
-@router.delete("/{id}", response_model=dict)
+@router.delete(
+    "/{id}",
+    response_model=dict,
+    summary="Delete a patient",
+    description="Deletes a patient record. This endpoint is restricted to users with the DOCTOR role.",
+    responses={
+        200: {"description": "Patient deleted successfully."},
+        403: {"description": "User does not have permission to delete this patient."},
+        404: {"description": "Patient not found."},
+    },
+)
 @limiter.limit("10/minute")
 async def delete_patient(
     request: Request,
     id: str,
     current_user_id: str = Depends(require_role(UserRole.DOCTOR))
 ):
-    """
-    Delete a patient record. (Doctor-only)
-    """
     success = await patient_service.delete(id, current_user_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
@@ -112,7 +143,19 @@ async def delete_patient(
 
 # --- Notes Routes ---
 
-@router.post("/{id}/notes", response_model=ClinicalNoteResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{id}/notes",
+    response_model=ClinicalNoteResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add a new note to a patient's record",
+    description="Adds a new clinical note to a patient's record. This endpoint is restricted to users with the DOCTOR role.",
+    responses={
+        201: {"description": "Note added successfully."},
+        403: {"description": "User does not have permission to add a note to this patient."},
+        404: {"description": "Patient not found."},
+        422: {"description": "Validation error."},
+    },
+)
 @limiter.limit("45/minute")
 async def add_patient_note(
     request: Request,
@@ -120,24 +163,27 @@ async def add_patient_note(
     note_data: NoteCreate,
     current_user_id: str = Depends(require_role(UserRole.DOCTOR))
 ):
-    """
-    Add a new note to a patient's record. (Doctor-only)
-    """
     note = await patient_service.add_note_to_patient(id, note_data, current_user_id)
     if not note:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return note
 
-@router.get("/{id}/notes", response_model=List[ClinicalNoteResponse])
+@router.get(
+    "/{id}/notes",
+    response_model=List[ClinicalNoteResponse],
+    summary="Get all notes for a specific patient",
+    description="Retrieves all clinical notes for a specific patient.",
+    responses={
+        200: {"description": "A list of clinical notes."},
+        404: {"description": "Patient not found."},
+    },
+)
 @limiter.limit("120/minute")
 async def get_patient_notes(
     request: Request,
     id: str,
     current_user_id: str = Depends(get_current_user)
 ):
-    """
-    Get all notes for a specific patient.
-    """
     notes = await patient_service.get_patient_notes(id, current_user_id)
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")

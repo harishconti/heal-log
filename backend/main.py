@@ -69,10 +69,30 @@ async def lifespan(app: FastAPI):
 
 # --- App Initialization ---
 app = FastAPI(
-    title="Medical Contacts API",
-    version="3.0",
-    description="Refactored API for managing medical contacts with advanced features.",
-    lifespan=lifespan
+    title="Clinic OS Lite API",
+    version="1.0.0-beta",
+    description="""
+The Clinic OS Lite API provides a comprehensive interface for managing patients, clinical notes, and other medical data.
+
+## Key Features:
+
+*   **User Authentication:** Secure JWT-based authentication with access and refresh tokens.
+*   **Patient Management:** Full CRUD operations for patient records.
+*   **Offline Sync:** Robust endpoints for two-way data synchronization with offline-first clients.
+*   **Role-Based Access Control:** Differentiated access for Doctors and Admins.
+
+For more detailed documentation, please see the [API Documentation](API_DOCUMENTATION.md).
+    """,
+    lifespan=lifespan,
+    contact={
+        "name": "Clinic OS Lite Support",
+        "url": "http://example.com/support",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

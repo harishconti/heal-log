@@ -26,7 +26,7 @@ class User(Document):
     medical_specialty: Optional[str] = Field(default="general", max_length=100)
     password_hash: str
     plan: UserPlan = UserPlan.BASIC
-    role: UserRole = UserRole.PATIENT
+    role: UserRole = UserRole.DOCTOR
     subscription_status: SubscriptionStatus = SubscriptionStatus.TRIALING
     subscription_end_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=90))
     status: str = "active"

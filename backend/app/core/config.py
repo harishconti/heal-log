@@ -1,7 +1,8 @@
 import os
-from pydantic import validator
+from pydantic import validator, Field
 from pydantic_settings import BaseSettings
 from pathlib import Path
+from typing import Optional
 
 # --- Environment Loading ---
 # Determine the root directory and load the appropriate .env file
@@ -41,6 +42,10 @@ class Settings(BaseSettings):
 
     # --- CORS Settings ---
     ALLOWED_ORIGINS: str = "*"
+
+    # --- Sentry Configuration (Optional) ---
+    SENTRY_DSN: Optional[str] = Field(default=None)
+    SENTRY_ENVIRONMENT: Optional[str] = Field(default=None)
 
     class Config:
         case_sensitive = True

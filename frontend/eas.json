@@ -16,7 +16,7 @@
 "buildType": "apk"
 },
 "env": {
-"EXPO_PUBLIC_BACKEND_URL": "https://api.clinicoslite.com"
+"EXPO_PUBLIC_BACKEND_URL": "https://doctor-log-production.up.railway.app"
 }
 },
 "production": {

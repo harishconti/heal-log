@@ -104,7 +104,7 @@ async def log_requests(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.ALLOWED_ORIGINS.split(',') if ',' in settings.ALLOWED_ORIGINS else [settings.ALLOWED_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

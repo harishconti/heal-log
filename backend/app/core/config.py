@@ -40,18 +40,7 @@ class Settings(BaseSettings):
         return v
 
     # --- CORS Settings ---
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:8081", "http://localhost:3000"]
-
-    @validator("ALLOWED_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v, values):
-        if isinstance(v, str) and not v.startswith("["):
-            # If the value is a string and does not start with '[',
-            # assume it's a comma-separated list and parse it.
-            return [i.strip() for i in v.split(",")]
-        if isinstance(v, (list, str)):
-            # If it's already a list or a string that looks like a list, return as is.
-            return v
-        raise ValueError("Invalid format for ALLOWED_ORIGINS")
+    ALLOWED_ORIGINS: str = "*"
 
     class Config:
         case_sensitive = True

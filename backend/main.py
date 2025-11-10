@@ -124,6 +124,14 @@ app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
 app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
 
+# --- Health Check Endpoint ---
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for monitoring services.
+    """
+    return {"status": "healthy"}
+
 # --- Root Endpoint ---
 @app.get("/api")
 async def root():

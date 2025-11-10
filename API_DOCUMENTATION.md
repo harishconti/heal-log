@@ -4,6 +4,42 @@ This document provides detailed information about the Clinic OS Lite API endpoin
 
 ## Authentication
 
+### `POST /api/auth/register`
+
+Registers a new user and returns an access token, refresh token, and user info.
+
+**Request Body:**
+```json
+{
+  "email": "newuser@example.com",
+  "password": "your_password",
+  "full_name": "New User Name",
+  "phone": "(555) 555-1234",
+  "medical_specialty": "General Practice"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "access_token": "your_access_token",
+  "refresh_token": "your_refresh_token",
+  "token_type": "bearer",
+  "user": {
+    "id": "new_user_id",
+    "email": "newuser@example.com",
+    "full_name": "New User Name",
+    "phone": "(555) 555-1234",
+    "medical_specialty": "General Practice",
+    "role": "DOCTOR",
+    "plan": "BASIC",
+    "subscription_status": "TRIALING",
+    "subscription_end_date": "YYYY-MM-DDTHH:MM:SS.ffffff+00:00"
+  }
+}
+```
+
 ### `POST /api/auth/login`
 
 Authenticates a user and returns an access token and a refresh token.

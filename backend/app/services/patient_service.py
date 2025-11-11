@@ -61,8 +61,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         """
         Builds the Beanie query for fetching patients based on filters.
         """
-        from bson import ObjectId
-        query = [self.model.user_id == ObjectId(user_id)]
+        query = [self.model.user_id == user_id]
         if search:
             search_regex = {"$regex": search, "$options": "i"}
             query.append(

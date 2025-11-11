@@ -100,3 +100,41 @@ The backend is a Python-based FastAPI application. It uses:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
+
+## Deployment Automation Scripts
+
+This project includes several scripts to help automate the deployment process.
+
+### `deploy_check.py`
+
+This script verifies that your environment is correctly configured for deployment. It checks for:
+
+*   Required environment variables
+*   Connection to MongoDB
+*   Connection to Redis
+*   Validity of the Sentry DSN
+*   Basic accessibility of the authentication endpoints
+
+**Usage:**
+
+```bash
+python3 backend/scripts/deploy_check.py
+```
+
+### `production_setup.sh`
+
+This script automates the initial setup of a production environment. It performs the following actions:
+
+*   Installs production dependencies from `requirements.txt`.
+*   Includes placeholders for running database migrations and creating an initial admin user.
+*   Creates logging directories.
+
+**Usage:**
+
+```bash
+bash backend/scripts/production_setup.sh
+```
+
+### `.env.production.example`
+
+This file serves as a template for the environment variables required for a production deployment. Copy this file to `.env.production` and fill in the values for your environment.

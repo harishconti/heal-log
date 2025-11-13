@@ -2,10 +2,10 @@ import os
 import base64
 from uuid import uuid4
 from fastapi import BackgroundTasks
-from backend.app.services.base_service import BaseService
-from backend.app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
-from backend.app.core.config import settings
-from backend.app.db.session import get_database
+from app.services.base_service import BaseService
+from app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
+from app.core.config import settings
+from app.db.session import get_database
 
 async def get_feedback_collection():
     db = await get_database()

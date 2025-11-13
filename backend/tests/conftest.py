@@ -13,6 +13,7 @@ from app.schemas.sync_event import SyncEvent
 from app.schemas.telemetry import Telemetry
 from app.schemas.beta_feedback import BetaFeedback
 from app.services.user_service import user_service
+from app.services.feedback_service import feedback_service
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
@@ -60,6 +61,7 @@ async def db(db_client):
         await collection.delete_all()
 
     user_service.user_collection = User
+    feedback_service.feedback_collection = BetaFeedback
     yield
     for collection in collections:
         await collection.delete_all()

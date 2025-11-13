@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     STATIC_DIR: str = str(ROOT_DIR / "static")
     BASE_URL: str = "http://localhost:8000"
 
+    # --- Email Settings ---
+    EMAIL_HOST: Optional[str] = None
+    EMAIL_PORT: Optional[int] = None
+    EMAIL_USER: Optional[str] = None
+    EMAIL_PASSWORD: Optional[str] = None
+    EMAIL_TO: Optional[str] = None
+
     class Config:
         case_sensitive = True
 

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
 
     # --- Database Settings ---
-    MONGO_URL: str
+    MONGO_URL: str = "mongodb://localhost:27017"
     DB_NAME: str
 
     # --- Cache Settings ---

@@ -146,7 +146,7 @@ async def test_update_patient(db):
 
     # First, create a patient using the service
     original_patient = await patient_service.create(
-        obj_in=PatientCreate(name="Jane Doe"),
+        obj_in=PatientCreate(name="Jane Doe", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
     )
 
@@ -192,7 +192,7 @@ async def test_delete_patient(db):
 
     # First, create a patient using the service
     patient_to_delete = await patient_service.create(
-        obj_in=PatientCreate(name="John Delete"),
+        obj_in=PatientCreate(name="John Delete", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
     )
 
@@ -233,7 +233,7 @@ async def test_sync_pull(db):
 
     # Create a patient that should be pulled
     new_patient = await patient_service.create(
-        obj_in=PatientCreate(name="Sync Me"),
+        obj_in=PatientCreate(name="Sync Me", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
     )
 

@@ -3,11 +3,15 @@ from backend.app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
 from backend.app.services.feedback_service import feedback_service
 from backend.app.models.user import User
 from backend.app.core.security import get_optional_current_user
+from app.core.limiter import limiter
+from fastapi import Request
 
 router = APIRouter()
 
 @router.post("/submit", response_model=BetaFeedback)
+@limiter.limit("10/hour")
 async def submit_feedback(
+    request: Request,
     feedback_data: BetaFeedbackIn,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_optional_current_user) # Optional auth

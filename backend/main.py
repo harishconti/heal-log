@@ -121,7 +121,17 @@ app.add_middleware(
 
 
 # --- API Routers ---
-app.include_router(api.api_router, prefix="/api")
+app.include_router(api.auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(api.users.router, prefix="/api/users", tags=["Users"])
+app.include_router(api.patients.router, prefix="/api/patients", tags=["Patients"])
+app.include_router(api.documents.router, prefix="/api/documents", tags=["Documents"])
+app.include_router(api.analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(api.payments.router, prefix="/api/payments", tags=["Payments"])
+app.include_router(api.webhooks.router, prefix="/api/webhooks", tags=["Webhooks"])
+app.include_router(api.sync.router, prefix="/api/sync", tags=["Sync"])
+app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
+app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
 
 # --- Health Check Endpoint ---
 @app.get("/health")

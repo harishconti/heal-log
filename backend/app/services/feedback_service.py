@@ -5,6 +5,11 @@ from fastapi import BackgroundTasks
 from backend.app.services.base_service import BaseService
 from backend.app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
 from backend.app.core.config import settings
+from backend.app.db.session import get_database
+
+async def get_feedback_collection():
+    db = await get_database()
+    return db.get_collection("beta_feedback")
 
 class FeedbackService(BaseService):
     async def create_feedback(self, feedback_data: BetaFeedbackIn, background_tasks: BackgroundTasks) -> BetaFeedback:
@@ -25,20 +30,43 @@ class FeedbackService(BaseService):
         )
         await feedback.insert()
 
-        # background_tasks.add_task(self.send_feedback_email, feedback)
+        if settings.EMAIL_HOST and settings.EMAIL_TO:
+            background_tasks.add_task(self.send_feedback_email, feedback)
         return feedback
 
     async def send_feedback_email(self, feedback: BetaFeedback):
-        # This is a placeholder for a real email sending implementation
-        # For now, we will just print to the console to simulate
-        print(f"--- New Feedback Received ---")
-        print(f"Type: {feedback.feedback_type}")
-        print(f"Description: {feedback.description}")
-        if feedback.steps_to_reproduce:
-            print(f"Steps to Reproduce: {feedback.steps_to_reproduce}")
-        print(f"Device Info: {feedback.device_info.dict()}")
-        if feedback.screenshot_url:
-            print(f"Screenshot: {settings.BASE_URL}{feedback.screenshot_url}")
-        print(f"--------------------------")
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
 
-feedback_service = FeedbackService(BetaFeedback)
+        if not all([settings.EMAIL_HOST, settings.EMAIL_PORT, settings.EMAIL_USER, settings.EMAIL_PASSWORD, settings.EMAIL_TO]):
+            print("Email settings are not configured. Skipping email notification.")
+            return
+
+        message = MIMEMultipart()
+        message["From"] = settings.EMAIL_USER
+        message["To"] = settings.EMAIL_TO
+        message["Subject"] = f"New Feedback Received: {feedback.feedback_type.capitalize()}"
+
+        body = f"""
+        A new piece of feedback has been submitted.
+
+        Type: {feedback.feedback_type}
+        Description: {feedback.description}
+        Steps to Reproduce: {feedback.steps_to_reproduce or 'N/A'}
+        Device Info: {feedback.device_info.dict()}
+        Screenshot: {settings.BASE_URL}{feedback.screenshot_url if feedback.screenshot_url else 'N/A'}
+        """
+        message.attach(MIMEText(body, "plain"))
+
+        try:
+            server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
+            server.starttls()
+            server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+            server.sendmail(settings.EMAIL_USER, settings.EMAIL_TO, message.as_string())
+            server.quit()
+            print("Feedback email sent successfully.")
+        except Exception as e:
+            print(f"Failed to send feedback email: {e}")
+
+feedback_service = FeedbackService(get_feedback_collection)

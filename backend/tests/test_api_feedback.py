@@ -25,8 +25,7 @@ async def test_submit_feedback_authenticated(db, limiter):
     feedback_data = {
         "feedback_type": "bug",
         "description": "This is a test bug report.",
-        "email": "test@example.com",
-        "device_info": {"os": "Android", "version": "12"}
+        "device_info": {"os_version": "Android 12", "app_version": "1.0.0", "device_model": "Pixel 6"}
     }
 
     from httpx import ASGITransport
@@ -50,9 +49,9 @@ async def test_submit_feedback_authenticated(db, limiter):
 async def test_submit_feedback_anonymous(db, limiter):
     app = create_test_app(limiter)
     feedback_data = {
-        "feedback_type": "feature",
+        "feedback_type": "suggestion",
         "description": "This is a test feature request.",
-        "email": "anonymous@example.com"
+        "device_info": {"os_version": "iOS 15", "app_version": "1.0.0", "device_model": "iPhone 13"}
     }
 
     from httpx import ASGITransport
@@ -72,8 +71,9 @@ async def test_submit_feedback_anonymous(db, limiter):
 async def test_submit_feedback_rate_limit(db, limiter):
     app = create_test_app(limiter)
     base_feedback_data = {
-        "feedback_type": "other",
+        "feedback_type": "general",
         "description": "This is a test idea.",
+        "device_info": {"os_version": "Android 12", "app_version": "1.0.0", "device_model": "Pixel 6"}
     }
 
     from httpx import ASGITransport
@@ -82,14 +82,10 @@ async def test_submit_feedback_rate_limit(db, limiter):
         # The rate limit is 10 requests per hour.
         # Sending 11 requests to trigger the rate limit.
         for i in range(10):
-            feedback_data = base_feedback_data.copy()
-            feedback_data["email"] = f"limittest{i}@example.com"
-            response = await ac.post("/api/feedback/submit", json=feedback_data)
+            response = await ac.post("/api/feedback/submit", json=base_feedback_data)
             assert response.status_code == 201
 
-        feedback_data = base_feedback_data.copy()
-        feedback_data["email"] = "limittest10@example.com"
-        response = await ac.post("/api/feedback/submit", json=feedback_data)
+        response = await ac.post("/api/feedback/submit", json=base_feedback_data)
         assert response.status_code == 429
 
 
@@ -99,7 +95,7 @@ async def test_submit_feedback_validation_error(db, limiter):
     # Missing 'description' field
     feedback_data = {
         "feedback_type": "bug",
-        "email": "validationtest@example.com"
+        "device_info": {"os_version": "Android 12", "app_version": "1.0.0", "device_model": "Pixel 6"}
     }
 
     from httpx import ASGITransport

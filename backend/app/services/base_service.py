@@ -58,20 +58,20 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> ModelType:
         """
         Update a document in the database.
-        This method is more efficient and uses modern Pydantic V2 methods.
+        Uses a direct $set operation for efficiency and atomicity.
         """
         update_data = obj_in.model_dump(exclude_unset=True)
         if not update_data:
-            return db_obj  # No changes
+            return db_obj  # No changes to apply
 
         update_data["updated_at"] = datetime.now(timezone.utc)
 
-        # Update the model in-memory
-        updated_obj = db_obj.model_copy(update=update_data)
+        await db_obj.set(update_data)
 
-        # Save the changes to the database
-        await updated_obj.save()
-        return updated_obj
+        # The db_obj is not updated in-place, so we reload it from the DB
+        # to ensure the returned object is in sync with the database.
+        updated_db_obj = await self.model.get(db_obj.id)
+        return updated_db_obj
 
     @log_query_performance
     async def delete(self, db_obj: ModelType) -> None:

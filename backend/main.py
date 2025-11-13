@@ -5,7 +5,7 @@ import uuid
 from beanie import init_beanie
 from fastapi import FastAPI, Request, Response
 from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from redis import asyncio as aioredis
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -46,10 +46,18 @@ async def lifespan(app: FastAPI):
     # Initialize Sentry Monitoring
     init_monitoring()
 
-    # Initialize Redis cache
-    redis = aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    logging.info("Redis cache initialized.")
+    # Initialize Redis cache if REDIS_URL is set, otherwise use in-memory backend
+    if settings.REDIS_URL:
+        try:
+            redis = aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+            FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+            logging.info("Redis cache initialized.")
+        except Exception as e:
+            logging.warning(f"Could not initialize Redis cache: {e}. Falling back to InMemoryBackend.")
+            FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+    else:
+        logging.warning("REDIS_URL not set. Using InMemoryBackend for cache.")
+        FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
 
     await connect_to_mongo()
     db = await get_database()

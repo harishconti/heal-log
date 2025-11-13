@@ -43,11 +43,12 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         db_obj = self.model(**patient_data)
         await db_obj.insert()
 
-        # Invalidate caches
-        await FastAPICache.clear(namespace="get_patients_by_user_id")
-        await FastAPICache.clear(namespace="get_patient_groups")
-        await FastAPICache.clear(namespace="get_user_stats")
-        await FastAPICache.clear(namespace="get_patient_growth_analytics")
+        # Invalidate caches if a backend is available
+        if FastAPICache.get_backend():
+            await FastAPICache.clear(namespace="get_patients_by_user_id")
+            await FastAPICache.clear(namespace="get_patient_groups")
+            await FastAPICache.clear(namespace="get_user_stats")
+            await FastAPICache.clear(namespace="get_patient_growth_analytics")
 
         return db_obj
 
@@ -99,10 +100,11 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         updated_patient = await super().update(patient, patient_data)
 
-        # Invalidate caches
-        await FastAPICache.clear(namespace="get_patients_by_user_id")
-        await FastAPICache.clear(namespace="get_patient_groups")
-        await FastAPICache.clear(namespace="get_user_stats")
+        # Invalidate caches if a backend is available
+        if FastAPICache.get_backend():
+            await FastAPICache.clear(namespace="get_patients_by_user_id")
+            await FastAPICache.clear(namespace="get_patient_groups")
+            await FastAPICache.clear(namespace="get_user_stats")
 
         return updated_patient
 
@@ -116,11 +118,12 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         await super().delete(patient)
 
-        # Invalidate caches
-        await FastAPICache.clear(namespace="get_patients_by_user_id")
-        await FastAPICache.clear(namespace="get_patient_groups")
-        await FastAPICache.clear(namespace="get_user_stats")
-        await FastAPICache.clear(namespace="get_patient_growth_analytics")
+        # Invalidate caches if a backend is available
+        if FastAPICache.get_backend():
+            await FastAPICache.clear(namespace="get_patients_by_user_id")
+            await FastAPICache.clear(namespace="get_patient_groups")
+            await FastAPICache.clear(namespace="get_user_stats")
+            await FastAPICache.clear(namespace="get_patient_growth_analytics")
 
         return True
 

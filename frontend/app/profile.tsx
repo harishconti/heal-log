@@ -476,6 +476,15 @@ export default function ProfileScreen() {
             <Text style={styles.actionText}>Privacy Policy</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/welcome')}
+          >
+            <Ionicons name="information-circle-outline" size={24} color="#666" />
+            <Text style={styles.actionText}>View Beta Welcome Screen</Text>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

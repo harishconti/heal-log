@@ -33,7 +33,7 @@ async def test_submit_feedback_authenticated(db, limiter):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
-            "/api/feedback/",
+                "/api/feedback/submit",
             json=feedback_data,
             headers={"Authorization": f"Bearer {token}"}
         )
@@ -58,7 +58,7 @@ async def test_submit_feedback_anonymous(db, limiter):
     from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        response = await ac.post("/api/feedback/", json=feedback_data)
+        response = await ac.post("/api/feedback/submit", json=feedback_data)
 
     assert response.status_code == 201
     data = response.json()
@@ -84,12 +84,12 @@ async def test_submit_feedback_rate_limit(db, limiter):
         for i in range(10):
             feedback_data = base_feedback_data.copy()
             feedback_data["email"] = f"limittest{i}@example.com"
-            response = await ac.post("/api/feedback/", json=feedback_data)
+            response = await ac.post("/api/feedback/submit", json=feedback_data)
             assert response.status_code == 201
 
         feedback_data = base_feedback_data.copy()
         feedback_data["email"] = "limittest10@example.com"
-        response = await ac.post("/api/feedback/", json=feedback_data)
+        response = await ac.post("/api/feedback/submit", json=feedback_data)
         assert response.status_code == 429
 
 
@@ -105,6 +105,6 @@ async def test_submit_feedback_validation_error(db, limiter):
     from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        response = await ac.post("/api/feedback/", json=feedback_data)
+        response = await ac.post("/api/feedback/submit", json=feedback_data)
 
     assert response.status_code == 422

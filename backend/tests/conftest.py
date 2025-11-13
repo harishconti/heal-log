@@ -11,6 +11,8 @@ from app.schemas.error_event import ErrorEvent
 from app.schemas.query_performance_event import QueryPerformanceEvent
 from app.schemas.sync_event import SyncEvent
 from app.schemas.telemetry import Telemetry
+from app.schemas.beta_feedback import BetaFeedback
+from app.services.user_service import user_service
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
@@ -35,7 +37,7 @@ async def db_client():
     # Initialize Beanie with all the document models
     await init_beanie(
         database=database,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry]
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry, BetaFeedback]
     )
 
     yield client
@@ -50,12 +52,14 @@ async def db(db_client):
     """
     await init_beanie(
         database=db_client.test_medical_contacts,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry],
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry, BetaFeedback],
         allow_index_dropping=True
     )
-    collections = [User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry]
+    collections = [User, Patient, ClinicalNote, Document, Feedback, ErrorEvent, QueryPerformanceEvent, SyncEvent, Telemetry, BetaFeedback]
     for collection in collections:
         await collection.delete_all()
+
+    user_service.user_collection = User
     yield
     for collection in collections:
         await collection.delete_all()

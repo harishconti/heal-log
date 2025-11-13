@@ -452,10 +452,10 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.push('/feedback')}
+            onPress={() => router.push('/(tabs)/settings/feedback')}
           >
-            <Ionicons name="bug" size={24} color="#666" />
-            <Text style={styles.actionText}>Report Bug</Text>
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#666" />
+            <Text style={styles.actionText}>Send Feedback</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
           

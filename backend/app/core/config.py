@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     SENTRY_DSN: Optional[str] = Field(default=None)
     SENTRY_ENVIRONMENT: Optional[str] = Field(default=None)
 
+    # --- Static Files ---
+    STATIC_DIR: str = str(ROOT_DIR / "static")
+    BASE_URL: str = "http://localhost:8000"
+
     class Config:
         case_sensitive = True
 

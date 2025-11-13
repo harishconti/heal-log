@@ -1,28 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from app.services.feedback_service import feedback_service
-from app.schemas.feedback import FeedbackCreate, FeedbackResponse
-from app.core.security import get_optional_current_user
-from typing import Optional
+from fastapi import APIRouter, Depends, BackgroundTasks
+from backend.app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
+from backend.app.services.feedback_service import feedback_service
+from backend.app.models.user import User
+from backend.app.core.security import get_optional_current_user
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
-@router.post(
-    "/",
-    response_model=FeedbackResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Submit feedback",
-)
-@limiter.limit("10/hour")
+@router.post("/submit", response_model=BetaFeedback)
 async def submit_feedback(
-    request: Request,
-    feedback_in: FeedbackCreate,
-    user_id: Optional[str] = Depends(get_optional_current_user),
+    feedback_data: BetaFeedbackIn,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_optional_current_user) # Optional auth
 ):
     """
-    Submit feedback.
+    Receives a feedback submission, stores it, and triggers a notification.
     """
-    feedback = await feedback_service.create(feedback_in, user_id=user_id)
+    feedback = await feedback_service.create_feedback(feedback_data, background_tasks)
     return feedback

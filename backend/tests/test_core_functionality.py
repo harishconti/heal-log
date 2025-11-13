@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
-from main import app
+from tests.test_main import create_test_app
+from app.core.limiter import limiter
 from app.schemas.user import User
 from app.schemas.patient import Patient, PatientCreate
 from app.core.security import create_access_token
@@ -8,6 +9,8 @@ from app.services.patient_service import patient_service
 import uuid
 from unittest.mock import patch, AsyncMock
 from datetime import timedelta
+
+app = create_test_app(limiter)
 
 @pytest.mark.asyncio
 async def test_expired_token_access(db):

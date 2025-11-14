@@ -245,3 +245,55 @@ async def test_sync_pull(db, app):
     assert len(pulled_patients) == 1
     assert pulled_patients[0]["id"] == str(new_patient.id)
     assert pulled_patients[0]["name"] == "Sync Me"
+
+@pytest.mark.asyncio
+@patch('app.services.feedback_service.FeedbackService.send_feedback_email', new_callable=AsyncMock)
+async def test_full_feedback_flow(mock_send_email, db, app):
+    """
+    Integration test for the full feedback submission flow.
+    - An authenticated user submits feedback.
+    - Verify the feedback is stored in the database correctly.
+    - Verify the email notification task is queued.
+    """
+    test_user = User(
+        id=str(uuid.uuid4()),
+        email="full_feedback@example.com",
+        full_name="Full Feedback User",
+        password_hash="hashed_password",
+        role="doctor"
+    )
+    await test_user.insert()
+
+    token = create_access_token(
+        subject=test_user.id,
+        plan=test_user.plan,
+        role=test_user.role
+    )
+
+    feedback_data = {
+        "feedback_type": "bug",
+        "description": "This is a full flow integration test.",
+        "device_info": {"os": "TestOS", "appVersion": "1.0-test"}
+    }
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/feedback/submit",
+            json=feedback_data,
+            headers={"Authorization": f"Bearer {token}"}
+        )
+
+    assert response.status_code == 200
+
+    # Verify the feedback is in the database
+    from app.schemas.feedback import Feedback
+    feedback_in_db = await Feedback.find_one(
+        Feedback.description == feedback_data["description"],
+        Feedback.user_id == test_user.id
+    )
+    assert feedback_in_db is not None
+    assert feedback_in_db.feedback_type == "bug"
+
+    # Verify the email notification was called
+    mock_send_email.assert_awaited_once()

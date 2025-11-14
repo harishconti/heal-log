@@ -32,9 +32,8 @@ async def test_read_users_me(db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["success"] is True
-    assert data["user"]["email"] == test_user.email
-    assert data["user"]["full_name"] == test_user.full_name
+    assert data["email"] == test_user.email
+    assert data["full_name"] == test_user.full_name
 
 @pytest.mark.asyncio
 async def test_read_users_forbidden_for_non_admin(db):

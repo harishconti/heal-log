@@ -20,8 +20,18 @@ This document tracks the major open issues and the overall testing status for th
 ## 2. Testing Summary
 
 ### Backend API
-- **Status:** **Stable.**
-- **Details:** The backend API is stable and all tests are passing.
+- **Status:** **Partially Stable.**
+- **Details:** The backend API is partially stable, but there are a number of failing tests that need to be addressed.
+
+### Known Backend Test Failures
+*   `test_api_users.py::test_read_users_success_for_admin`: Fails with an `AttributeError`, indicating an issue with the user object being returned from the API.
+*   `test_auth_flow.py::test_refresh_token_returns_new_refresh_token`: Fails with a `KeyError`, indicating an issue with the refresh token response.
+*   `test_core_functionality.py::test_expired_token_access`: Fails with a `401 Unauthorized` error, but the test expects a `403 Forbidden` error.
+*   `test_core_functionality.py::test_create_duplicate_patient`: Fails with a `404 Not Found` error, but the test expects a `201 Created` error.
+*   `test_core_functionality.py::test_database_error_handling`: Fails with a `404 Not Found` error, but the test expects a `500 Internal Server Error` error.
+*   `test_core_functionality.py::test_update_patient`: Fails with a `404 Not Found` error, but the test expects a `200 OK` error.
+*   `test_core_functionality.py::test_delete_patient`: Fails with a `404 Not Found` error, but the test expects a `200 OK` error.
+*   `test_sync_edge_cases.py::test_sync_conflict_resolution`: Fails with an `AssertionError`, indicating an issue with the sync conflict resolution.
 
 ### Frontend (iOS, Android & Web)
 - **Status:** **Operational.**

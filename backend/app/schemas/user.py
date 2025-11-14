@@ -59,6 +59,8 @@ class UserResponse(BaseModel):
     subscription_status: SubscriptionStatus
     subscription_end_date: datetime
 
+    model_config = {"from_attributes": True}
+
 class UserLogin(BaseModel):
     username: EmailStr
     password: str

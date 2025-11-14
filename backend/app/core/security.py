@@ -57,7 +57,7 @@ def create_refresh_token(subject: str, expires_delta: Optional[timedelta] = None
     return encoded_jwt
 
 # --- Dependency to Get Current User ---
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> str:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
     """
     Dependency to get the current user from a JWT token.
     Raises HTTPException for invalid credentials.
@@ -78,7 +78,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        return user.id
+        return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -98,7 +98,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
         )
 
 # --- Dependency to Require "Pro" User ---
-async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> str:
+async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
     """
     Dependency to ensure the current user has a "PRO" subscription plan.
     Raises HTTPException if the user is not a pro user.
@@ -122,7 +122,11 @@ async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(r
                 detail="This feature requires a PRO subscription.",
             )
 
-        return user_id
+        user = await user_service.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
@@ -133,7 +137,7 @@ async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(r
         )
 
 # --- Dependency Factory for Role-Based Access ---
-async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2)) -> Optional[str]:
+async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2)) -> Optional[User]:
     """
     Dependency to get the current user from a JWT token if present.
     Returns the user ID if the token is valid, otherwise returns None.
@@ -153,7 +157,7 @@ async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCrede
         if not user:
             return None
 
-        return user.id
+        return user
     except (jwt.PyJWTError, HTTPException):
         # Broadly catch JWT errors or HTTPExceptions from nested dependencies
         # and return None, effectively making authentication optional.
@@ -164,7 +168,7 @@ def require_role(required_role: UserRole):
     """
     Dependency factory to ensure the user has a specific role.
     """
-    async def role_checker(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> str:
+    async def role_checker(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
         """
         Checks if the user has the required role.
         """
@@ -187,7 +191,11 @@ def require_role(required_role: UserRole):
                     detail=f"Insufficient permissions. {required_role.value.capitalize()} role required.",
                 )
 
-            return user_id
+            user = await user_service.get_user_by_id(user_id)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+            return user
         except jwt.ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"

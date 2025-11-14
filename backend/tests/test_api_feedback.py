@@ -4,9 +4,11 @@ from tests.test_main import create_test_app
 from app.schemas.user import User
 from app.core.security import create_access_token
 import uuid
+from unittest.mock import patch, AsyncMock
 
 @pytest.mark.asyncio
-async def test_submit_feedback_authenticated(db, limiter):
+@patch('app.services.feedback_service.FeedbackService.send_feedback_email', new_callable=AsyncMock)
+async def test_submit_feedback_authenticated(mock_send_email, db, limiter):
     app = create_test_app(limiter)
     test_user = User(
         id=str(uuid.uuid4()),
@@ -44,7 +46,8 @@ async def test_submit_feedback_authenticated(db, limiter):
     assert data["device_info"] == feedback_data["device_info"]
 
 @pytest.mark.asyncio
-async def test_submit_feedback_anonymous(db, limiter):
+@patch('app.services.feedback_service.FeedbackService.send_feedback_email', new_callable=AsyncMock)
+async def test_submit_feedback_anonymous(mock_send_email, db, limiter):
     app = create_test_app(limiter)
     feedback_data = {
         "feedback_type": "suggestion",
@@ -64,7 +67,8 @@ async def test_submit_feedback_anonymous(db, limiter):
 
 
 @pytest.mark.asyncio
-async def test_submit_feedback_rate_limit(db, limiter):
+@patch('app.services.feedback_service.FeedbackService.send_feedback_email', new_callable=AsyncMock)
+async def test_submit_feedback_rate_limit(mock_send_email, db, limiter):
     app = create_test_app(limiter)
     base_feedback_data = {
         "feedback_type": "general",

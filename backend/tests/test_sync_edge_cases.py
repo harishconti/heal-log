@@ -27,14 +27,14 @@ async def test_sync_conflict_resolution(db, limiter):
         role=user.role
     )
 
+    # 1. Initial state
     patient = Patient(
         id=str(uuid.uuid4()),
         patient_id=str(uuid.uuid4()),
-        name="Test Patient",
+        name="Original Name",
         user_id=user.id,
-            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
-        updated_at=datetime.datetime.now(datetime.timezone.utc)
-        - datetime.timedelta(days=1),
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
+        updated_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
     )
     await patient.insert()
 
@@ -42,29 +42,46 @@ async def test_sync_conflict_resolution(db, limiter):
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        response = await ac.post(
+        # 2. Client pulls the initial state
+        pull_response = await ac.post(
             "/api/sync/pull",
-                json={"last_pulled_at": last_pulled_at},
+            json={"last_pulled_at": last_pulled_at},
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code == 200
-        assert len(response.json()["changes"]["patients"]["updated"]) == 1
+        assert pull_response.status_code == 200, "Client failed to pull initial data."
+        pulled_patients = pull_response.json()["changes"]["patients"]["created"]
+        assert len(pulled_patients) == 1, "Expected to pull one created patient."
+        assert pulled_patients[0]["name"] == "Original Name", "Pulled patient name is incorrect."
 
-        patient.name = "Updated Patient Name"
-        patient.updated_at = datetime.datetime.now(datetime.timezone.utc)
+        # 3. Server updates the patient's name
+        old_updated_at = patient.updated_at
+        patient.name = "Server Updated Name"
         await patient.save()
 
-        response = await ac.post(
-            "/api/sync/pull",
-            json={"last_pulled_at": response.json()["timestamp"]},
+        # 4. Client tries to push an update with an old timestamp
+        client_update = {
+            "patients": {
+                "updated": [
+                    {
+                        "id": str(patient.id),
+                        "name": "Client Updated Name",
+                            "updated_at": int(old_updated_at.timestamp() * 1000),
+                    }
+                ]
+            }
+        }
+
+        push_response = await ac.post(
+            "/api/sync/push",
+            json={"changes": client_update},
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code == 200
-        assert len(response.json()["changes"]["patients"]["updated"]) == 1
-        assert (
-            response.json()["changes"]["patients"]["updated"][0]["name"]
-            == "Updated Patient Name"
-        )
+        assert push_response.status_code == 409, "Server should have detected a conflict."
+        assert "Conflict detected" in push_response.json()["error"]["message"], "Conflict error message is missing."
+
+        # 5. Verify the server's version of the patient was not overwritten
+        db_patient = await Patient.get(patient.id)
+        assert db_patient.name == "Server Updated Name", "Server data was overwritten by stale client data."
 
 @pytest.mark.asyncio
 async def test_sync_after_long_offline_period(db, limiter):

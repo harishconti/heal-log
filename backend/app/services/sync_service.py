@@ -3,6 +3,7 @@ from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.sync_event import SyncEvent
 from typing import Dict, Any, List
+from app.core.exceptions import SyncConflictException
 
 async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
     """
@@ -86,6 +87,9 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 patient_id = patient_data.pop('id')
                 patient = await Patient.get(patient_id)
                 if patient and patient.user_id == user_id:
+                    client_updated_at = datetime.fromtimestamp(patient_data['updated_at'] / 1000.0, tz=timezone.utc)
+                    if client_updated_at < patient.updated_at.replace(tzinfo=timezone.utc):
+                        raise SyncConflictException(f"Conflict detected for patient {patient_id}")
                     patient_data['updated_at'] = datetime.now(timezone.utc)
                     await patient.update({"$set": patient_data})
 

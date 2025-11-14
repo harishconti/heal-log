@@ -1,13 +1,12 @@
 import pytest
-from httpx import AsyncClient
-from main import app
+from httpx import AsyncClient, ASGITransport
 from app.schemas.user import User
 from app.core.hashing import get_password_hash
 from app.core.security import create_refresh_token
 import uuid
 
 @pytest.mark.asyncio
-async def test_refresh_token_returns_new_refresh_token(db):
+async def test_refresh_token_returns_new_refresh_token(db, app):
     # Create a test user directly in the database
     test_user = User(
         id=str(uuid.uuid4()),
@@ -18,9 +17,8 @@ async def test_refresh_token_returns_new_refresh_token(db):
     await test_user.insert()
 
     # Create a refresh token for the user
-    old_refresh_token = create_refresh_token(subject=test_user.id)
+    old_refresh_token = create_refresh_token(subject=str(test_user.id))
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(

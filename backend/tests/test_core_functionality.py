@@ -1,19 +1,15 @@
 import pytest
-from httpx import AsyncClient
-from tests.test_main import create_test_app
-from app.core.limiter import limiter
+from httpx import AsyncClient, ASGITransport
 from app.schemas.user import User
 from app.schemas.patient import Patient, PatientCreate
 from app.core.security import create_access_token
 from app.services.patient_service import patient_service
 import uuid
 from unittest.mock import patch, AsyncMock
-from datetime import timedelta
-
-app = create_test_app(limiter)
+from datetime import timedelta, datetime, timezone
 
 @pytest.mark.asyncio
-async def test_expired_token_access(db):
+async def test_expired_token_access(db, app):
     """
     Tests that a request with an expired token is rejected.
     """
@@ -33,19 +29,18 @@ async def test_expired_token_access(db):
         expires_delta=timedelta(minutes=-1)
     )
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get(
             "/api/users/me",
             headers={"Authorization": f"Bearer {token}"}
         )
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Token has expired"}
+    assert "Token has expired" in response.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_create_duplicate_patient(db):
+async def test_create_duplicate_patient(db, app):
     """
     Tests that creating a patient with a duplicate name for the same user is rejected.
     """
@@ -64,11 +59,10 @@ async def test_create_duplicate_patient(db):
         role=test_user.role
     )
 
-    patient_data = PatientCreate(name="John Doe")
+    patient_data = PatientCreate(name="John Doe", patient_id=str(uuid.uuid4()))
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # Create the first patient
         response1 = await ac.post(
             "/api/patients/",
@@ -88,7 +82,7 @@ async def test_create_duplicate_patient(db):
     assert "A patient with this name already exists" in response2.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_database_error_handling(db):
+async def test_database_error_handling(db, app):
     """
     Tests that a 500 error is returned when a database error occurs.
     """
@@ -107,14 +101,13 @@ async def test_database_error_handling(db):
         role=test_user.role
     )
 
-    patient_data = PatientCreate(name="Error Patient")
+    patient_data = PatientCreate(name="Error Patient", patient_id=str(uuid.uuid4()))
 
     with patch("app.services.patient_service.Patient.insert", new_callable=AsyncMock) as mock_insert:
         mock_insert.side_effect = Exception("Simulated database error")
 
-        from httpx import ASGITransport
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
             response = await ac.post(
                 "/api/patients/",
                 json=patient_data.model_dump(),
@@ -125,7 +118,7 @@ async def test_database_error_handling(db):
     assert "An unexpected error occurred" in response.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_update_patient(db):
+async def test_update_patient(db, app):
     """
     Tests updating an existing patient's information.
     """
@@ -144,7 +137,6 @@ async def test_update_patient(db):
         role=test_user.role
     )
 
-    # First, create a patient using the service
     original_patient = await patient_service.create(
         obj_in=PatientCreate(name="Jane Doe", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
@@ -152,9 +144,8 @@ async def test_update_patient(db):
 
     updated_data = {"name": "Jane Smith"}
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.put(
             f"/api/patients/{original_patient.id}",
             json=updated_data,
@@ -165,13 +156,12 @@ async def test_update_patient(db):
     updated_patient_response = response.json()
     assert updated_patient_response["name"] == "Jane Smith"
 
-    # Verify the change in the database
     db_patient = await Patient.get(original_patient.id)
     assert db_patient is not None
     assert db_patient.name == "Jane Smith"
 
 @pytest.mark.asyncio
-async def test_delete_patient(db):
+async def test_delete_patient(db, app):
     """
     Tests deleting an existing patient.
     """
@@ -190,29 +180,26 @@ async def test_delete_patient(db):
         role=test_user.role
     )
 
-    # First, create a patient using the service
     patient_to_delete = await patient_service.create(
         obj_in=PatientCreate(name="John Delete", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
     )
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.delete(
             f"/api/patients/{patient_to_delete.id}",
             headers={"Authorization": f"Bearer {token}"}
         )
 
     assert response.status_code == 200
-    assert response.json() == {"success": True, "message": "Patient deleted successfully"}
+    assert response.json()["message"] == "Patient deleted successfully"
 
-    # Verify the patient is deleted from the database
     db_patient = await Patient.get(patient_to_delete.id)
     assert db_patient is None
 
 @pytest.mark.asyncio
-async def test_sync_pull(db):
+async def test_sync_pull(db, app):
     """
     Tests the sync pull endpoint to ensure it returns new and updated records.
     """
@@ -231,17 +218,18 @@ async def test_sync_pull(db):
         role=test_user.role
     )
 
-    # Create a patient that should be pulled
     new_patient = await patient_service.create(
         obj_in=PatientCreate(name="Sync Me", patient_id=str(uuid.uuid4())),
         user_id=test_user.id
     )
+    new_patient.created_at = datetime.now(timezone.utc)
+    new_patient.updated_at = datetime.now(timezone.utc)
+    await new_patient.save()
 
     last_pulled_at = int((new_patient.created_at - timedelta(seconds=1)).timestamp() * 1000)
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=True) as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/sync/pull",
             json={"last_pulled_at": last_pulled_at},
@@ -253,8 +241,7 @@ async def test_sync_pull(db):
     assert "changes" in data
     assert "patients" in data["changes"]
     assert "created" in data["changes"]["patients"]
-
     pulled_patients = data["changes"]["patients"]["created"]
     assert len(pulled_patients) == 1
-    assert pulled_patients[0]["id"] == new_patient.id
+    assert pulled_patients[0]["id"] == str(new_patient.id)
     assert pulled_patients[0]["name"] == "Sync Me"

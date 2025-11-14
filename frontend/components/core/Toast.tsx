@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, Theme } from '../../contexts/ThemeContext';
 
 export interface ToastHandles {
   show: (message: string, type?: 'success' | 'error') => void;

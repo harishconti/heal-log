@@ -11,6 +11,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from app.middleware.logging import LoggingMiddleware
 
 from app import api
 from app.core.config import settings
@@ -89,28 +90,7 @@ app.add_exception_handler(APIException, api_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
 # --- Middleware ---
-@app.middleware("http")
-async def add_request_id(request: Request, call_next):
-    """
-    Adds a unique request_id to each incoming request.
-    """
-    request.state.request_id = str(uuid.uuid4())
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request.state.request_id
-    return response
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """
-    Logs incoming requests and their response times.
-    """
-    start_time = time.time()
-    logging.info(f"Request: {request.method} {request.url.path} from {request.client.host}")
-    response = await call_next(request)
-    process_time = (time.time() - start_time) * 1000
-    logging.info(f"Response status: {response.status_code} in {process_time:.2f}ms")
-    return response
-
+app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS.split(',') if ',' in settings.ALLOWED_ORIGINS else [settings.ALLOWED_ORIGINS],
@@ -133,6 +113,8 @@ app.include_router(api.debug.router, prefix="/api/debug", tags=["Debug"])
 app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
 app.include_router(api.beta.router, prefix="/api/beta", tags=["Beta"])
+app.include_router(api.health.router, prefix="/api", tags=["Health"])
+app.include_router(api.metrics.router, prefix="/api", tags=["Metrics"])
 
 # --- Health Check Endpoint ---
 @app.get("/health")

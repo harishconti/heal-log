@@ -23,6 +23,9 @@ pydantic-settings==2.1.0
 tenacity==8.2.3
 fastapi-cache2[redis]
 sentry-sdk[fastapi]==2.18.0
+structlog==24.1.0
+SQLAlchemy==2.0.23
+locust==2.24.0
 
 pytest
 pytest-asyncio

@@ -1,36 +1,47 @@
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 import os
 import logging
+from app.core.config import settings
+
+def before_send(event, hint):
+    if 'request' in event.get('contexts', {}):
+        request_info = event['contexts']['request']
+        if 'data' in request_info:
+            # Sanitize sensitive data from the request payload
+            if 'password' in request_info['data']:
+                request_info['data']['password'] = "[REDACTED]"
+            if 'token' in request_info['data']:
+                request_info['data']['token'] = "[REDACTED]"
+    return event
 
 def init_monitoring():
     """
     Initializes Sentry monitoring and error tracking.
     """
-    sentry_dsn = os.getenv("SENTRY_DSN")
-    environment = os.getenv("SENTRY_ENVIRONMENT", "beta")
-
-    if not sentry_dsn:
+    if not settings.SENTRY_DSN:
         logging.warning("SENTRY_DSN not found. Sentry monitoring is disabled.")
         return
 
     try:
         sentry_sdk.init(
-            dsn=sentry_dsn,
+            dsn=settings.SENTRY_DSN,
             integrations=[
                 FastApiIntegration(),
                 LoggingIntegration(
                     level=logging.INFO,        # Capture info and above as breadcrumbs
                     event_level=logging.ERROR  # Send errors as events
                 ),
+                SqlalchemyIntegration(),
             ],
-            environment=environment,
+            environment=settings.SENTRY_ENVIRONMENT,
             traces_sample_rate=0.1,
-            # Set release to track deployments
-            release="clinic-os-lite@1.0.0-beta"
+            release="clinic-os-lite@1.0.0-beta",
+            before_send=before_send,
         )
-        logging.info(f"Sentry monitoring initialized for environment: {environment}")
+        logging.info(f"Sentry monitoring initialized for environment: {settings.SENTRY_ENVIRONMENT}")
     except Exception as e:
         logging.error(f"Failed to initialize Sentry: {e}")
 

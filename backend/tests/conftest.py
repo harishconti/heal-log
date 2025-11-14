@@ -1,6 +1,11 @@
+import sys
+import os
 import pytest_asyncio
 import asyncio
 from mongomock_motor import AsyncMongoMockClient
+
+# Add the project root to the sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from beanie import init_beanie
 from app.schemas.user import User
 from app.schemas.patient import Patient

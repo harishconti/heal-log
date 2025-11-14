@@ -14,6 +14,12 @@ This document tracks the major open issues and the overall testing status for th
 
 ## 1. Open Issues
 - **Frontend testing is not yet implemented.** The project does not have a configured test script for running automated frontend tests. All attempts to set up Playwright for the React Native web application have been unsuccessful.
+- **Backend Test Execution Failure.** A persistent `ImportError: No module named 'app.main'` prevents the test suite from running. This issue appears to be caused by an incorrect `PYTHONPATH` or `sys.path` configuration in the test environment.
+    - **Attempts to Resolve:**
+        - Setting the `PYTHONPATH` to `backend` when running `pytest`.
+        - Changing the working directory to `backend` before running `pytest`.
+        - Modifying the `sys.path` in `backend/tests/conftest.py` to include the project root.
+    - **Current Status:** None of these attempts have been successful. The tests continue to fail with the same `ImportError`.
 
 ---
 

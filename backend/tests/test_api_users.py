@@ -1,13 +1,12 @@
 import pytest
-from httpx import AsyncClient
-from main import app
+from httpx import AsyncClient, ASGITransport
 from app.schemas.user import User
 from app.schemas.role import UserRole
 from app.core.security import create_access_token
 import uuid
 
 @pytest.mark.asyncio
-async def test_read_users_me(db):
+async def test_read_users_me(db, app):
     test_user = User(
         id=str(uuid.uuid4()),
         email="test@example.com",
@@ -22,7 +21,6 @@ async def test_read_users_me(db):
         role=test_user.role
     )
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get(
@@ -36,14 +34,14 @@ async def test_read_users_me(db):
     assert data["full_name"] == test_user.full_name
 
 @pytest.mark.asyncio
-async def test_read_users_forbidden_for_non_admin(db):
+async def test_read_users_forbidden_for_non_admin(db, app):
     # Create a non-admin test user
     test_user = User(
         id=str(uuid.uuid4()),
         email="nonadmin@example.com",
         full_name="Non-Admin User",
         password_hash="hashed_password",
-        role=UserRole.PATIENT  # Explicitly set a non-admin role
+        role=UserRole.DOCTOR
     )
     await test_user.insert()
 
@@ -53,7 +51,6 @@ async def test_read_users_forbidden_for_non_admin(db):
         role=test_user.role
     )
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get(
@@ -64,14 +61,14 @@ async def test_read_users_forbidden_for_non_admin(db):
     assert response.status_code == 403
 
 @pytest.mark.asyncio
-async def test_read_users_success_for_admin(db):
+async def test_read_users_success_for_admin(db, app):
     # Create an admin test user
     admin_user = User(
         id=str(uuid.uuid4()),
         email="admin@example.com",
         full_name="Admin User",
         password_hash="hashed_password",
-        role=UserRole.ADMIN  # Explicitly set the admin role
+        role=UserRole.ADMIN
     )
     await admin_user.insert()
 
@@ -90,7 +87,6 @@ async def test_read_users_success_for_admin(db):
         role=admin_user.role
     )
 
-    from httpx import ASGITransport
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get(
@@ -101,9 +97,8 @@ async def test_read_users_success_for_admin(db):
     assert response.status_code == 200
     user_list = response.json()
     assert isinstance(user_list, list)
-    assert len(user_list) >= 2  # At least the admin and the other user
+    assert len(user_list) >= 2
 
-    # Check if the emails of our test users are in the response
     emails_in_response = [user['email'] for user in user_list]
     assert admin_user.email in emails_in_response
     assert other_user.email in emails_in_response

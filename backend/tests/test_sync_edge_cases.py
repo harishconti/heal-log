@@ -32,22 +32,26 @@ async def test_sync_conflict_resolution(db, limiter):
         patient_id=str(uuid.uuid4()),
         name="Test Patient",
         user_id=user.id,
+            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
         updated_at=datetime.datetime.now(datetime.timezone.utc)
         - datetime.timedelta(days=1),
     )
     await patient.insert()
 
+    last_pulled_at = int((datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=3)).timestamp() * 1000)
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/sync/pull",
-            json={"last_pulled_at": 0},
+                json={"last_pulled_at": last_pulled_at},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
         assert len(response.json()["changes"]["patients"]["updated"]) == 1
 
         patient.name = "Updated Patient Name"
+        patient.updated_at = datetime.datetime.now(datetime.timezone.utc)
         await patient.save()
 
         response = await ac.post(
@@ -88,20 +92,23 @@ async def test_sync_after_long_offline_period(db, limiter):
             patient_id=str(uuid.uuid4()),
             name=f"Test Patient {i}",
             user_id=user.id,
+            created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
             updated_at=datetime.datetime.now(datetime.timezone.utc)
             - datetime.timedelta(days=i),
         )
         await patient.insert()
 
+    last_pulled_at = int((datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=6)).timestamp() * 1000)
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/sync/pull",
-            json={"last_pulled_at": 0},
+            json={"last_pulled_at": last_pulled_at},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 200
-        assert len(response.json()["changes"]["patients"]["updated"]) == 5
+        assert len(response.json()["changes"]["patients"]["created"]) == 5
 
 @pytest.mark.skip(reason="Large batch syncs require a more complex setup.")
 @pytest.mark.asyncio

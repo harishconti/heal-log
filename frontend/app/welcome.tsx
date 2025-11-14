@@ -30,8 +30,7 @@ export default function WelcomeScreen() {
   };
 
   const navigateToKnownIssues = () => {
-    // Assuming a known-issues screen exists or will be created
-    router.push('/known-issues');
+    router.push('/(tabs)/settings/known-issues');
   };
 
   const styles = getStyles(theme);

@@ -9,3 +9,4 @@ from . import payments
 from . import sync
 from . import feedback
 from . import telemetry
+from . import beta

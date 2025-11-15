@@ -21,6 +21,9 @@
       "versionCode": 1,
       "edgeToEdgeEnabled": true
     },
+    "androidStatusBar": {
+      "backgroundColor": "#000000"
+    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -34,7 +37,7 @@
           "image": "./assets/images/splash-image.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#000000"
         }
       ]
     ],

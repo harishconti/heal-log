@@ -1,37 +1,40 @@
 {
-"cli": {
-"version": ">= 12.6.2"
-},
-"build": {
-"development": {
-"developmentClient": true,
-"distribution": "internal",
-"android": {
-"buildType": "apk"
-}
-},
-"beta": {
-"distribution": "internal",
-"android": {
-"buildType": "apk"
-},
-"env": {
-"EXPO_PUBLIC_BACKEND_URL": "https://doctor-log-production.up.railway.app"
-}
-},
-"production": {
-"autoIncrement": true,
-"android": {
-"buildType": "aab"
-}
-}
-},
-"submit": {
-"production": {
-"android": {
-"track": "internal",
-"releaseStatus": "draft"
-}
-}
-}
+  "cli": {
+    "version": ">= 12.6.2"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "node": "22.11.0",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "beta": {
+      "distribution": "internal",
+      "node": "22.11.0",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://doctor-log-production.up.railway.app"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "node": "22.11.0",
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  }
 }

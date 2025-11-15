@@ -1,140 +1,100 @@
 # Clinic OS Lite
 
-Clinic OS Lite is a modern, offline-first patient management system designed for doctors and small clinics. It features a robust FastAPI backend and a cross-platform React Native frontend for Web, iOS, and Android.
+Clinic OS Lite is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
-## Features
+## Technical Architecture
 
-*   **Offline-First:** Continue working without an internet connection. Data syncs automatically when you're back online.
-*   **Patient Management:** Create, edit, and manage patient records with ease.
-*   **Clinical Notes:** Keep detailed clinical notes for each patient.
-*   **Cross-Platform:** Use the app on your phone, tablet, or web browser.
-*   **Secure:** Your data is protected with JWT-based authentication and role-based access control.
-
-## Architecture Overview
-
-### Frontend
-
-The frontend is a React Native application built with Expo. It uses:
-
-*   **Expo Router** for file-based routing.
-*   **WatermelonDB** for offline data storage.
-*   **Zustand** for global state management.
-*   **React Hook Form** and **Zod** for form handling and validation.
-*   **Axios** for making API requests.
-*   **Sentry** for error monitoring.
+The application uses a decoupled, three-tier architecture. The core is a **FastAPI backend** that serves as the single source of truth and handles all business logic. It communicates with a **cross-platform React Native client** that targets iOS, Android, and Web, providing a consistent user experience across devices.
 
 ### Backend
 
-The backend is a Python-based FastAPI application. It uses:
+The backend is a FastAPI application with a modular structure. The main entrypoint is `backend/main.py`.
 
-*   **MongoDB** as the primary database.
-*   **Beanie** as the ODM for MongoDB.
-*   **JWT** for authentication.
-*   **Pydantic** for data validation.
-*   **Sentry** for error monitoring.
-*   **FastAPI Cache** with a Redis backend for caching.
-*   **SlowAPI** for rate limiting.
+-   **`api/`**: API endpoint definitions (routers).
+-   **`core/`**: Core application logic, configuration, and security.
+-   **`db/`**: Database session management and initialization.
+-   **`models/`**: Pydantic models for database collections.
+-   **`schemas/`**: Pydantic schemas for API request/response validation.
+-   **`services/`**: Business logic, separated from the API layer.
 
-## Setup and Installation
+### Frontend
 
-### Prerequisites
+The frontend is a React Native application built with Expo. The main entrypoint is `frontend/app/index.tsx`.
 
-*   Node.js (v18 or higher)
-*   Yarn
-*   Python (v3.10 or higher)
-*   Pip
-*   MongoDB
-*   Redis
+-   **`app/`**: Uses Expo Router for file-based routing.
+-   **`components/`**: Reusable React Native components.
+-   **`contexts/`**: React contexts for state management.
+-   **`models/`**: WatermelonDB models for offline data storage.
+-   **`services/`**: Services for interacting with the backend API.
 
-### Backend Setup
+## API Documentation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/doctor-log.git
-    cd doctor-log
-    ```
+### Authentication
 
-2.  **Install Python dependencies:**
-    ```bash
-    pip install -r backend/requirements.txt
-    ```
+#### `POST /api/auth/register`
 
-3.  **Create a `.env` file** in the root directory and add the following environment variables:
-    ```
-    SECRET_KEY=your_secret_key
-    ALGORITHM=HS256
-    ACCESS_TOKEN_EXPIRE_MINUTES=30
-    REFRESH_TOKEN_EXPIRE_DAYS=7
-    MONGO_URL=mongodb://localhost:27017
-    DB_NAME=clinic_os_lite
-    REDIS_URL=redis://localhost:6379
-    ```
+Registers a new user.
 
-4.  **Run the backend server:**
-    ```bash
-    PYTHONPATH=backend uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    ```
+#### `POST /api/auth/login`
 
-### Frontend Setup
+Authenticates a user.
 
-1.  **Navigate to the `frontend` directory:**
-    ```bash
-    cd frontend
-    ```
+#### `POST /api/auth/refresh`
 
-2.  **Install Node.js dependencies:**
-    ```bash
-    yarn install
-    ```
+Refreshes an expired access token.
 
-3.  **Create a `.env` file** in the `frontend` directory and add the following environment variable:
-    ```
-    EXPO_PUBLIC_BACKEND_URL=http://localhost:8000
-    ```
+#### `GET /api/auth/me`
 
-4.  **Start the frontend development server:**
-    ```bash
-    yarn start
-    ```
+Retrieves the currently authenticated user's information.
 
-## Contributing
+### Users
 
-Contributions are welcome! Please feel free to submit a pull request or open an issue.
+#### `POST /api/users/`
 
-## Deployment Automation Scripts
+Creates a new user.
 
-This project includes several scripts to help automate the deployment process.
+#### `GET /api/users/me`
 
-### `deploy_check.py`
+Retrieves the currently authenticated user's profile.
 
-This script verifies that your environment is correctly configured for deployment. It checks for:
+### Patients
 
-*   Required environment variables
-*   Connection to MongoDB
-*   Connection to Redis
-*   Validity of the Sentry DSN
-*   Basic accessibility of the authentication endpoints
+#### `POST /api/patients/`
 
-**Usage:**
+Creates a new patient.
 
-```bash
-python3 backend/scripts/deploy_check.py
-```
+#### `GET /api/patients/`
 
-### `production_setup.sh`
+Retrieves a list of patients for the current user.
 
-This script automates the initial setup of a production environment. It performs the following actions:
+#### `GET /api/patients/{patient_id}`
 
-*   Installs production dependencies from `requirements.txt`.
-*   Includes placeholders for running database migrations and creating an initial admin user.
-*   Creates logging directories.
+Retrieves a specific patient by ID.
 
-**Usage:**
+#### `PUT /api/patients/{patient_id}`
 
-```bash
-bash backend/scripts/production_setup.sh
-```
+Updates a specific patient by ID.
 
-### `.env.production.example`
+#### `DELETE /api/patients/{patient_id}`
 
-This file serves as a template for the environment variables required for a production deployment. Copy this file to `.env.production` and fill in the values for your environment.
+Deletes a specific patient by ID.
+
+### Clinical Notes
+
+#### `POST /api/patients/{patient_id}/notes`
+
+Creates a new clinical note for a patient.
+
+#### `GET /api/patients/{patient_id}/notes`
+
+Retrieves a list of clinical notes for a patient.
+
+### Sync
+
+#### `POST /api/sync/pull`
+
+Pulls changes from the server since the last sync.
+
+#### `POST /api/sync/push`
+
+Pushes local changes to the server.

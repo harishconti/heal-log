@@ -107,6 +107,6 @@ def time_test(request):
 
 @pytest_asyncio.fixture
 async def app(limiter):
-    from backend.tests.test_main import create_test_app
+    from tests.test_main import create_test_app
     app = create_test_app(limiter)
     return app

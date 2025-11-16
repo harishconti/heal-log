@@ -139,4 +139,4 @@ venv.bak/
 # Test results and logs
 test_result.md
 *.log
-server.log
+server.logfrontend/android/app/release.keystore

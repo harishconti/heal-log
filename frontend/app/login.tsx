@@ -12,15 +12,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, LoginFormData } from '../lib/validation';
-import ControlledInput from '../components/forms/ControlledInput';
-import { useTheme } from '../contexts/ThemeContext';
-import { useAppStore } from '../store/useAppStore';
-import { addBreadcrumb } from '../utils/monitoring';
+import { loginSchema, LoginFormData } from '@/lib/validation';
+import ControlledInput from '@/components/forms/ControlledInput';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAppStore } from '@/store/useAppStore';
+import { addBreadcrumb } from '@/utils/monitoring';
 
 export default function LoginScreen() {
   const { login } = useAuth();

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
 import { Control, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface ControlledInputProps extends TextInputProps {
   control: Control<any>;

@@ -6,10 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { submitFeedback } from '../../../services/api';
-import { useTheme, Theme } from '../../../contexts/ThemeContext';
-import Dropdown from '../../../components/core/Dropdown';
-import Toast, { ToastHandles } from '../../../components/core/Toast';
+import { submitFeedback } from '@/services/api';
+import { useTheme, Theme } from '@/contexts/ThemeContext';
+import Dropdown from '@/components/core/Dropdown';
+import Toast, { ToastHandles } from '@/components/core/Toast';
 import { useRef } from 'react';
 
 // This would typically be in a shared validation schema file

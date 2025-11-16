@@ -12,17 +12,17 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { patientSchema, PatientFormData } from '@/lib/validation';
-import ControlledInput from '../components/forms/ControlledInput';
-import { database } from '../models/database';
-import Patient from '../models/Patient';
+import ControlledInput from '@/components/forms/ControlledInput';
+import { database } from '@/models/database';
+import Patient from '@/models/Patient';
 import uuid from 'react-native-uuid';
-import { addBreadcrumb } from '../utils/monitoring';
+import { addBreadcrumb } from '@/utils/monitoring';
 
 const MEDICAL_GROUPS = [
   'general',

@@ -1,13 +1,13 @@
 import { Stack, useRouter, usePathname } from 'expo-router';
-import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import { ThemeProvider, useInitializeTheme } from '../contexts/ThemeContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ThemeProvider, useInitializeTheme } from '@/contexts/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
-import { initMonitoring, ErrorBoundary } from '../utils/monitoring';
+import AppInitializer from '@/contexts/AppInitializer';
+import { initMonitoring, ErrorBoundary } from '@/utils/monitoring';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from "@react-native-community/netinfo";
-import { trackOfflineOnlineTime } from '../services/analytics';
-import AppInitializer from '../contexts/AppInitializer';
+import { trackOfflineOnlineTime } from '@/services/analytics';
 
 initMonitoring();
 

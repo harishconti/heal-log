@@ -14,18 +14,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'expo-router';
-import { trackScreenView, trackFeatureAdoption } from '../services/analytics';
-import { useAppStore } from '../store/useAppStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { trackScreenView, trackFeatureAdoption } from '@/services/analytics';
+import { sync } from '@/services/sync';
 import { map } from 'rxjs/operators';
-import { sync } from '../services/sync';
 import { FlashList } from '@shopify/flash-list';
-import { useTheme } from '../contexts/ThemeContext';
+import { useAppStore } from '@/store/useAppStore';
+import { useRouter } from 'expo-router';
 
 // WatermelonDB imports
-import { database } from '../models/database';
-import Patient from '../models/Patient';
+import { database } from '@/models/database';
+import Patient from '@/models/Patient';
 import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
 

@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
-import { useAppStore } from '../store/useAppStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 

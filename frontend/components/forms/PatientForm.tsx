@@ -14,11 +14,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAppStore } from '../../store/useAppStore';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAppStore } from '@/store/useAppStore';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { patientFormSchema, PatientFormValues } from '../../lib/validation';
+import { patientFormSchema, PatientFormValues } from '@/lib/validation';
 import { ControlledInput } from './ControlledInput';
 
 const MEDICAL_GROUPS = [

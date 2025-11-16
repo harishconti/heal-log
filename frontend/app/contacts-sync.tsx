@@ -11,10 +11,10 @@ import {
   Switch
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function ContactsSyncScreen() {
   const { isAuthenticated } = useAuth();

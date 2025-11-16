@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import * as WebBrowser from 'expo-web-browser';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 

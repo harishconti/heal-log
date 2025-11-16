@@ -12,12 +12,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, RegisterFormData } from '../lib/validation';
-import ControlledInput from '../components/forms/ControlledInput';
+import { registerSchema, RegisterFormData } from '@/lib/validation';
+import ControlledInput from '@/components/forms/ControlledInput';
 
 const SPECIALTIES = [
   'general',

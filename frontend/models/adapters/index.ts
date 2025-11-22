@@ -1,6 +1,6 @@
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
-import { mySchema } from '../schema';
-import migrations from '../migrations';
+import { mySchema } from '@/models/schema';
+import migrations from '@/models/migrations';
 
 const adapter = new LokiJSAdapter({
   schema: mySchema,

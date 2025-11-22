@@ -66,7 +66,7 @@ export class ErrorBoundary extends React.Component<any, ErrorBoundaryState> {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
           <Text style={{ fontSize: 24, marginBottom: 16 }}>Oops, something went wrong.</Text>
           <Text style={{ fontSize: 16, color: 'gray', textAlign: 'center', marginBottom: 24 }}>
             We've been notified of the issue and are working to fix it. Please restart the app.

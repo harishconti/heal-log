@@ -39,7 +39,7 @@ export default function WelcomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Image source={require('../assets/images/icon.png')} style={styles.logo} />
+          <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
           <Text style={styles.title}>Welcome to the Beta!</Text>
           <Text style={styles.subtitle}>
             Thank you for helping us test and improve Clinic OS Lite.

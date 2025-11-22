@@ -50,7 +50,7 @@ export default function ContactsSyncScreen() {
       setLastSyncTime(lastSync);
 
       // Load call logs
-      const { PhoneIntegration } = await import('../utils/phoneIntegration');
+      const { PhoneIntegration } = await import('@/utils/phoneIntegration');
       const logs = await PhoneIntegration.getCallLogs();
       setCallLogs(logs.slice(0, 10)); // Show last 10 calls
 
@@ -132,7 +132,7 @@ export default function ContactsSyncScreen() {
             try {
               setSyncing(true);
               
-              const { PhoneIntegration } = await import('../utils/phoneIntegration');
+              const { PhoneIntegration } = await import('@/utils/phoneIntegration');
               const success = await PhoneIntegration.removeContactsFromDevice();
               
               if (success) {

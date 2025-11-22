@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Appearance, ColorSchemeName } from 'react-native';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export interface Theme {
   colors: {
@@ -145,7 +145,7 @@ export const useInitializeTheme = () => {
   );
 
   // const [fontsLoaded] = useFonts({
-  //   'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
+  //   'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   // });
   const fontsLoaded = true;
 

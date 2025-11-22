@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Device from 'expo-device';
 import { useTheme } from '@/contexts/ThemeContext';
 import ControlledInput from './ControlledInput';
-import { Dropdown } from '../core/Dropdown';
+import { Dropdown } from '@/components/core/Dropdown';
 
 const feedbackSchema = z.object({
   feedback_type: z.enum(['bug', 'suggestion', 'general']),

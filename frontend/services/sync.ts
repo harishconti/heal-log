@@ -1,7 +1,6 @@
 import { synchronize } from '@nozbe/watermelondb/sync';
-import { database } from '../models/database';
-import axios from 'axios';
-import { addBreadcrumb } from '../utils/monitoring';
+import { database } from '@/models/database';
+import { addBreadcrumb } from '@/utils/monitoring';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 

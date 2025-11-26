@@ -140,3 +140,21 @@ venv.bak/
 test_result.md
 *.log
 server.logfrontend/android/app/release.keystore
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Global Android/iOS ignores
+**/local.properties
+**/android/.gradle
+**/android/build
+**/android/app/build
+**/*.iml
+**/.idea
+**/*.keystore
+**/ios/Pods
+**/ios/build
+**/ios/*.xcworkspace
+**/ios/*.derivedData

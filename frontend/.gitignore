@@ -35,3 +35,27 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 .metro-cache/
+
+# Android
+android/.gradle
+android/local.properties
+android/*/build
+android/build
+android/*.iml
+android/.idea
+android/app/build
+android/app/*.iml
+*.keystore
+
+# iOS
+ios/Pods
+ios/build
+ios/*.xcworkspace
+ios/*.xcuserdatad
+ios/*.xccheckout
+ios/*.moved-aside
+ios/*.derivedData
+ios/*.hmap
+ios/*.ipa
+ios/*.dSYM
+

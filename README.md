@@ -97,4 +97,4 @@ Pulls changes from the server since the last sync.
 
 #### `POST /api/sync/push`
 
-Pushes local changes to the server.
+Pushes local changes to the server..

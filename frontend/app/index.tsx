@@ -67,7 +67,7 @@ function Index({ patients, groups, totalPatientCount }) {
 
   const handleSync = useCallback(async (showRefresh = false) => {
     if (!isAuthenticated) return;
-    
+
     try {
       if (showRefresh) {
         setRefreshing(true);
@@ -128,7 +128,7 @@ function Index({ patients, groups, totalPatientCount }) {
       <View style={styles.cardContent}>
         <View style={styles.patientInfo}>
           {item.photo ? (
-            <Image 
+            <Image
               source={{ uri: `data:image/jpeg;base64,${item.photo}` }}
               style={styles.patientPhoto}
             />
@@ -173,7 +173,7 @@ function Index({ patients, groups, totalPatientCount }) {
       { filter: 'favorites', label: 'Favorites' }
     ];
     (groups || []).forEach(group => {
-      if(group) {
+      if (group) {
         buttons.push({ filter: group, label: group });
       }
     });
@@ -215,6 +215,9 @@ function Index({ patients, groups, totalPatientCount }) {
           <TouchableOpacity style={styles.addButton} onPress={addNewPatient}>
             <Ionicons name="add" size={24} color="#fff" />
           </TouchableOpacity>
+          <TouchableOpacity style={styles.debugButton} onPress={() => router.push('/debug-console')}>
+            <Ionicons name="bug" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -222,7 +225,7 @@ function Index({ patients, groups, totalPatientCount }) {
         <View style={styles.offlineBanner}>
           <Ionicons name="cloud-offline-outline" size={16} color="#fff" />
           <Text style={styles.offlineText}>
-            Offline Mode - {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}`: 'Never synced'}
+            Offline Mode - {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Never synced'}
           </Text>
         </View>
       )}
@@ -293,7 +296,7 @@ function Index({ patients, groups, totalPatientCount }) {
           {patients.length} of {totalPatientCount} patients
         </Text>
         <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
-          {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}`: ''}
+          {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : ''}
         </Text>
         {user?.subscription_plan && (
           <Text style={[styles.planText, { color: theme.colors.primary }]}>
@@ -393,6 +396,14 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  debugButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },

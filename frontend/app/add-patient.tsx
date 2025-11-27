@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { patientSchema, PatientFormData } from '@/lib/validation';
-import ControlledInput from '@/components/forms/ControlledInput';
+import { ControlledInput } from '@/components/forms/ControlledInput';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import uuid from 'react-native-uuid';
@@ -26,7 +26,7 @@ import { addBreadcrumb } from '@/utils/monitoring';
 
 const MEDICAL_GROUPS = [
   'general',
-  'cardiology', 
+  'cardiology',
   'physiotherapy',
   'orthopedics',
   'neurology',
@@ -145,7 +145,7 @@ export default function AddPatientScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
@@ -155,7 +155,7 @@ export default function AddPatientScreen() {
             <Ionicons name="close" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Patient</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSubmit(onSubmit)}
             style={[styles.headerButton, loading && styles.disabledButton]}
             disabled={loading}
@@ -169,7 +169,7 @@ export default function AddPatientScreen() {
           <View style={styles.photoSection}>
             <TouchableOpacity style={styles.photoContainer} onPress={showImagePicker}>
               {photo ? (
-                <Image 
+                <Image
                   source={{ uri: `data:image/jpeg;base64,${photo}` }}
                   style={styles.patientPhoto}
                 />
@@ -185,7 +185,7 @@ export default function AddPatientScreen() {
           {/* Basic Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Basic Information</Text>
-            
+
             <ControlledInput
               control={control}
               name="full_name"
@@ -227,11 +227,11 @@ export default function AddPatientScreen() {
           {/* Medical Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Medical Information</Text>
-            
+
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Location</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.pickerButton}
                   onPress={() => {
                     Alert.alert('Visit Location', 'Select visit location', [
@@ -246,10 +246,10 @@ export default function AddPatientScreen() {
                   <Ionicons name="chevron-down" size={20} color="#666" />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Medical Group</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.pickerButton}
                   onPress={() => {
                     Alert.alert('Medical Group', 'Select medical specialty',
@@ -269,39 +269,39 @@ export default function AddPatientScreen() {
             </View>
 
             <ControlledInput
-                control={control}
-                name="initial_complaint"
-                label="Initial Complaint"
-                placeholder="Describe the patient's initial complaint or symptoms..."
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                />
+              control={control}
+              name="initial_complaint"
+              label="Initial Complaint"
+              placeholder="Describe the patient's initial complaint or symptoms..."
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
 
             <ControlledInput
-                control={control}
-                name="initial_diagnosis"
-                label="Initial Diagnosis"
-                placeholder="Enter initial diagnosis or assessment..."
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-             />
+              control={control}
+              name="initial_diagnosis"
+              label="Initial Diagnosis"
+              placeholder="Enter initial diagnosis or assessment..."
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
 
           </View>
 
           {/* Options */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Options</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.favoriteOption}
               onPress={() => setValue('is_favorite', !isFavorite)}
             >
               <View style={styles.favoriteLeft}>
-                <Ionicons 
+                <Ionicons
                   name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24} 
+                  size={24}
                   color={isFavorite ? '#e74c3c' : '#666'}
                 />
                 <Text style={styles.favoriteText}>Mark as Favorite</Text>

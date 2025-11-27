@@ -19,7 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { patientSchema, PatientFormData } from '@/lib/validation';
-import ControlledInput from '@/components/forms/ControlledInput';
+import { ControlledInput } from '@/components/forms/ControlledInput';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import withObservables from '@nozbe/with-observables';
@@ -33,7 +33,7 @@ const MEDICAL_GROUPS = [
 function EditPatientScreen({ patient }) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  
+
   const [saving, setSaving] = useState(false);
 
   const { control, handleSubmit, setValue, watch, reset, formState: { isDirty } } = useForm<PatientFormData>({
@@ -147,24 +147,24 @@ function EditPatientScreen({ patient }) {
     if (!patient) return;
     Alert.alert(
       'Delete Patient', 'Are you sure? This action cannot be undone.', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await database.write(async () => {
-                await patient.destroyPermanently();
-              });
-              Alert.alert('Deleted', 'Patient removed successfully.', [
-                { text: 'OK', onPress: () => router.replace('/') },
-              ]);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete patient');
-            }
-          },
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await database.write(async () => {
+              await patient.destroyPermanently();
+            });
+            Alert.alert('Deleted', 'Patient removed successfully.', [
+              { text: 'OK', onPress: () => router.replace('/') },
+            ]);
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete patient');
+          }
         },
-      ]
+      },
+    ]
     );
   };
 

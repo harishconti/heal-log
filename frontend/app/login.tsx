@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from '@/lib/validation';
-import ControlledInput from '@/components/forms/ControlledInput';
+import { ControlledInput } from '@/components/forms/ControlledInput';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppStore } from '@/store/useAppStore';
 import { addBreadcrumb } from '@/utils/monitoring';
@@ -67,7 +67,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
@@ -83,13 +83,13 @@ export default function LoginScreen() {
           <View style={styles.demoSection}>
             <Text style={styles.demoTitle}>Demo Accounts:</Text>
             <View style={styles.demoButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.demoButton}
                 onPress={() => loadDemoAccount('cardiology')}
               >
                 <Text style={styles.demoButtonText}>Dr. Sarah (Cardiology)</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.demoButton}
                 onPress={() => loadDemoAccount('physiotherapy')}
               >
@@ -117,7 +117,7 @@ export default function LoginScreen() {
               placeholderTextColor={theme.colors.textSecondary}
             />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.loginButton, loading.login && styles.loginButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
               disabled={loading.login}
@@ -135,7 +135,7 @@ export default function LoginScreen() {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.registerButton}
               onPress={navigateToRegister}
             >

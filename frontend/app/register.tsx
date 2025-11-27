@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterFormData } from '@/lib/validation';
-import ControlledInput from '@/components/forms/ControlledInput';
+import { ControlledInput } from '@/components/forms/ControlledInput';
 
 const SPECIALTIES = [
   'general',
@@ -35,7 +35,7 @@ const SPECIALTIES = [
 export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [medicalSpecialty, setMedicalSpecialty] = useState('general');
-  
+
   const { register } = useAuth();
   const router = useRouter();
 
@@ -71,7 +71,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
@@ -116,7 +116,7 @@ export default function RegisterScreen() {
 
             <View style={styles.inputContainer}>
               <Ionicons name="medical" size={20} color="#666" style={styles.inputIcon} />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.pickerContainer}
                 onPress={() => {
                   Alert.alert(
@@ -153,7 +153,7 @@ export default function RegisterScreen() {
               placeholderTextColor="#999"
             />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
               disabled={isLoading}
@@ -165,7 +165,7 @@ export default function RegisterScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.loginLink}
               onPress={navigateToLogin}
             >

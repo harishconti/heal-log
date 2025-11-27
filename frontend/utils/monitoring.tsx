@@ -11,12 +11,12 @@ export function initMonitoring() {
     // RN does not have a document object
     ignoreErrors: ['document is not defined'],
     //
-    integrations: [
-      new Sentry.ReactNativeTracing({
-        // Pass instrumentation to be used as `render` props
-        // routingInstrumentation: new Sentry.ReactNavigationV5Instrumentation(),
-      }),
-    ],
+    // integrations: [
+    //   new Sentry.ReactNativeTracing({
+    //     // Pass instrumentation to be used as `render` props
+    //     // routingInstrumentation: new Sentry.ReactNavigationV5Instrumentation(),
+    //   }),
+    // ],
     beforeSend(event) {
       // Modify or drop the event here
       if (event.level === 'info') {

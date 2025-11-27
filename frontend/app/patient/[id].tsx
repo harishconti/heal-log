@@ -23,6 +23,7 @@ import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import PatientNote from '@/models/PatientNote';
 import withObservables from '@nozbe/with-observables';
+import { Q } from '@nozbe/watermelondb';
 
 function PatientDetailsScreen({ patient, notes }) {
   const { user } = useAuth();
@@ -117,7 +118,7 @@ function PatientDetailsScreen({ patient, notes }) {
         <View style={styles.patientCard}>
           <View style={styles.patientHeader}>
             {patient.photo ? (
-              <Image 
+              <Image
                 source={{ uri: `data:image/jpeg;base64,${patient.photo}` }}
                 style={styles.patientPhoto}
               />
@@ -126,7 +127,7 @@ function PatientDetailsScreen({ patient, notes }) {
                 <Ionicons name="person" size={48} color="#666" />
               </View>
             )}
-            
+
             <View style={styles.patientBasicInfo}>
               <Text style={styles.patientName}>{patient.name}</Text>
               <Text style={styles.patientId}>ID: {patient.patientId}</Text>
@@ -303,363 +304,363 @@ export default function PatientDetailsContainer() {
 
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#f8f9fa',
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    loadingText: {
-      marginTop: 16,
-      fontSize: 16,
-      color: '#666',
-    },
-    errorContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 32,
-    },
-    errorText: {
-      fontSize: 18,
-      color: '#e74c3c',
-      marginVertical: 16,
-    },
-    backButton: {
-      backgroundColor: '#2ecc71',
-      paddingHorizontal: 24,
-      paddingVertical: 12,
-      borderRadius: 8,
-    },
-    backButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    header: {
-      backgroundColor: '#2ecc71',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      paddingTop: 48,
-    },
-    headerButton: {
-      padding: 8,
-    },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#fff',
-    },
-    scrollContent: {
-      paddingBottom: 32,
-    },
-    patientCard: {
-      backgroundColor: '#fff',
-      margin: 16,
-      padding: 16,
-      borderRadius: 12,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-    },
-    patientHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    patientPhoto: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      marginRight: 16,
-    },
-    patientPhotoPlaceholder: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: '#e9ecef',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 16,
-    },
-    patientBasicInfo: {
-      flex: 1,
-    },
-    patientName: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#333',
-      marginBottom: 4,
-    },
-    patientId: {
-      fontSize: 16,
-      color: '#666',
-      marginBottom: 8,
-    },
-    groupBadge: {
-      alignSelf: 'flex-start',
-      paddingHorizontal: 12,
-      paddingVertical: 4,
-      backgroundColor: '#e3f2fd',
-      borderRadius: 12,
-    },
-    groupText: {
-      fontSize: 12,
-      color: '#1976d2',
-      fontWeight: '500',
-    },
-    contactSection: {
-      marginTop: 16,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: '#333',
-      marginBottom: 12,
-    },
-    contactItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: '#f0f0f0',
-    },
-    contactText: {
-      flex: 1,
-      fontSize: 16,
-      color: '#333',
-      marginLeft: 12,
-    },
-    medicalCard: {
-      backgroundColor: '#fff',
-      marginHorizontal: 16,
-      marginBottom: 16,
-      padding: 16,
-      borderRadius: 12,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-    },
-    medicalItem: {
-      marginBottom: 12,
-    },
-    medicalLabel: {
-      fontSize: 14,
-      color: '#666',
-      marginBottom: 4,
-    },
-    medicalValue: {
-      fontSize: 16,
-      color: '#333',
-    },
-    notesCard: {
-      backgroundColor: '#fff',
-      marginHorizontal: 16,
-      marginBottom: 16,
-      padding: 16,
-      borderRadius: 12,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-    },
-    notesHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    addNoteButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: '#2ecc71',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    noteItem: {
-      backgroundColor: '#f8f9fa',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    noteHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    noteType: {
-      fontSize: 12,
-      color: '#2ecc71',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-    },
-    noteDate: {
-      fontSize: 12,
-      color: '#666',
-    },
-    noteContent: {
-      fontSize: 16,
-      color: '#333',
-      marginBottom: 8,
-    },
-    noteAuthor: {
-      fontSize: 12,
-      color: '#999',
-      fontStyle: 'italic',
-    },
-    emptyNotes: {
-      alignItems: 'center',
-      paddingVertical: 32,
-    },
-    emptyNotesText: {
-      fontSize: 16,
-      color: '#666',
-      marginTop: 12,
-      marginBottom: 4,
-    },
-    emptyNotesSubtext: {
-      fontSize: 14,
-      color: '#999',
-      textAlign: 'center',
-    },
-    actionButtons: {
-      paddingHorizontal: 16,
-    },
-    editButton: {
-      backgroundColor: '#3498db',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 16,
-      borderRadius: 12,
-      gap: 8,
-    },
-    uploadButton: {
-      backgroundColor: '#27ae60',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 16,
-      borderRadius: 12,
-      gap: 8,
-      marginBottom: 16,
-    },
-    buttonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    upgradeCard: {
-      backgroundColor: '#fff',
-      marginHorizontal: 16,
-      marginBottom: 16,
-      padding: 16,
-      borderRadius: 12,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-    },
-    upgradeTextContainer: {
-      flex: 1,
-    },
-    upgradeTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#333',
-    },
-    upgradeSubtitle: {
-      fontSize: 14,
-      color: '#666',
-      marginTop: 4,
-    },
-    modalContainer: {
-      flex: 1,
-      backgroundColor: '#f8f9fa',
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
-      backgroundColor: '#fff',
-    },
-    modalCancel: {
-      fontSize: 16,
-      color: '#e74c3c',
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: '#333',
-    },
-    modalSave: {
-      fontSize: 16,
-      color: '#2ecc71',
-      fontWeight: '600',
-    },
-    modalContent: {
-      flex: 1,
-      padding: 16,
-    },
-    inputGroup: {
-      marginBottom: 24,
-    },
-    inputLabel: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#333',
-      marginBottom: 8,
-    },
-    visitTypeButtons: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-    },
-    visitTypeButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: '#e9ecef',
-    },
-    activeVisitType: {
-      backgroundColor: '#2ecc71',
-    },
-    visitTypeText: {
-      fontSize: 14,
-      color: '#666',
-    },
-    activeVisitTypeText: {
-      color: '#fff',
-      fontWeight: '600',
-    },
-    noteInput: {
-      backgroundColor: '#fff',
-      borderRadius: 12,
-      padding: 16,
-      fontSize: 16,
-      minHeight: 120,
-      borderWidth: 1,
-      borderColor: '#e9ecef',
-    },
-  });
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#e74c3c',
+    marginVertical: 16,
+  },
+  backButton: {
+    backgroundColor: '#2ecc71',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  header: {
+    backgroundColor: '#2ecc71',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingTop: 48,
+  },
+  headerButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  patientCard: {
+    backgroundColor: '#fff',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  patientHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  patientPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 16,
+  },
+  patientPhotoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#e9ecef',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  patientBasicInfo: {
+    flex: 1,
+  },
+  patientName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  patientId: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  groupBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#e3f2fd',
+    borderRadius: 12,
+  },
+  groupText: {
+    fontSize: 12,
+    color: '#1976d2',
+    fontWeight: '500',
+  },
+  contactSection: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  contactText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 12,
+  },
+  medicalCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  medicalItem: {
+    marginBottom: 12,
+  },
+  medicalLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  medicalValue: {
+    fontSize: 16,
+    color: '#333',
+  },
+  notesCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addNoteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2ecc71',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noteItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  noteType: {
+    fontSize: 12,
+    color: '#2ecc71',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  noteDate: {
+    fontSize: 12,
+    color: '#666',
+  },
+  noteContent: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+  },
+  noteAuthor: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
+  },
+  emptyNotes: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyNotesText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  emptyNotesSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  actionButtons: {
+    paddingHorizontal: 16,
+  },
+  editButton: {
+    backgroundColor: '#3498db',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  uploadButton: {
+    backgroundColor: '#27ae60',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 16,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  upgradeCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  upgradeTextContainer: {
+    flex: 1,
+  },
+  upgradeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  upgradeSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    backgroundColor: '#fff',
+  },
+  modalCancel: {
+    fontSize: 16,
+    color: '#e74c3c',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalSave: {
+    fontSize: 16,
+    color: '#2ecc71',
+    fontWeight: '600',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  visitTypeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  visitTypeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#e9ecef',
+  },
+  activeVisitType: {
+    backgroundColor: '#2ecc71',
+  },
+  visitTypeText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  activeVisitTypeText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  noteInput: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+});

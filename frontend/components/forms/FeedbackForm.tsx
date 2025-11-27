@@ -6,7 +6,7 @@ import * as z from 'zod';
 import * as ImagePicker from 'expo-image-picker';
 import * as Device from 'expo-device';
 import { useTheme } from '@/contexts/ThemeContext';
-import ControlledInput from './ControlledInput';
+import { ControlledInput } from './ControlledInput';
 import { Dropdown } from '@/components/core/Dropdown';
 
 const feedbackSchema = z.object({
@@ -16,9 +16,9 @@ const feedbackSchema = z.object({
 });
 
 const feedbackTypes = [
-    { label: 'Bug Report', value: 'bug' },
-    { label: 'Suggestion', value: 'suggestion' },
-    { label: 'General Feedback', value: 'general' },
+  { label: 'Bug Report', value: 'bug' },
+  { label: 'Suggestion', value: 'suggestion' },
+  { label: 'General Feedback', value: 'general' },
 ];
 
 const FeedbackForm = ({ onSubmit, isSubmitting }) => {
@@ -59,9 +59,9 @@ const FeedbackForm = ({ onSubmit, isSubmitting }) => {
 
   const handleFormSubmit = (data) => {
     const deviceInfo = {
-        os_version: `${Device.osName} ${Device.osVersion}`,
-        app_version: '1.0.0', // Replace with your actual app version
-        device_model: Device.modelName,
+      os_version: `${Device.osName} ${Device.osVersion}`,
+      app_version: '1.0.0', // Replace with your actual app version
+      device_model: Device.modelName,
     };
 
     const payload = {
@@ -79,11 +79,11 @@ const FeedbackForm = ({ onSubmit, isSubmitting }) => {
         name="feedback_type"
         control={control}
         render={({ field: { onChange, value } }) => (
-            <Dropdown
-                options={feedbackTypes}
-                selectedValue={value}
-                onValueChange={onChange}
-            />
+          <Dropdown
+            options={feedbackTypes}
+            selectedValue={value}
+            onValueChange={onChange}
+          />
         )}
       />
 
@@ -130,41 +130,41 @@ const FeedbackForm = ({ onSubmit, isSubmitting }) => {
 };
 
 const createStyles = (theme) => StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: theme.colors.text,
-    },
-    button: {
-        backgroundColor: theme.colors.primary,
-        padding: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    buttonDisabled: {
-        backgroundColor: theme.colors.disabled,
-    },
-    buttonText: {
-        color: theme.colors.buttonText,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    screenshotContainer: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    screenshotPreview: {
-        width: 100,
-        height: 100,
-        marginTop: 10,
-        borderRadius: 8,
-    },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: theme.colors.text,
+  },
+  button: {
+    backgroundColor: theme.colors.primary,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: theme.colors.disabled,
+  },
+  buttonText: {
+    color: theme.colors.buttonText,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  screenshotContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  screenshotPreview: {
+    width: 100,
+    height: 100,
+    marginTop: 10,
+    borderRadius: 8,
+  },
 });
 
 export default FeedbackForm;

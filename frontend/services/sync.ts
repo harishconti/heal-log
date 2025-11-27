@@ -3,7 +3,7 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 import { database } from '@/models/database';
 import { addBreadcrumb } from '@/utils/monitoring';
 
-const BACKEND_URL = 'https://doctor-log-production.up.railway.app';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export async function sync() {
   await synchronize({
@@ -12,18 +12,9 @@ export async function sync() {
       addBreadcrumb('sync', `Pulling changes from server since ${lastPulledAt}`);
       try {
         const token = axios.defaults.headers.common['Authorization'];
-        console.warn('Syncing with token:', token);
-        console.warn('Sync pull params (raw):', { last_pulled_at: lastPulledAt });
-
-        // Ensure last_pulled_at is sent as 'null' string if it is null/undefined, 
-        // because axios might omit it otherwise, and backend might expect it.
-        const params = {
-          last_pulled_at: lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : 'null'
-        };
-
-        // The backend expects POST for pull
-        const response = await axios.post(`${BACKEND_URL}/api/sync/pull`, null, {
-          params,
+        // Ensure last_pulled_at is sent in the body
+        const response = await axios.post(`${BACKEND_URL}/api/sync/pull`, {
+          last_pulled_at: lastPulledAt || null,
         });
 
         if (response.status !== 200) {
@@ -44,8 +35,9 @@ export async function sync() {
     pushChanges: async ({ changes, lastPulledAt }) => {
       addBreadcrumb('sync', `Pushing ${Object.keys(changes).length} changes to server`);
       try {
-        const response = await axios.post(`${BACKEND_URL}/api/sync/push`, { changes }, {
-          params: { last_pulled_at: lastPulledAt },
+        const response = await axios.post(`${BACKEND_URL}/api/sync/push`, {
+          changes,
+          last_pulled_at: lastPulledAt || null,
         });
 
         if (response.status !== 200) {

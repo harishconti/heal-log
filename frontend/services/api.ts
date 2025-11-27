@@ -30,6 +30,10 @@ api.interceptors.request.use(
     const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('📤 [API] Request:', config.url);
+      console.log('🔑 [API] Token added:', `${token.substring(0, 10)}...`);
+    } else {
+      console.warn('⚠️ [API] No token found for request:', config.url);
     }
     return config;
   },
@@ -42,9 +46,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.error('❌ [API] Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
     if (error.response?.status === 401) {
-      // Token expired or invalid - we might want to clear it here or let AuthContext handle it
-      console.warn('API: Auth token invalid or expired (401)');
+      console.warn('🔐 [API] 401 Unauthorized - Token might be invalid');
+      // We could trigger a logout here if we had access to the store/context
     }
     return Promise.reject(error);
   }

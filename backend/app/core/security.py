@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import jwt
 import uuid
+import logging
 
 from app.core.config import settings
 from app.schemas.user import UserPlan
@@ -11,6 +12,8 @@ from app.schemas.role import UserRole
 from app.core.hashing import verify_password
 from app.services import user_service
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 # --- JWT Bearer Scheme ---
 # We instantiate it once and reuse it in our dependency
@@ -63,38 +66,59 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
     Raises HTTPException for invalid credentials.
     """
     try:
+        # Step 1: Decode JWT
+        logger.info("[AUTH] Decoding JWT token...")
         payload = jwt.decode(
             credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id: str = payload.get("sub")
+        
         if user_id is None:
+            logger.error("[AUTH] Token payload missing 'sub' (user_id)")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials: user ID not in token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        logger.info(f"[AUTH] Token decoded successfully. User ID: {user_id}")
+
+        # Step 2: Fetch user from database
+        logger.info(f"[AUTH] Fetching user from database...")
         user = await user_service.get_user_by_id(user_id)
+        
         if not user:
+            logger.error(f"[AUTH] User not found in database. User ID: {user_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+        logger.info(f"[AUTH] User authenticated successfully: {user.email}")
         return user
+        
     except jwt.ExpiredSignatureError:
+        logger.warning("[AUTH] Token has expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
+        logger.error(f"[AUTH] JWT validation error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except Exception:
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Log the actual error for debugging
+        logger.error(f"[AUTH] Unexpected authentication error: {str(e)}", exc_info=True)
+        logger.error(f"[AUTH] Error type: {type(e).__name__}")
+        logger.error(f"[AUTH] User ID attempted: {payload.get('sub') if 'payload' in locals() else 'N/A'}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred during authentication"
+            detail=f"An unexpected error occurred during authentication: {str(e)}"
         )
 
 # --- Dependency to Require "Pro" User ---

@@ -16,11 +16,11 @@ const api = axios.create({
 const getToken = async () => {
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem('auth_token');
+      return window.localStorage.getItem('token'); // ✅ Changed from 'auth_token' to 'token'
     }
     return null;
   } else {
-    return await SecureStore.getItemAsync('auth_token');
+    return await SecureStore.getItemAsync('token'); // ✅ Changed from 'auth_token' to 'token'
   }
 };
 
@@ -42,9 +42,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401 errors
+// Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful responses
+    console.log('✅ [API] Response:', response.config.url, response.status);
+    return response;
+  },
   async (error) => {
     console.error('❌ [API] Error:', {
       url: error.config?.url,
@@ -54,8 +58,20 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       console.warn('🔐 [API] 401 Unauthorized - Token might be invalid');
-      // We could trigger a logout here if we had access to the store/context
+      // Clear invalid token
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem('token');
+        }
+      } else {
+        await SecureStore.deleteItemAsync('token');
+      }
     }
+    
+    if (error.response?.status === 500) {
+      console.error('🔥 [API] 500 Server Error:', error.response?.data);
+    }
+    
     return Promise.reject(error);
   }
 );

@@ -2,10 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import axios from 'axios';
+import api from '@/services/api'; // Use centralized api
 import { useAppStore, User } from '@/store/useAppStore';
-
-const BACKEND_URL = 'https://doctor-log-production.up.railway.app';
 
 // Platform-specific secure storage
 const SecureStorageAdapter = {
@@ -104,8 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('Init: Stored User exists?', !!storedUser);
 
         if (storedToken) {
-          // Set header immediately
-          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          // No need to set header manually, interceptor handles it
 
           if (storedUser) {
             // OPTIMISTIC AUTH: We have a user and a token. Let them in.
@@ -119,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // No user data, must fetch
             try {
               console.warn('Fetching user data (blocking)...');
-              const response = await axios.get(`${BACKEND_URL}/api/auth/me`);
+              const response = await api.get('/api/auth/me');
               setToken(storedToken);
               setUser(response.data);
             } catch (error: any) {
@@ -143,14 +140,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    console.warn('Attempting login with URL:', BACKEND_URL);
-    console.warn('Email:', email);
+    console.warn('Attempting login...');
     try {
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, formData, {
+      const response = await api.post('/api/auth/login', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -164,8 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(access_token);
       setUser(userData);
 
-      // Set axios default authorization header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      // Interceptor will pick up the token from SecureStorage for next requests
 
     } catch (error: any) {
       console.warn('Login error details:', error.response?.data || error.message);
@@ -175,7 +170,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/auth/register`, userData);
+      const response = await api.post('/api/auth/register', userData);
 
       const { access_token, user: newUser } = response.data;
 
@@ -184,9 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setToken(access_token);
       setUser(newUser);
-
-      // Set axios default authorization header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Registration failed');
@@ -215,9 +207,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(null);
       setUser(null);
 
-      // Clear axios default authorization header
-      delete axios.defaults.headers.common['Authorization'];
-
       console.log('Logout completed successfully');
 
     } catch (error) {
@@ -227,7 +216,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // but warn user about potential data remnants
       setToken(null);
       setUser(null);
-      delete axios.defaults.headers.common['Authorization'];
 
       // In production, you might want to show a warning to the user
       // about manually clearing app data if logout issues persist
@@ -239,7 +227,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!token) return;
 
-      const response = await axios.get(`${BACKEND_URL}/api/auth/me`);
+      const response = await api.get('/api/auth/me');
       const userData = response.data.user;
 
       setUser(userData);

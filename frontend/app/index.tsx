@@ -10,8 +10,13 @@ import {
   Image,
   RefreshControl,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  LogBox
 } from 'react-native';
+
+LogBox.ignoreLogs([
+  'Accessing element.ref was removed in React 19',
+]);
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';

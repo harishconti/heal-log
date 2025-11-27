@@ -96,43 +96,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         const storedUser = useAppStore.getState().user;
-        const storedToken = await SecureStorageAdapter.getItem('auth_token');
+        const storedToken = await SecureStorageAdapter.getItem('token'); // ✅ Changed from 'auth_token'
 
-        console.warn('Init: Stored Token exists?', !!storedToken);
-        console.warn('Init: Stored User exists?', !!storedUser);
+        console.log('🔑 [Auth] Init - Token exists?', !!storedToken);
+        console.log('👤 [Auth] Init - User exists?', !!storedUser);
 
         if (storedToken) {
           // No need to set header manually, interceptor handles it
 
           if (storedUser) {
             // OPTIMISTIC AUTH: We have a user and a token. Let them in.
-            console.warn('Optimistic Auth: Using persisted user data.');
+            console.log('✅ [Auth] Optimistic Auth: Using persisted user data.');
             setToken(storedToken);
             setUser(storedUser);
 
             // Verify in background (non-blocking)
-            refreshUser().catch(err => console.warn('Background refresh failed:', err));
+            refreshUser().catch(err => console.warn('⚠️ [Auth] Background refresh failed:', err));
           } else {
             // No user data, must fetch
             try {
-              console.warn('Fetching user data (blocking)...');
+              console.log('🔄 [Auth] Fetching user data (blocking)...');
               const response = await api.get('/api/auth/me');
               setToken(storedToken);
               setUser(response.data);
+              console.log('✅ [Auth] User data fetched successfully');
             } catch (error: any) {
-              console.error('Blocking auth failed:', error);
+              console.error('❌ [Auth] Blocking auth failed:', error);
               if (error.response?.status === 401) {
                 await logout();
               } else {
-                console.warn('Server error without cached user. Keeping token but user is null.');
+                console.warn('⚠️ [Auth] Server error without cached user. Keeping token but user is null.');
               }
             }
           }
+        } else {
+          console.log('⚠️ [Auth] No stored token found');
         }
       } catch (e) {
-        console.error("Initialization error:", e);
+        console.error('❌ [Auth] Initialization error:', e);
       } finally {
         setIsLoading(false);
+        console.log('✅ [Auth] Initialization complete');
       }
     };
 
@@ -140,7 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    console.warn('Attempting login...');
+    console.log('🔑 [Auth] Attempting login...');
     try {
       const formData = new URLSearchParams();
       formData.append('username', email);
@@ -154,42 +158,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const { access_token, user: userData } = response.data;
 
+      console.log('✅ [Auth] Login successful');
+      console.log('💾 [Auth] Saving token to SecureStore...');
+      
       // Store auth data
-      await SecureStorageAdapter.setItem('auth_token', access_token);
+      await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
 
       setToken(access_token);
       setUser(userData);
 
+      console.log('✅ [Auth] Token saved successfully');
       // Interceptor will pick up the token from SecureStorage for next requests
 
     } catch (error: any) {
-      console.warn('Login error details:', error.response?.data || error.message);
+      console.error('❌ [Auth] Login error:', error.response?.data || error.message);
       throw new Error(error.response?.data?.detail || 'Login failed');
     }
   };
 
   const register = async (userData: RegisterData) => {
+    console.log('📝 [Auth] Attempting registration...');
     try {
       const response = await api.post('/api/auth/register', userData);
 
       const { access_token, user: newUser } = response.data;
 
+      console.log('✅ [Auth] Registration successful');
+      
       // Store auth data
-      await SecureStorageAdapter.setItem('auth_token', access_token);
+      await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
 
       setToken(access_token);
       setUser(newUser);
 
+      console.log('✅ [Auth] Token saved successfully');
+
     } catch (error: any) {
+      console.error('❌ [Auth] Registration error:', error.response?.data || error.message);
       throw new Error(error.response?.data?.detail || 'Registration failed');
     }
   };
 
   const logout = async () => {
+    console.log('🚪 [Auth] Attempting logout...');
     try {
       // First, clear stored data - this is the critical part
       const storageCleanupResults = await Promise.allSettled([
-        SecureStorageAdapter.removeItem('auth_token'),
+        SecureStorageAdapter.removeItem('token'), // ✅ Changed from 'auth_token'
         AsyncStorage.removeItem('patients_cache'),
         AsyncStorage.removeItem('medical_call_logs'),
         AsyncStorage.removeItem('contacts_sync_enabled'),
@@ -198,8 +213,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Log any storage cleanup failures for debugging
       storageCleanupResults.forEach((result, index) => {
         if (result.status === 'rejected') {
-          const keys = ['auth_token', 'patients_cache', 'medical_call_logs', 'contacts_sync_enabled'];
-          console.warn(`Failed to clear ${keys[index]}:`, result.reason);
+          const keys = ['token', 'patients_cache', 'medical_call_logs', 'contacts_sync_enabled'];
+          console.warn(`⚠️ [Auth] Failed to clear ${keys[index]}:`, result.reason);
         }
       });
 
@@ -207,10 +222,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(null);
       setUser(null);
 
-      console.log('Logout completed successfully');
+      console.log('✅ [Auth] Logout completed successfully');
 
     } catch (error) {
-      console.error('Critical error during logout:', error);
+      console.error('❌ [Auth] Critical error during logout:', error);
 
       // If storage cleanup completely fails, still clear app state
       // but warn user about potential data remnants
@@ -225,15 +240,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (!token) return;
+      if (!token) {
+        console.warn('⚠️ [Auth] No token available for refresh');
+        return;
+      }
 
+      console.log('🔄 [Auth] Refreshing user data...');
       const response = await api.get('/api/auth/me');
       const userData = response.data.user;
 
       setUser(userData);
+      console.log('✅ [Auth] User data refreshed successfully');
 
     } catch (error) {
-      console.error('Error refreshing user data:', error);
+      console.error('❌ [Auth] Error refreshing user data:', error);
       // If refresh fails, logout user
       await logout();
     }

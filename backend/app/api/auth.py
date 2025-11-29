@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import User, UserCreate, UserResponse
 from app.core.exceptions import APIException
 from app.core.limiter import limiter
 from app.schemas.token import Token, RefreshToken
-from app.services.user_service import user_service, authenticate_user
+from app.services.user_service import user_service
 from app.core.security import create_access_token, create_refresh_token, get_current_user
 import jwt
 import logging
@@ -19,6 +19,10 @@ async def register_user(request: Request, user_data: UserCreate):
     Register a new user and return an access token, refresh token, and user info.
     """
     try:
+        existing_user = await user_service.get_user_by_email(user_data.email)
+        if existing_user:
+            raise ValueError("An account with this email already exists.")
+
         user = await user_service.create(user_data)
 
         access_token = create_access_token(subject=user.id, plan=user.plan, role=user.role)
@@ -32,10 +36,8 @@ async def register_user(request: Request, user_data: UserCreate):
             "user": UserResponse(**user.model_dump())
         }
     except ValueError as e:
-        # This is for known errors, like "email already registered"
         raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        # This is for unexpected errors
         logging.error(f"Unhandled exception during user registration: {e}", exc_info=True)
         raise APIException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -48,7 +50,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     """
     Authenticate a user and return tokens and user info.
     """
-    user = await authenticate_user(form_data.username, form_data.password)
+    user = await user_service.authenticate(form_data.username, form_data.password)
     if not user:
         raise APIException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -88,7 +90,7 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
                 detail="Invalid refresh token",
             )
 
-        user = await user_service.get(user_id)
+        user = await user_service.get_user_by_id(user_id)
         if not user:
             raise APIException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -112,12 +114,11 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
         )
 
 @router.get("/me", response_model=dict)
-async def read_users_me(current_user_id: str = Depends(get_current_user)):
+async def read_users_me(current_user: User = Depends(get_current_user)):
     """
     Get the current authenticated user's information.
     """
-    user = await user_service.get(current_user_id)
-    if not user:
+    if not current_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"success": True, "user": UserResponse(**user.model_dump())}
+    return {"success": True, "user": UserResponse(**current_user.model_dump())}

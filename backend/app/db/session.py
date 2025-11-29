@@ -2,6 +2,10 @@ import os
 import logging
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
+try:
+    from mongomock_motor import AsyncMongoMockClient
+except ImportError:
+    AsyncMongoMockClient = None
 from pymongo.errors import ConnectionFailure
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
@@ -13,7 +17,7 @@ MIN_CONNECTIONS_COUNT = int(os.getenv("MIN_CONNECTIONS_COUNT", 10))
 
 # --- Database Client ---
 # We initialize the client as None and connect in a separate function.
-client: AsyncIOMotorClient = None
+client = None
 
 # --- Retry Logic for Connection ---
 # This decorator will retry the connection 5 times over a period of ~2 minutes
@@ -30,14 +34,21 @@ async def connect_to_mongo():
     global client
     logging.info(f"Attempting to connect to MongoDB at {settings.MONGO_URL}...")
     try:
-        client = AsyncIOMotorClient(
-            settings.MONGO_URL,
-            maxPoolSize=MAX_CONNECTIONS_COUNT,
-            minPoolSize=MIN_CONNECTIONS_COUNT,
-            serverSelectionTimeoutMS=5000  # Timeout for server selection
-        )
-        # The ismaster command is cheap and does not require auth.
-        await client.admin.command('ismaster')
+        if settings.MONGO_URL.startswith("mongomock://"):
+            if AsyncMongoMockClient is None:
+                raise ImportError("mongomock_motor is not installed")
+            client = AsyncMongoMockClient()
+            logging.info("Using AsyncMongoMockClient for testing.")
+        else:
+            client = AsyncIOMotorClient(
+                settings.MONGO_URL,
+                maxPoolSize=MAX_CONNECTIONS_COUNT,
+                minPoolSize=MIN_CONNECTIONS_COUNT,
+                serverSelectionTimeoutMS=5000  # Timeout for server selection
+            )
+            # The ismaster command is cheap and does not require auth.
+            await client.admin.command('ismaster')
+            
         logging.info("Successfully connected to MongoDB.")
     except ConnectionFailure as e:
         logging.error(f"Failed to connect to MongoDB: {e}")

@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import api from '@/services/api'; // Use centralized api
 import { useAppStore, User } from '@/store/useAppStore';
+import { authEvents } from '@/utils/events';
 
 // Platform-specific secure storage
 const SecureStorageAdapter = {
@@ -141,6 +142,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeApp();
+
+    // Subscribe to auth events (e.g. 401 from API)
+    const unsubscribe = authEvents.on('auth:logout', () => {
+      console.log('🔒 [Auth] Received logout event from API');
+      logout();
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -160,7 +171,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       console.log('✅ [Auth] Login successful');
       console.log('💾 [Auth] Saving token to SecureStore...');
-      
+
       // Store auth data
       await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
 
@@ -184,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { access_token, user: newUser } = response.data;
 
       console.log('✅ [Auth] Registration successful');
-      
+
       // Store auth data
       await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
 

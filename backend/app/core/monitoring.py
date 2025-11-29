@@ -1,7 +1,7 @@
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
 import os
 import logging
 from app.core.config import settings
@@ -34,7 +34,7 @@ def init_monitoring():
                     level=logging.INFO,        # Capture info and above as breadcrumbs
                     event_level=logging.ERROR  # Send errors as events
                 ),
-                SqlalchemyIntegration(),
+
             ],
             environment=settings.SENTRY_ENVIRONMENT,
             traces_sample_rate=0.1,

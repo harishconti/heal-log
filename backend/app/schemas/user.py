@@ -24,7 +24,7 @@ class User(Document):
     phone: Optional[str] = Field(default="", max_length=25)
     full_name: str = Field(..., min_length=2, max_length=100)
     medical_specialty: Optional[str] = Field(default="general", max_length=100)
-    password_hash: str
+    password_hash: Optional[str] = None
     plan: UserPlan = UserPlan.BASIC
     role: UserRole = UserRole.DOCTOR
     subscription_status: SubscriptionStatus = SubscriptionStatus.TRIALING

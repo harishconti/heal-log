@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { authEvents } from '@/utils/events';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://doctor-log-production.up.railway.app';
 
@@ -66,12 +67,15 @@ api.interceptors.response.use(
       } else {
         await SecureStore.deleteItemAsync('token');
       }
+
+      // Notify app to logout
+      authEvents.emit('auth:logout');
     }
-    
+
     if (error.response?.status === 500) {
       console.error('🔥 [API] 500 Server Error:', error.response?.data);
     }
-    
+
     return Promise.reject(error);
   }
 );

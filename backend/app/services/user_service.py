@@ -33,7 +33,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """
         logger.info(f"[USER_SERVICE] Looking up user by email: {email}")
         try:
-            from app.models.user import User as UserModel
+            from app.schemas.user import User as UserModel
             user = await UserModel.find_one({"email": email})
             if user:
                 logger.info(f"[USER_SERVICE] User found: {user.id}")
@@ -50,7 +50,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """
         logger.info(f"[USER_SERVICE] Looking up user by ID: {user_id}")
         try:
-            from app.models.user import User as UserModel
+            from app.schemas.user import User as UserModel
             user = await UserModel.get(user_id)
             if user:
                 logger.info(f"[USER_SERVICE] User found: {user.email}")
@@ -66,9 +66,9 @@ async def authenticate_user(email: str, password: str) -> Optional[User]:
     """
     Authenticates a user. Returns the user object if successful, otherwise None.
     """
-    from app.models.user import User as UserModel
+    from app.schemas.user import User as UserModel
     user = await UserModel.find_one({"email": email})
-    if not user or not verify_password(password, user.password_hash):
+    if not user or not user.password_hash or not verify_password(password, user.password_hash):
         return None
 
     return user
@@ -79,7 +79,7 @@ async def get_user_by_id(user_id: str) -> Optional[User]:
     """
     logger.info(f"[USER_SERVICE] get_user_by_id called with ID: {user_id}")
     try:
-        from app.models.user import User as UserModel
+        from app.schemas.user import User as UserModel
         user = await UserModel.get(user_id)
         logger.info(f"[USER_SERVICE] User lookup result: {user is not None}")
         return user

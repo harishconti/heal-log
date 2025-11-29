@@ -51,31 +51,29 @@ export default function ProfileScreen() {
 
   const loadProfileData = async () => {
     try {
-      // Use Promise.allSettled for better error handling
-      const [subscriptionResult, statsResult] = await Promise.allSettled([
-        axios.get(`${BACKEND_URL}/api/subscription`),
-        axios.get(`${BACKEND_URL}/api/stats`)
-      ]);
-
-      // Handle subscription data
-      if (subscriptionResult.status === 'fulfilled') {
-        setSubscriptionInfo(subscriptionResult.value.data.subscription);
-      } else {
-        console.error('Error loading subscription data:', subscriptionResult.reason);
-        // Set default subscription info or show error state
+      // Set subscription info directly from user object
+      if (user) {
         setSubscriptionInfo({
-          subscription_plan: 'regular',
-          subscription_status: 'unknown',
-          trial_end_date: new Date().toISOString()
+          subscription_plan: user.plan || 'regular',
+          subscription_status: user.subscription_status || 'unknown',
+          trial_end_date: user.subscription_end_date || new Date().toISOString()
         });
       }
 
-      // Handle stats data
-      if (statsResult.status === 'fulfilled') {
-        setStats(statsResult.value.data.stats);
-      } else {
-        console.error('Error loading stats data:', statsResult.reason);
-        // Set default stats or show error state
+      // Fetch stats from correct endpoint
+      try {
+        const statsResponse = await axios.get(`${BACKEND_URL}/api/patients/stats/`);
+        if (statsResponse.data && statsResponse.data.stats) {
+          setStats(statsResponse.data.stats);
+        } else {
+          setStats({
+            total_patients: 0,
+            favorite_patients: 0,
+            groups: []
+          });
+        }
+      } catch (error) {
+        console.error('Error loading stats data:', error);
         setStats({
           total_patients: 0,
           favorite_patients: 0,
@@ -83,14 +81,6 @@ export default function ProfileScreen() {
         });
       }
 
-      // Show error message if both failed
-      if (subscriptionResult.status === 'rejected' && statsResult.status === 'rejected') {
-        Alert.alert(
-          'Connection Error',
-          'Unable to load profile data. Please check your internet connection and try again.',
-          [{ text: 'OK' }]
-        );
-      }
     } catch (error) {
       console.error('Unexpected error loading profile data:', error);
       Alert.alert('Error', 'An unexpected error occurred while loading profile data.');
@@ -114,13 +104,13 @@ export default function ProfileScreen() {
               console.log('Starting logout process...');
               await logout();
               console.log('Logout completed, navigating to login...');
-              
+
               // Use replace to completely reset navigation stack
               router.replace('/login');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Logout Error', error.message || 'Failed to logout completely');
-              
+
               // Force navigation even if logout partially failed
               router.replace('/login');
             }
@@ -146,7 +136,7 @@ export default function ProfileScreen() {
   const pickProfilePhoto = async () => {
     try {
       const { default: ImagePicker } = await import('expo-image-picker');
-      
+
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission Required', 'Camera roll permissions are required to select photos');
@@ -172,7 +162,7 @@ export default function ProfileScreen() {
   const takeProfilePhoto = async () => {
     try {
       const { default: ImagePicker } = await import('expo-image-picker');
-      
+
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission Required', 'Camera permissions are required to take photos');
@@ -198,11 +188,11 @@ export default function ProfileScreen() {
     try {
       setUpdatingPhoto(true);
       setUserPhoto(photo);
-      
+
       // Note: You would implement a backend endpoint to save user profile photo
       // For now, we'll just save it locally
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
-      
+
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
       Alert.alert('Error', 'Failed to save profile photo');
@@ -216,9 +206,9 @@ export default function ProfileScreen() {
     try {
       setUpdatingPhoto(true);
       setUserPhoto('');
-      
+
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
-      
+
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
       Alert.alert('Error', 'Failed to remove profile photo');
@@ -284,13 +274,13 @@ export default function ProfileScreen() {
 
         {/* User Info */}
         <View style={styles.userSection}>
-          <TouchableOpacity 
-            style={styles.userAvatarContainer} 
+          <TouchableOpacity
+            style={styles.userAvatarContainer}
             onPress={updateProfilePhoto}
             disabled={updatingPhoto}
           >
             {userPhoto ? (
-              <Image 
+              <Image
                 source={{ uri: `data:image/jpeg;base64,${userPhoto}` }}
                 style={styles.userAvatarImage}
               />
@@ -346,19 +336,19 @@ export default function ProfileScreen() {
               <View style={styles.subscriptionHeader}>
                 <Text style={styles.planName}>
                   {subscriptionInfo.subscription_plan.charAt(0).toUpperCase() +
-                   subscriptionInfo.subscription_plan.slice(1)} Plan
+                    subscriptionInfo.subscription_plan.slice(1)} Plan
                 </Text>
                 <View style={[
-                  styles.statusBadge, 
+                  styles.statusBadge,
                   { backgroundColor: getStatusColor(subscriptionInfo.subscription_status) }
                 ]}>
                   <Text style={styles.statusText}>
                     {subscriptionInfo.subscription_status.charAt(0).toUpperCase() +
-                     subscriptionInfo.subscription_status.slice(1)}
+                      subscriptionInfo.subscription_status.slice(1)}
                   </Text>
                 </View>
               </View>
-              
+
               {subscriptionInfo.subscription_status === 'trial' && (
                 <Text style={styles.trialInfo}>
                   Trial ends: {formatDate(subscriptionInfo.trial_end_date)}
@@ -379,7 +369,7 @@ export default function ProfileScreen() {
                   <Ionicons name="checkmark" size={16} color="#2ecc71" />
                   <Text style={styles.featureText}>Medical Notes</Text>
                 </View>
-                
+
                 {subscriptionInfo.subscription_plan === 'regular' && (
                   <>
                     <View style={styles.feature}>
@@ -392,7 +382,7 @@ export default function ProfileScreen() {
                     </View>
                   </>
                 )}
-                
+
                 {subscriptionInfo.subscription_plan === 'pro' && (
                   <>
                     <View style={styles.feature}>
@@ -412,7 +402,7 @@ export default function ProfileScreen() {
               </View>
 
               {subscriptionInfo.subscription_plan === 'regular' && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.upgradeButton}
                   onPress={() => router.push('/upgrade')}
                 >
@@ -441,7 +431,7 @@ export default function ProfileScreen() {
 
         {/* Account Actions */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/contacts-sync')}
           >
@@ -458,19 +448,19 @@ export default function ProfileScreen() {
             <Text style={styles.actionText}>Send Feedback</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="settings" size={24} color="#666" />
             <Text style={styles.actionText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="help-circle" size={24} color="#666" />
             <Text style={styles.actionText}>Help & Support</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="document-text" size={24} color="#666" />
             <Text style={styles.actionText}>Privacy Policy</Text>

@@ -1,0 +1,22 @@
+FAIL app/profile.test.tsx
+  ΓùÅ Test suite failed to run
+
+    TypeError: Cannot read properties of undefined (reading 'ReactCurrentOwner')
+
+      1 | import React from 'react';
+    > 2 | import renderer, { act } from 'react-test-renderer';
+        | ^
+      3 | import ProfileScreen from './profile';
+      4 | import axios from 'axios';
+      5 |
+
+      at node_modules/react-test-renderer/cjs/react-test-renderer.development.js:494:46
+      at Object.<anonymous> (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:18680:5)
+      at Object.<anonymous> (node_modules/react-test-renderer/index.js:6:20)
+      at Object.require (app/profile.test.tsx:2:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.754 s
+Ran all test suites matching /app\\profile.test.tsx/i.

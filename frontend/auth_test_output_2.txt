@@ -1,0 +1,85 @@
+FAIL contexts/auth.test.tsx
+  ΓùÅ Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ΓÇó If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ΓÇó If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ΓÇó To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ΓÇó If you need a custom transformation specify a "transform" option in your config.
+     ΓÇó If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: F:\git-repos\doctor-log\doctor-log\frontend\contexts\auth.test.tsx: Unexpected token (22:4)
+
+      20 |     <Button title="Logout" onPress={logout} />
+      21 | </View>
+    > 22 |     );
+         |     ^
+      23 | };
+      24 |
+      25 | describe('AuthContext', () => {
+
+      at constructor (node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at TypeScriptParserMixin.toParseError [as raise] (node_modules/@babel/parser/src/tokenizer/index.ts:1507:19)
+      at TypeScriptParserMixin.raise [as unexpected] (node_modules/@babel/parser/src/tokenizer/index.ts:1547:16)
+      at TypeScriptParserMixin.unexpected (node_modules/@babel/parser/src/parser/expression.ts:1355:22)
+      at TypeScriptParserMixin.parseExprAtom (node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at TypeScriptParserMixin.parseExprAtom [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:742:23)
+      at TypeScriptParserMixin.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at TypeScriptParserMixin.parseUpdate (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at TypeScriptParserMixin.parseMaybeUnary (node_modules/@babel/parser/src/plugins/typescript/index.ts:3876:20)
+      at TypeScriptParserMixin.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at TypeScriptParserMixin.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at TypeScriptParserMixin.parseMaybeConditional (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at TypeScriptParserMixin.parseMaybeAssign (node_modules/@babel/parser/src/plugins/typescript/index.ts:3747:22)
+      at TypeScriptParserMixin.parseMaybeAssign [as parseExpressionBase] (node_modules/@babel/parser/src/parser/expression.ts:226:23)
+      at parseExpressionBase (node_modules/@babel/parser/src/parser/expression.ts:217:39)
+      at TypeScriptParserMixin.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3197:16)
+      at TypeScriptParserMixin.allowInAnd [as parseExpression] (node_modules/@babel/parser/src/parser/expression.ts:217:17)
+      at TypeScriptParserMixin.parseExpression (node_modules/@babel/parser/src/parser/statement.ts:688:23)
+      at TypeScriptParserMixin.parseStatementContent (node_modules/@babel/parser/src/plugins/typescript/index.ts:3223:20)
+      at TypeScriptParserMixin.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at TypeScriptParserMixin.parseStatementLike [as parseModuleItem] (node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at TypeScriptParserMixin.parseModuleItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at TypeScriptParserMixin.parseBlockBody [as parseProgram] (node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at TypeScriptParserMixin.parseProgram [as parseTopLevel] (node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at TypeScriptParserMixin.parseTopLevel (node_modules/@babel/parser/src/parser/index.ts:88:25)
+      at TypeScriptParserMixin.parse (node_modules/@babel/parser/src/plugins/typescript/index.ts:4337:20)
+      at parse (node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+          at normalizeFile.next (<anonymous>)
+      at run (node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (node_modules/gensync/index.js:251:28)
+      at sync (node_modules/gensync/index.js:89:14)
+      at fn (node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (node_modules/@babel/core/src/transform.ts:66:52)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.965 s
+Ran all test suites matching /contexts\\auth.test.tsx/i.

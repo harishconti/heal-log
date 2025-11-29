@@ -19,9 +19,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { patientSchema, PatientFormData } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
-import { database } from '@/models/database';
-import Patient from '@/models/Patient';
-import uuid from 'react-native-uuid';
+import { PatientService } from '@/services/patient_service';
 import { addBreadcrumb } from '@/utils/monitoring';
 
 const MEDICAL_GROUPS = [
@@ -117,21 +115,14 @@ export default function AddPatientScreen() {
     setLoading(true);
     addBreadcrumb('patient', `Attempting to add new patient: ${data.full_name}`);
     try {
-      await database.write(async () => {
-        await database.collections.get<Patient>('patients').create(patient => {
-          patient.patientId = `PAT-${uuid.v4()}`;
-          patient.name = data.full_name;
-          patient.phone = data.phone_number;
-          patient.email = data.email;
-          patient.address = data.address;
-          patient.location = location;
-          patient.initialComplaint = data.initial_complaint;
-          patient.initialDiagnosis = data.initial_diagnosis;
-          patient.photo = data.photo;
-          patient.group = medicalGroup;
-          patient.isFavorite = isFavorite;
-        });
+      await PatientService.createPatient({
+        ...data,
+        location,
+        group: medicalGroup,
+        photo,
+        is_favorite: isFavorite,
       });
+
       Alert.alert('Success', 'Patient added successfully!', [
         { text: 'OK', onPress: () => router.back() },
       ]);

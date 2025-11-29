@@ -1,7 +1,9 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
+from app.models.user import User
+from app.core.security import get_current_user
 
 router = APIRouter()
 
@@ -51,8 +53,14 @@ known_issues_db: List[KnownIssue] = [
 ]
 
 @router.get("/known-issues", response_model=List[KnownIssue], status_code=status.HTTP_200_OK)
-async def get_known_issues():
+async def get_known_issues(current_user: User = Depends(get_current_user)):
     """
     Retrieve a list of known issues for the beta.
+    Restricted to beta testers only.
     """
+    if not current_user.is_beta_tester:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access restricted to beta testers only."
+        )
     return known_issues_db

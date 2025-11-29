@@ -5,7 +5,55 @@ import uuid from 'react-native-uuid';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { Q } from '@nozbe/watermelondb';
 
+export interface PatientFilter {
+    search?: string;
+    sortBy?: 'name' | 'last_visit' | 'date_added';
+    sortOrder?: 'asc' | 'desc';
+    fromDate?: number;
+    toDate?: number;
+}
+
 export const PatientService = {
+    // ... existing methods ...
+
+    async queryPatients(filter: PatientFilter = {}) {
+        try {
+            const conditions = [];
+
+            if (filter.search) {
+                const searchStr = Q.sanitizeLikeString(filter.search);
+                conditions.push(
+                    Q.or(
+                        Q.where('name', Q.like(`%${searchStr}%`)),
+                        Q.where('phone', Q.like(`%${searchStr}%`))
+                    )
+                );
+            }
+
+            if (filter.fromDate) {
+                conditions.push(Q.where('updated_at', Q.gte(filter.fromDate)));
+            }
+
+            if (filter.toDate) {
+                conditions.push(Q.where('updated_at', Q.lte(filter.toDate)));
+            }
+
+            let sortColumn = 'name';
+            if (filter.sortBy === 'date_added') sortColumn = 'created_at';
+            if (filter.sortBy === 'last_visit') sortColumn = 'updated_at';
+
+            const sortOrder = filter.sortOrder === 'desc' ? Q.desc : Q.asc;
+
+            return await database.collections.get<Patient>('patients').query(
+                ...conditions,
+                Q.sortBy(sortColumn, sortOrder)
+            ).fetch();
+        } catch (error) {
+            console.error('Error querying patients:', error);
+            throw error;
+        }
+    },
+
     async createPatient(data: PatientFormData) {
         addBreadcrumb('patient_service', `Creating patient: ${data.full_name}`);
         try {
@@ -86,14 +134,4 @@ export const PatientService = {
         }
     },
 
-    async searchPatients(query: string) {
-        try {
-            return await database.collections.get<Patient>('patients').query(
-                Q.where('name', Q.like(`%${Q.sanitizeLikeString(query)}%`))
-            ).fetch();
-        } catch (error) {
-            console.error('Error searching patients:', error);
-            throw error;
-        }
-    }
 };

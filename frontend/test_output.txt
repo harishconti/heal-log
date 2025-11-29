@@ -1,22 +1,53 @@
-FAIL app/profile.test.tsx
-  ΓùÅ Test suite failed to run
+FAIL services/patient_search.test.ts
+  PatientService Search
+    ├ù queryPatients filters by name or phone (8 ms)
+    ├ù queryPatients filters by date range (1 ms)
+    ΓêÜ queryPatients sorts results (1 ms)
 
-    TypeError: Cannot read properties of undefined (reading 'ReactCurrentOwner')
+  ΓùÅ PatientService Search ΓÇ║ queryPatients filters by name or phone
 
-      1 | import React from 'react';
-    > 2 | import renderer, { act } from 'react-test-renderer';
-        | ^
-      3 | import ProfileScreen from './profile';
-      4 | import axios from 'axios';
-      5 |
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
 
-      at node_modules/react-test-renderer/cjs/react-test-renderer.development.js:494:46
-      at Object.<anonymous> (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:18680:5)
-      at Object.<anonymous> (node_modules/react-test-renderer/index.js:6:20)
-      at Object.require (app/profile.test.tsx:2:1)
+    Expected: ObjectContaining {"conditions": ArrayContaining [ObjectContaining {"left": "name", "right": {"value": "%John%"}, "type": "where"}, ObjectContaining {"left": "phone", "right": {"value": "%John%"}, "type": "where"}], "type": "or"}, Anything
+    Received: {"conditions": [{"comparison": {"operator": "like", "right": {"value": "%John%"}}, "left": "name", "type": "where"}, {"comparison": {"operator": "like", "right": {"value": "%John%"}}, "left": "phone", "type": "where"}], "type": "or"}, {"sortColumn": "name", "sortOrder": "asc", "type": "sortBy"}
+
+    Number of calls: 1
+
+      32 |
+      33 |         expect(database.collections.get).toHaveBeenCalledWith('patients');
+    > 34 |         expect(mockCollection.query).toHaveBeenCalledWith(
+         |                                      ^
+      35 |             expect.objectContaining({
+      36 |                 type: 'or',
+      37 |                 conditions: expect.arrayContaining([
+
+      at Object.toHaveBeenCalledWith (services/patient_search.test.ts:34:38)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ΓùÅ PatientService Search ΓÇ║ queryPatients filters by date range
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: ObjectContaining {"comparison": "gte", "left": "updated_at", "right": {"value": 1000}, "type": "where"}, ObjectContaining {"comparison": "lte", "left": "updated_at", "right": {"value": 2000}, "type": "where"}, Anything
+    Received: {"comparison": {"operator": "gte", "right": {"value": 1000}}, "left": "updated_at", "type": "where"}, {"comparison": {"operator": "lte", "right": {"value": 2000}}, "left": "updated_at", "type": "where"}, {"sortColumn": "name", "sortOrder": "asc", "type": "sortBy"}
+
+    Number of calls: 1
+
+      54 |         await PatientService.queryPatients({ fromDate: 1000, toDate: 2000 });
+      55 |
+    > 56 |         expect(mockCollection.query).toHaveBeenCalledWith(
+         |                                      ^
+      57 |             expect.objectContaining({ type: 'where', left: 'updated_at', comparison: 'gte', right: { value: 1000 } }),
+      58 |             expect.objectContaining({ type: 'where', left: 'updated_at', comparison: 'lte', right: { value: 2000 } }),
+      59 |             expect.anything()
+
+      at Object.toHaveBeenCalledWith (services/patient_search.test.ts:56:38)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
 
 Test Suites: 1 failed, 1 total
-Tests:       0 total
+Tests:       2 failed, 1 passed, 3 total
 Snapshots:   0 total
-Time:        1.754 s
-Ran all test suites matching /app\\profile.test.tsx/i.
+Time:        2.264 s
+Ran all test suites matching /services\\patient_search.test.ts/i.

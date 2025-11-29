@@ -36,3 +36,11 @@ export const registerSchema = z.object({
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export const noteSchema = z.object({
+  content: z.string().min(1, "Note content cannot be empty"),
+  visit_type: z.string().min(1, "Visit type is required"),
+  patient_id: z.string().min(1, "Patient ID is required"),
+});
+
+export type NoteFormData = z.infer<typeof noteSchema>;

@@ -55,28 +55,51 @@ const AppLayout = () => {
     );
   }
 
-  return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="welcome" />
-      </Stack>
-  );
-};
+  import { NetworkProvider } from '@/contexts/NetworkContext';
+  import OfflineIndicator from '@/components/core/OfflineIndicator';
 
-export default function RootLayout() {
-  return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppInitializer>
-            <AppLayout />
-          </AppInitializer>
-        </ThemeProvider>
-      </AuthProvider>
-    </ErrorBoundary>
-  );
-}
+  // ... existing imports
+
+  const AppLayout = () => {
+    // ... existing hooks
+
+    // ... existing useEffects
+
+    if (!fontsLoaded || !isReady) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" />
+        </View>
+      );
+    }
+
+    return (
+      <View style={{ flex: 1 }}>
+        <OfflineIndicator />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="welcome" />
+        </Stack>
+      </View>
+    );
+  };
+
+  export default function RootLayout() {
+    return (
+      <ErrorBoundary>
+        <NetworkProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <AppInitializer>
+                <AppLayout />
+              </AppInitializer>
+            </ThemeProvider>
+          </AuthProvider>
+        </NetworkProvider>
+      </ErrorBoundary>
+    );
+  }

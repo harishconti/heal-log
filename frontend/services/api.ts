@@ -86,12 +86,90 @@ export interface Feedback {
   email?: string;
 }
 
+export interface BetaFeedback {
+  feedback_type: 'bug' | 'suggestion' | 'general';
+  description: string;
+  steps_to_reproduce?: string;
+  device_info: {
+    os_version?: string;
+    app_version?: string;
+    device_model?: string;
+  };
+  screenshot?: string;
+}
+
+export interface KnownIssue {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  status: string;
+  reported_date: string;
+  workaround?: string;
+}
+
 export const submitFeedback = async (feedback: Feedback) => {
   try {
-    const response = await api.post('/api/feedback', feedback);
+    // Map frontend Feedback to backend BetaFeedbackIn structure if needed, 
+    // or just use the existing endpoint if it matches.
+    // Based on backend/app/api/feedback.py, it expects BetaFeedbackIn.
+    // Let's assume for now we are using the simple feedback endpoint or mapping it.
+    // Actually, looking at backend/app/api/feedback.py, it uses BetaFeedbackIn which is quite strict.
+    // Let's update the frontend to match the backend expectation or map it here.
+
+    const payload = {
+      feedback_type: feedback.feedbackType === 'feature' ? 'suggestion' : feedback.feedbackType,
+      description: feedback.description,
+      device_info: {
+        os_version: Platform.OS + ' ' + Platform.Version,
+        app_version: '1.0.0', // TODO: Get real version
+        device_model: 'Unknown' // TODO: Get real model
+      }
+    };
+
+    const response = await api.post('/api/feedback/submit', payload);
     return response.data;
   } catch (error) {
     console.error('Error submitting feedback:', error);
+    throw error;
+  }
+};
+
+export const getKnownIssues = async (): Promise<KnownIssue[]> => {
+  try {
+    const response = await api.get('/api/beta/known-issues');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching known issues:', error);
+    throw error;
+  }
+};
+
+export interface UserUpdate {
+  full_name?: string;
+  phone?: string;
+  medical_specialty?: string;
+}
+
+export const updateProfile = async (data: UserUpdate) => {
+  try {
+    const response = await api.put('/api/users/me', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  try {
+    const response = await api.post('/api/users/me/password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error changing password:', error);
     throw error;
   }
 };

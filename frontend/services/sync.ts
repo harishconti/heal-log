@@ -21,13 +21,6 @@ export async function sync() {
     console.log('🔑 Token exists:', token ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}` : 'null');
     console.log('🔑 Token length:', token?.length);
 
-    // Set the auth token for this sync session
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
-    // 🔍 DEBUG: Log the actual header being sent
-    const authHeader = api.defaults.headers.common['Authorization'];
-    console.log('📤 Authorization header:', authHeader ? `${authHeader.substring(0, 20)}...` : 'not set');
-
     console.log('🔄 [Sync] Starting sync process...');
 
     await synchronize({

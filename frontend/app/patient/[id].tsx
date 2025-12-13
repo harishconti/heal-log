@@ -10,7 +10,8 @@ import {
   Image,
   ActivityIndicator,
   TextInput,
-  Modal
+  Modal,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -51,6 +52,15 @@ function PatientDetailsScreen({ patient, notes }) {
     } catch (error) {
       Alert.alert('Error', 'Failed to update favorite status');
     }
+  };
+
+  const makeCall = (phoneNumber: string) => {
+    if (!phoneNumber) {
+      Alert.alert('Error', 'No phone number available');
+      return;
+    }
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(`tel:${phoneNumber}`);
   };
 
   const addNote = async () => {
@@ -143,10 +153,17 @@ function PatientDetailsScreen({ patient, notes }) {
           <View style={styles.contactSection}>
             <Text style={styles.sectionTitle}>Contact Information</Text>
             {patient.phone && (
-              <View style={styles.contactItem}>
+              <TouchableOpacity
+                style={styles.contactItem}
+                onPress={() => makeCall(patient.phone)}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="call" size={20} color="#2ecc71" />
-                <Text style={styles.contactText}>{patient.phone}</Text>
-              </View>
+                <Text style={[styles.contactText, { flex: 1 }]}>{patient.phone}</Text>
+                <View style={styles.callButton}>
+                  <Ionicons name="call-outline" size={16} color="#fff" />
+                </View>
+              </TouchableOpacity>
             )}
             {patient.email && (
               <View style={styles.contactItem}>
@@ -440,6 +457,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     marginLeft: 12,
+  },
+  callButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2ecc71',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   medicalCard: {
     backgroundColor: '#fff',

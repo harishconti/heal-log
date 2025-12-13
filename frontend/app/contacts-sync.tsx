@@ -19,7 +19,7 @@ import { useAppStore } from '@/store/useAppStore';
 export default function ContactsSyncScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  
+
   const { patients, loading: storeLoading } = useAppStore();
 
   const [syncing, setSyncing] = useState(false);
@@ -34,7 +34,7 @@ export default function ContactsSyncScreen() {
       router.replace('/login');
       return;
     }
-    
+
     loadScreenData();
     checkPhoneCapabilities();
   }, [isAuthenticated]);
@@ -62,12 +62,12 @@ export default function ContactsSyncScreen() {
   const checkPhoneCapabilities = async () => {
     try {
       const { PhoneIntegration } = await import('../utils/phoneIntegration');
-      
+
       const [canCall, canSMS] = await Promise.all([
         PhoneIntegration.canMakePhoneCalls(),
         PhoneIntegration.canSendSMS()
       ]);
-      
+
       setPhoneSupported(canCall);
       setSmsSupported(canSMS);
     } catch (error) {
@@ -78,11 +78,11 @@ export default function ContactsSyncScreen() {
   const handleSyncContacts = async () => {
     try {
       setSyncing(true);
-      
+
       const { PhoneIntegration } = await import('../utils/phoneIntegration');
-      
+
       // Convert patients to contact format
-      const contactData = patients
+      const contactData = (patients || [])
         .filter(p => p.phone)
         .map(p => ({
           id: p.id,
@@ -94,14 +94,14 @@ export default function ContactsSyncScreen() {
         }));
 
       const success = await PhoneIntegration.syncContactsToDevice(contactData);
-      
+
       if (success) {
         Alert.alert(
           'Success',
           `Successfully synced ${contactData.length} medical contacts to your device. You will now see patient names when they call.`,
           [{ text: 'OK' }]
         );
-        
+
         await AsyncStorage.setItem('contacts_sync_enabled', 'true');
         setSyncEnabled(true);
         await loadScreenData(); // Refresh data
@@ -131,10 +131,10 @@ export default function ContactsSyncScreen() {
           onPress: async () => {
             try {
               setSyncing(true);
-              
+
               const { PhoneIntegration } = await import('@/utils/phoneIntegration');
               const success = await PhoneIntegration.removeContactsFromDevice();
-              
+
               if (success) {
                 Alert.alert('Success', 'Medical contacts removed from device');
                 await AsyncStorage.setItem('contacts_sync_enabled', 'false');
@@ -157,7 +157,7 @@ export default function ContactsSyncScreen() {
   const toggleAutoSync = async (enabled: boolean) => {
     try {
       await AsyncStorage.setItem('auto_sync_enabled', enabled.toString());
-      
+
       if (enabled) {
         Alert.alert(
           'Auto Sync Enabled',
@@ -220,7 +220,7 @@ export default function ContactsSyncScreen() {
               </Text>
             </View>
             <View style={[
-              styles.statusIndicator, 
+              styles.statusIndicator,
               { backgroundColor: syncEnabled ? '#2ecc71' : '#e74c3c' }
             ]} />
           </View>
@@ -235,7 +235,7 @@ export default function ContactsSyncScreen() {
         {/* Sync Controls */}
         <View style={styles.syncCard}>
           <Text style={styles.sectionTitle}>Sync Management</Text>
-          
+
           <View style={styles.syncInfo}>
             <Ionicons name="information-circle" size={20} color="#3498db" />
             <Text style={styles.syncInfoText}>
@@ -244,7 +244,7 @@ export default function ContactsSyncScreen() {
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.syncButton, syncing && styles.disabledButton]}
               onPress={handleSyncContacts}
               disabled={syncing}
@@ -260,7 +260,7 @@ export default function ContactsSyncScreen() {
             </TouchableOpacity>
 
             {syncEnabled && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.removeButton, syncing && styles.disabledButton]}
                 onPress={handleRemoveContacts}
                 disabled={syncing}
@@ -272,28 +272,28 @@ export default function ContactsSyncScreen() {
           </View>
 
           <Text style={styles.syncCount}>
-            {patients.filter(p => p.phone).length} patients with phone numbers
+            {(patients || []).filter(p => p.phone).length} patients with phone numbers
           </Text>
         </View>
 
         {/* Device Capabilities */}
         <View style={styles.capabilitiesCard}>
           <Text style={styles.sectionTitle}>Device Capabilities</Text>
-          
+
           <View style={styles.capabilityItem}>
-            <Ionicons 
-              name={phoneSupported ? 'checkmark-circle' : 'close-circle'} 
-              size={24} 
-              color={phoneSupported ? '#2ecc71' : '#e74c3c'} 
+            <Ionicons
+              name={phoneSupported ? 'checkmark-circle' : 'close-circle'}
+              size={24}
+              color={phoneSupported ? '#2ecc71' : '#e74c3c'}
             />
             <Text style={styles.capabilityText}>Phone Calls</Text>
           </View>
 
           <View style={styles.capabilityItem}>
-            <Ionicons 
-              name={smsSupported ? 'checkmark-circle' : 'close-circle'} 
-              size={24} 
-              color={smsSupported ? '#2ecc71' : '#e74c3c'} 
+            <Ionicons
+              name={smsSupported ? 'checkmark-circle' : 'close-circle'}
+              size={24}
+              color={smsSupported ? '#2ecc71' : '#e74c3c'}
             />
             <Text style={styles.capabilityText}>SMS Messages</Text>
           </View>
@@ -303,7 +303,7 @@ export default function ContactsSyncScreen() {
         {callLogs.length > 0 && (
           <View style={styles.callLogsCard}>
             <Text style={styles.sectionTitle}>Recent Patient Calls</Text>
-            
+
             {callLogs.map((call, index) => (
               <View key={index} style={styles.callLogItem}>
                 <View style={styles.callInfo}>
@@ -322,21 +322,21 @@ export default function ContactsSyncScreen() {
         {/* Instructions */}
         <View style={styles.instructionsCard}>
           <Text style={styles.sectionTitle}>How It Works</Text>
-          
+
           <View style={styles.instruction}>
             <Text style={styles.instructionNumber}>1</Text>
             <Text style={styles.instructionText}>
               Tap "Sync Contacts" to add your medical patients to your device contacts
             </Text>
           </View>
-          
+
           <View style={styles.instruction}>
             <Text style={styles.instructionNumber}>2</Text>
             <Text style={styles.instructionText}>
               When patients call, you'll see their name and patient ID on caller ID
             </Text>
           </View>
-          
+
           <View style={styles.instruction}>
             <Text style={styles.instructionNumber}>3</Text>
             <Text style={styles.instructionText}>

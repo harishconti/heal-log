@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
+import api from '@/services/api';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -62,7 +62,7 @@ export default function ProfileScreen() {
 
       // Fetch stats from correct endpoint
       try {
-        const statsResponse = await axios.get(`${BACKEND_URL}/api/patients/stats/`);
+        const statsResponse = await api.get('/api/patients/stats/');
         if (statsResponse.data && statsResponse.data.stats) {
           setStats(statsResponse.data.stats);
         } else {

@@ -1,6 +1,7 @@
 from typing import List
+import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user, require_role
@@ -41,10 +42,36 @@ async def update_user_me(
     """
     Update current user's profile.
     """
-    # Convert UserUpdate to dict, excluding None values
-    update_data = user_in.dict(exclude_none=True)
-    user = await user_service.update(current_user.id, update_data)
-    return user
+    try:
+        # Log the update attempt
+        logging.info(f"[UPDATE_USER] User {current_user.id} attempting profile update")
+        logging.debug(f"[UPDATE_USER] Update data: {user_in.dict(exclude_none=True)}")
+        
+        # Convert UserUpdate to dict, excluding None values
+        update_data = user_in.dict(exclude_none=True)
+        
+        if not update_data:
+            logging.warning(f"[UPDATE_USER] No fields to update for user {current_user.id}")
+            return current_user
+        
+        # Update user
+        user = await user_service.update(current_user.id, update_data)
+        
+        if not user:
+            logging.error(f"[UPDATE_USER] User {current_user.id} not found during update")
+            raise NotFoundException(detail="User not found")
+        
+        logging.info(f"[UPDATE_USER] User {current_user.id} profile updated successfully")
+        return user
+        
+    except NotFoundException:
+        raise
+    except Exception as e:
+        logging.error(f"[UPDATE_USER] Error updating user {current_user.id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update user profile: {str(e)}"
+        )
 
 @router.post("/me/password")
 async def change_password(

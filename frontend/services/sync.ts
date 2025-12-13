@@ -31,17 +31,28 @@ export async function sync() {
           console.warn('Syncing with token:', token ? 'Token exists' : 'No token');
           console.warn('Sync pull timestamp:', lastPulledAt);
 
-          // Send as JSON body to match backend SyncRequest schema
-          const response = await api.post('/api/sync/pull', {
-            last_pulled_at: lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : null,
-            changes: {} // Pull doesn't send changes, only push does
-          }, {
-            timeout: 30000, // 30 second timeout
-          });
+          // Import retry utility
+          const { retrySyncOperation } = require('@/utils/retry');
 
-          if (response.status !== 200) {
-            throw new Error(JSON.stringify(response.data));
-          }
+          // Wrap API call in retry logic
+          const pullOperation = async () => {
+            // Send as JSON body to match backend SyncRequest schema
+            const response = await api.post('/api/sync/pull', {
+              last_pulled_at: lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : null,
+              changes: {} // Pull doesn't send changes, only push does
+            }, {
+              timeout: 30000, // 30 second timeout
+            });
+
+            if (response.status !== 200) {
+              throw new Error(JSON.stringify(response.data));
+            }
+
+            return response;
+          };
+
+          // Execute with retry logic
+          const response = await retrySyncOperation(pullOperation, 'Sync Pull');
 
           const { changes, timestamp } = response.data;
           console.log('✅ [Sync] Successfully pulled changes:', Object.keys(changes).length);

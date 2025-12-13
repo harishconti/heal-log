@@ -7,11 +7,10 @@ import uuid
 import logging
 
 from app.core.config import settings
-from app.schemas.user import UserPlan
+from app.schemas.user import UserPlan, User  # ✅ Import User from schemas (Beanie Document)
 from app.schemas.role import UserRole
 from app.core.hashing import verify_password
 from app.services import user_service
-from app.models.user import User
 
 logger = logging.getLogger(__name__)
 

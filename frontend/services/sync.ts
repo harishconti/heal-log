@@ -4,13 +4,11 @@ import { addBreadcrumb } from '@/utils/monitoring';
 import * as SecureStore from 'expo-secure-store';
 import api from './api';
 
-const BACKEND_URL = 'https://doctor-log-production.up.railway.app';
-
 export async function sync() {
   try {
     // Retrieve the auth token from SecureStore
     const token = await SecureStore.getItemAsync('token');
-    
+
     if (!token) {
       console.warn('❌ No auth token found, skipping sync');
       addBreadcrumb('sync', 'No auth token found', 'warning');
@@ -28,18 +26,16 @@ export async function sync() {
       pullChanges: async ({ lastPulledAt }) => {
         addBreadcrumb('sync', `Pulling changes from server since ${lastPulledAt}`);
         console.log('⬇️ [Sync] Starting pull...', { last_pulled_at: lastPulledAt });
-        
+
         try {
           console.warn('Syncing with token:', token ? 'Token exists' : 'No token');
-          console.warn('Sync pull params (raw):', { last_pulled_at: lastPulledAt });
+          console.warn('Sync pull timestamp:', lastPulledAt);
 
-          const params = {
-            last_pulled_at: lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : null
-          };
-
-          // Use the centralized api instance with auth token
-          const response = await api.post('/api/sync/pull', null, {
-            params,
+          // Send as JSON body to match backend SyncRequest schema
+          const response = await api.post('/api/sync/pull', {
+            last_pulled_at: lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : null,
+            changes: {} // Pull doesn't send changes, only push does
+          }, {
             timeout: 30000, // 30 second timeout
           });
 
@@ -56,7 +52,7 @@ export async function sync() {
           if (error.response) {
             console.error('❌ [Sync] Pull server error:', error.response.status, error.response.data);
             addBreadcrumb('sync', `Server error: ${error.response.status}`, 'error');
-            
+
             // If 401, token might be expired
             if (error.response.status === 401) {
               console.warn('🔐 [Sync] Auth token expired or invalid');
@@ -69,19 +65,21 @@ export async function sync() {
             console.error('❌ [Sync] Pull error:', error.message);
             addBreadcrumb('sync', 'Pull error', 'error');
           }
-          
+
           // Graceful degradation - return empty changes
           return { changes: {}, timestamp: lastPulledAt || Date.now() };
         }
       },
-      
+
       pushChanges: async ({ changes, lastPulledAt }) => {
         addBreadcrumb('sync', `Pushing ${Object.keys(changes).length} changes to server`);
         console.log('⬆️ [Sync] Starting push...', Object.keys(changes).length, 'changes');
-        
+
         try {
-          const response = await api.post('/api/sync/push', { changes }, {
-            params: { last_pulled_at: lastPulledAt },
+          const response = await api.post('/api/sync/push', {
+            changes,
+            last_pulled_at: lastPulledAt
+          }, {
             timeout: 30000,
           });
 
@@ -102,9 +100,9 @@ export async function sync() {
         }
       },
     });
-    
+
     console.log('✅ [Sync] Sync completed successfully');
-    
+
   } catch (error: any) {
     console.error('❌ [Sync] Sync failed globally:', error);
     console.error('❌ [Sync] Error details:', {

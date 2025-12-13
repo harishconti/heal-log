@@ -64,15 +64,25 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """
         Updates a user's information.
         """
-        user = await self.get_user_by_id(user_id)
-        if not user:
-            return None
+        logger.info(f"[USER_SERVICE] Updating user: {user_id} with data: {user_data}")
+        try:
+            user = await self.get_user_by_id(user_id)
+            if not user:
+                logger.warning(f"[USER_SERVICE] User not found for update: {user_id}")
+                return None
 
-        for key, value in user_data.items():
-            setattr(user, key, value)
+            # Update only provided fields
+            for key, value in user_data.items():
+                if hasattr(user, key):
+                    setattr(user, key, value)
+                    logger.debug(f"[USER_SERVICE] Set {key} = {value}")
 
-        await user.save()
-        return user
+            await user.save()
+            logger.info(f"[USER_SERVICE] User updated successfully: {user_id}")
+            return user
+        except Exception as e:
+            logger.error(f"[USER_SERVICE] Error updating user {user_id}: {str(e)}", exc_info=True)
+            raise
 
 # Create a singleton instance of the service
 user_service = UserService(User)

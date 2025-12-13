@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log('✅ [Auth] User data fetched successfully');
             } catch (error: any) {
               console.error('❌ [Auth] Blocking auth failed:', error);
-              if (error.response?.status === 401) {
+              if (error.response?.status === 401 || error.response?.status === 404) {
                 await logout();
               } else {
                 console.warn('⚠️ [Auth] Server error without cached user. Keeping token but user is null.');
@@ -263,10 +263,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(userData);
       console.log('✅ [Auth] User data refreshed successfully');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [Auth] Error refreshing user data:', error);
-      // If refresh fails, logout user
-      await logout();
+      // If refresh fails with 401 or 404, logout user
+      if (error.response?.status === 401 || error.response?.status === 404) {
+        await logout();
+      }
     }
   };
 

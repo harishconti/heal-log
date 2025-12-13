@@ -41,7 +41,9 @@ async def update_user_me(
     """
     Update current user's profile.
     """
-    user = await user_service.update(current_user, user_in)
+    # Convert UserUpdate to dict, excluding None values
+    update_data = user_in.dict(exclude_none=True)
+    user = await user_service.update(current_user.id, update_data)
     return user
 
 @router.post("/me/password")

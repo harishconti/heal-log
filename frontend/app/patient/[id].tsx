@@ -67,7 +67,9 @@ function PatientDetailsScreen({ patient, notes }) {
       });
       setNewNote('');
       setShowAddNote(false);
-      triggerHaptic(Haptics.NotificationFeedbackType.Success);
+      if (settings.hapticEnabled) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to add note');
     }

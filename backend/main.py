@@ -115,6 +115,7 @@ app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemet
 app.include_router(api.beta.router, prefix="/api/beta", tags=["Beta"])
 app.include_router(api.health.router, prefix="/api", tags=["Health"])
 app.include_router(api.metrics.router, prefix="/api", tags=["Metrics"])
+app.include_router(api.version.router, prefix="/api", tags=["Version"])
 
 # --- Health Check Endpoint ---
 @app.get("/health")

@@ -1,0 +1,20 @@
+{
+    "version": "1.0.1",
+    "build_date": "2025-12-13T23:44:00+05:30",
+    "commit": "auto-populated-on-deploy",
+    "release_notes": "Fixed User import in security.py for sync operations, added database indexes, retry logic, version tracking API",
+    "features": [
+        "Authentication (login, register, token refresh)",
+        "Patient management (CRUD)",
+        "Clinical notes",
+        "Sync (pull/push)",
+        "User profile management",
+        "Beta features (known issues)"
+    ],
+    "fixes": [
+        "Fixed sync 404 User not found error",
+        "Fixed profile update 500 error",
+        "Added retry logic with exponential backoff",
+        "Added database indexes for performance"
+    ]
+}

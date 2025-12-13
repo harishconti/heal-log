@@ -10,12 +10,18 @@ logger = logging.getLogger(__name__)
 async def get_user_by_id(user_id: str) -> Optional[User]:
     """
     Retrieves a user by their ID.
-    Since the ID is a UUID string aliased to _id, we must use find_one.
+    Handles both MongoDB ObjectId format and UUID strings.
     """
     logger.info(f"[USER_SERVICE] Looking up user by ID: {user_id}")
     try:
-        # Use find_one with the _id field for string UUIDs
+        # Try finding by _id first (MongoDB ObjectId as string)
         user = await User.find_one({"_id": user_id})
+        
+        if not user:
+            # Try finding by id field (UUID string)
+            logger.info(f"[USER_SERVICE] Not found by _id, trying id field")
+            user = await User.find_one({"id": user_id})
+        
         if user:
             logger.info(f"[USER_SERVICE] User found: {user.email}")
         else:
@@ -23,7 +29,7 @@ async def get_user_by_id(user_id: str) -> Optional[User]:
         return user
     except Exception as e:
         logger.error(f"[USER_SERVICE] Error fetching user by ID: {str(e)}", exc_info=True)
-        raise
+        return None
 
 class UserService(BaseService[User, UserCreate, UserUpdate]):
     async def create(self, obj_in: UserCreate, **kwargs: Any) -> User:

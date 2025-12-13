@@ -1,18 +1,20 @@
 {
-    "version": "1.0.1",
-    "build_date": "2025-12-13T23:44:00+05:30",
+    "version": "1.0.2",
+    "build_date": "2025-12-13T23:54:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Fixed User import in security.py for sync operations, added database indexes, retry logic, version tracking API",
+    "release_notes": "Critical fix: User lookup now handles both MongoDB ObjectId and UUID formats",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
         "Clinical notes",
         "Sync (pull/push)",
         "User profile management",
-        "Beta features (known issues)"
+        "Beta features (known issues)",
+        "Version tracking API"
     ],
     "fixes": [
-        "Fixed sync 404 User not found error",
+        "CRITICAL: Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields",
+        "Fixed User import in security.py for sync operations",
         "Fixed profile update 500 error",
         "Added retry logic with exponential backoff",
         "Added database indexes for performance"

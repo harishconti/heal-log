@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 from .base_service import BaseService
 import uuid
 import logging
+from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -14,16 +15,28 @@ async def get_user_by_id(user_id: str) -> Optional[User]:
     """
     logger.info(f"[USER_SERVICE] Looking up user by ID: {user_id}")
     try:
-        # Try finding by _id first (MongoDB ObjectId as string)
-        user = await User.find_one({"_id": user_id})
+        # Try converting to ObjectId first (for MongoDB _id queries)
+        try:
+            oid = ObjectId(user_id)
+            user = await User.find_one({"_id": oid})
+            if user:
+                logger.info(f"[USER_SERVICE] User found by ObjectId: {user.email}")
+                return user
+        except Exception as oid_error:
+            logger.debug(f"[USER_SERVICE] Not a valid ObjectId: {oid_error}")
         
-        if not user:
-            # Try finding by id field (UUID string)
-            logger.info(f"[USER_SERVICE] Not found by _id, trying id field")
-            user = await User.find_one({"id": user_id})
+        # Fallback: Try as string _id
+        user = await User.find_one({"_id": user_id})
+        if user:
+            logger.info(f"[USER_SERVICE] User found by string _id: {user.email}")
+            return user
+            
+        # Fallback: Try by id field (UUID string)
+        logger.info(f"[USER_SERVICE] Not found by _id, trying id field")
+        user = await User.find_one({"id": user_id})
         
         if user:
-            logger.info(f"[USER_SERVICE] User found: {user.email}")
+            logger.info(f"[USER_SERVICE] User found by id field: {user.email}")
         else:
             logger.warning(f"[USER_SERVICE] User not found for ID: {user_id}")
         return user

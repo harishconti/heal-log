@@ -1,8 +1,8 @@
 {
-    "version": "1.0.2",
-    "build_date": "2025-12-13T23:54:00+05:30",
+    "version": "1.0.3",
+    "build_date": "2025-12-14T00:10:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Critical fix: User lookup now handles both MongoDB ObjectId and UUID formats",
+    "release_notes": "CRITICAL FIX: Convert string user_id to ObjectId for MongoDB queries",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
@@ -13,7 +13,8 @@
         "Version tracking API"
     ],
     "fixes": [
-        "CRITICAL: Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields",
+        "CRITICAL: Convert string ID to MongoDB ObjectId() before querying database",
+        "Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields",
         "Fixed User import in security.py for sync operations",
         "Fixed profile update 500 error",
         "Added retry logic with exponential backoff",

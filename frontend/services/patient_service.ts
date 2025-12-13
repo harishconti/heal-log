@@ -4,6 +4,7 @@ import { PatientFormData } from '@/lib/validation';
 import uuid from 'react-native-uuid';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { Q } from '@nozbe/watermelondb';
+import { generatePatientId } from '@/utils/patientIdGenerator';
 
 export interface PatientFilter {
     search?: string;
@@ -57,9 +58,11 @@ export const PatientService = {
     async createPatient(data: PatientFormData) {
         addBreadcrumb('patient_service', `Creating patient: ${data.full_name}`);
         try {
+            const patientId = await generatePatientId('PAT');
+
             return await database.write(async () => {
                 return await database.collections.get<Patient>('patients').create(patient => {
-                    patient.patientId = `PAT-${uuid.v4()}`;
+                    patient.patientId = patientId;
                     patient.name = data.full_name;
                     patient.phone = data.phone_number || '';
                     patient.email = data.email || '';

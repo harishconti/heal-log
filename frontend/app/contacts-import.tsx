@@ -17,7 +17,7 @@ import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import * as Haptics from 'expo-haptics';
 import { useAppStore } from '@/store/useAppStore';
-import uuid from 'react-native-uuid';
+import { generatePatientId } from '@/utils/patientIdGenerator';
 
 interface DeviceContact {
     id: string;
@@ -102,9 +102,10 @@ export default function ContactsImportScreen() {
                 for (const contact of contactsToImport) {
                     const phone = contact.phoneNumbers?.[0]?.number || '';
                     const email = contact.emails?.[0]?.email || '';
+                    const patientId = await generatePatientId('IMP');
 
                     await database.collections.get<Patient>('patients').create(patient => {
-                        patient.patientId = `IMPORTED-${uuid.v4().toString().substring(0, 8)}`;
+                        patient.patientId = patientId;
                         patient.name = contact.name || 'Unknown';
                         patient.phone = phone;
                         patient.email = email;

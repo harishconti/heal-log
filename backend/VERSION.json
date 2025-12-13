@@ -1,8 +1,8 @@
 {
-    "version": "1.0.3",
-    "build_date": "2025-12-14T00:10:00+05:30",
+    "version": "1.0.4",
+    "build_date": "2025-12-14T00:24:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "CRITICAL FIX: Convert string user_id to ObjectId for MongoDB queries",
+    "release_notes": "Fixed email validation error by sanitizing empty strings to None",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
@@ -13,7 +13,8 @@
         "Version tracking API"
     ],
     "fixes": [
-        "CRITICAL: Convert string ID to MongoDB ObjectId() before querying database",
+        "Fixed sync push 409 error: Empty email strings now converted to None",
+        "Convert string ID to MongoDB ObjectId() before querying database",
         "Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields",
         "Fixed User import in security.py for sync operations",
         "Fixed profile update 500 error",

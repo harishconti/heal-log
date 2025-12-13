@@ -68,10 +68,18 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
     This version uses Beanie Documents for creating and updating records.
     """
     try:
+        # Helper function to sanitize patient data
+        def sanitize_patient_data(data: dict) -> dict:
+            """Convert empty strings to None for optional email field"""
+            if 'email' in data and data['email'] == '':
+                data['email'] = None
+            return data
+        
         # Process created records
         if 'patients' in changes and 'created' in changes['patients']:
             for patient_data in changes['patients']['created']:
                 patient_data['user_id'] = user_id
+                patient_data = sanitize_patient_data(patient_data)
                 new_patient = Patient(**patient_data)
                 await new_patient.insert()
 
@@ -85,6 +93,7 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
         if 'patients' in changes and 'updated' in changes['patients']:
             for patient_data in changes['patients']['updated']:
                 patient_id = patient_data.pop('id')
+                patient_data = sanitize_patient_data(patient_data)
                 patient = await Patient.get(patient_id)
                 if patient and patient.user_id == user_id:
                     client_updated_at = datetime.fromtimestamp(patient_data['updated_at'] / 1000.0, tz=timezone.utc)

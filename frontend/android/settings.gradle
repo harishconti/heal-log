@@ -31,7 +31,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'Clinic OS Lite'
+rootProject.name = 'PatientLog'
 
 expoAutolinking.useExpoVersionCatalog()
 

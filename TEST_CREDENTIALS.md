@@ -1,5 +1,9 @@
 # Test Credentials & Configuration
 
+> ⚠️ **PRIVATE - DO NOT SHARE WITH BETA TESTERS**
+> 
+> This file contains login credentials for testing. Keep this file secure and do not distribute to external testers.
+
 ## Demo Accounts
 
 The following demo accounts are available for testing:

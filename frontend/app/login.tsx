@@ -28,11 +28,11 @@ export default function LoginScreen() {
   const { theme } = useTheme();
   const { loading, setLoading } = useAppStore();
 
-  const { control, handleSubmit, setValue } = useForm<LoginFormData>({
+  const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'dr.sarah@clinic.com', // Pre-filled for demo
-      password: 'password123',   // Pre-filled for demo
+      email: '',
+      password: '',
     },
   });
 
@@ -53,16 +53,6 @@ export default function LoginScreen() {
     router.push('/register');
   };
 
-  const loadDemoAccount = (userType: 'cardiology' | 'physiotherapy') => {
-    if (userType === 'cardiology') {
-      setValue('email', 'dr.sarah@clinic.com');
-      setValue('password', 'password123');
-    } else {
-      setValue('email', 'dr.mike@physio.com');
-      setValue('password', 'password123');
-    }
-  };
-
   const styles = getStyles(theme);
 
   return (
@@ -77,25 +67,6 @@ export default function LoginScreen() {
             <Ionicons name="medical" size={64} color={theme.colors.primary} />
             <Text style={styles.title}>Medical Contacts</Text>
             <Text style={styles.subtitle}>Professional Patient Management</Text>
-          </View>
-
-          {/* Demo Accounts */}
-          <View style={styles.demoSection}>
-            <Text style={styles.demoTitle}>Demo Accounts:</Text>
-            <View style={styles.demoButtons}>
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => loadDemoAccount('cardiology')}
-              >
-                <Text style={styles.demoButtonText}>Dr. Sarah (Cardiology)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => loadDemoAccount('physiotherapy')}
-              >
-                <Text style={styles.demoButtonText}>Dr. Mike (Physiotherapy)</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           {/* Login Form */}
@@ -191,34 +162,6 @@ const getStyles = (theme) => StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  demoSection: {
-    backgroundColor: theme.colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 32,
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  demoButtons: {
-    gap: 8,
-  },
-  demoButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  demoButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
     textAlign: 'center',
   },
   form: {

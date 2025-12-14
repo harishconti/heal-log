@@ -79,5 +79,10 @@
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
+  "overrides": {
+    "@nozbe/with-observables": {
+      "@types/react": "$@types/react"
+    }
+  },
   "private": true
 }

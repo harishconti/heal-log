@@ -1,8 +1,8 @@
 {
-    "version": "1.0.4",
-    "build_date": "2025-12-14T00:24:00+05:30",
+    "version": "1.0.5",
+    "build_date": "2025-12-14T10:21:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Fixed email validation error by sanitizing empty strings to None",
+    "release_notes": "Beta testing cleanup: removed demo login credentials from UI",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

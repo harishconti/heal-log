@@ -1,8 +1,8 @@
 {
-    "version": "1.0.7",
-    "build_date": "2025-12-14T10:48:00+05:30",
+    "version": "1.0.8",
+    "build_date": "2025-12-14T11:04:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Updated all dependencies to Expo SDK 54 compatible versions, fixed flash-list Kotlin build error",
+    "release_notes": "Added react-native-worklets dependency for reanimated 4.x compatibility",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

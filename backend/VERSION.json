@@ -1,8 +1,8 @@
 {
-    "version": "1.0.14",
-    "build_date": "2025-12-14T21:35:00+05:30",
-    "commit": "auto-populated-on-deploy",
-    "release_notes": "Updated app logo to new PatientLog branding, cleaned up documentation (removed 15 redundant .md files)",
+    "version": "1.0.17",
+    "build_date": "2025-12-15T00:15:00+05:30",
+    "commit": "dark-mode-complete",
+    "release_notes": "Implemented complete dark mode support for profile and add-patient screens. All colors now use theme values.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

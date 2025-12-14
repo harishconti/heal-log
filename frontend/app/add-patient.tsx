@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
@@ -41,6 +42,7 @@ const MEDICAL_GROUPS = [
 ];
 
 export default function AddPatientScreen() {
+  const { theme } = useTheme();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -138,6 +140,8 @@ export default function AddPatientScreen() {
       setLoading(false);
     }
   };
+
+  const styles = createStyles(theme);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -365,16 +369,17 @@ export default function AddPatientScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   keyboardAvoid: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -404,7 +409,7 @@ const styles = StyleSheet.create({
   photoSection: {
     alignItems: 'center',
     paddingVertical: 24,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginBottom: 16,
   },
   photoContainer: {
@@ -420,27 +425,27 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#dee2e6',
+    borderColor: theme.colors.border,
     borderStyle: 'dashed',
   },
   photoText: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginTop: 4,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginBottom: 16,
     padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 16,
   },
   inputGroup: {
@@ -457,35 +462,37 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
+    color: theme.colors.text,
   },
   textAreaInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
     minHeight: 80,
+    color: theme.colors.text,
   },
   pickerButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -493,7 +500,7 @@ const styles = StyleSheet.create({
   },
   pickerText: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
   },
   favoriteOption: {
     paddingVertical: 12,
@@ -505,13 +512,13 @@ const styles = StyleSheet.create({
   },
   favoriteText: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 12,
     fontWeight: '500',
   },
   favoriteSubtext: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginLeft: 36,
   },
   modalOverlay: {
@@ -522,7 +529,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 20,
     width: '100%',
@@ -531,17 +538,18 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 16,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     marginBottom: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
+    color: theme.colors.text,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -553,11 +561,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   modalCancelText: {
-    color: '#666',
+    color: theme.colors.textSecondary,
     fontSize: 16,
   },
   modalCreateButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -568,3 +576,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+

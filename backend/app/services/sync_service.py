@@ -14,13 +14,15 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         # Convert last_pulled_at from milliseconds timestamp to a timezone-aware datetime object
         last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0, tz=timezone.utc) if last_pulled_at else datetime.min.replace(tzinfo=timezone.utc)
 
-        # Fetch created and updated records using Beanie's async queries
+        # Fetch created records (created AFTER last pull)
         created_patients_cursor = Patient.find(
             Patient.user_id == user_id,
             Patient.created_at > last_pulled_at_dt
         )
+        # Fetch updated records (created BEFORE last pull, but updated AFTER)
         updated_patients_cursor = Patient.find(
             Patient.user_id == user_id,
+            Patient.created_at <= last_pulled_at_dt,
             Patient.updated_at > last_pulled_at_dt,
         )
 
@@ -30,8 +32,8 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         )
         updated_notes_cursor = ClinicalNote.find(
             ClinicalNote.user_id == user_id,
+            ClinicalNote.created_at <= last_pulled_at_dt,
             ClinicalNote.updated_at > last_pulled_at_dt,
-            ClinicalNote.created_at <= last_pulled_at_dt
         )
 
         created_patients = await created_patients_cursor.to_list()

@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import { Patient } from '@/models/Patient';
@@ -34,6 +35,7 @@ interface Stats {
 }
 
 export default function ProfileScreen() {
+  const { theme, isDark } = useTheme();
   const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const { settings, updateSettings } = useAppStore(
@@ -259,19 +261,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
@@ -426,21 +430,6 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Preferences Section */}
-        <View style={styles.preferencesSection}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.preferenceItem}>
-            <Ionicons name="pulse" size={24} color="#666" />
-            <Text style={styles.actionText}>Enable Haptic Feedback</Text>
-            <Switch
-              value={settings.hapticEnabled}
-              onValueChange={(value) => updateSettings({ hapticEnabled: value })}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={settings.hapticEnabled ? '#2ecc71' : '#f4f3f4'}
-            />
-          </View>
-        </View>
-
         {/* Account Actions */}
         <View style={styles.actionsSection}>
           <TouchableOpacity
@@ -496,10 +485,11 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -509,13 +499,13 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   scrollContent: {
     paddingBottom: 32,
   },
   header: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -537,7 +527,7 @@ const styles = StyleSheet.create({
   userSection: {
     alignItems: 'center',
     paddingVertical: 32,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginBottom: 16,
   },
   userAvatarContainer: {
@@ -548,7 +538,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e8f5e8',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -564,37 +554,37 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: theme.colors.card,
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginBottom: 8,
   },
   userSpecialty: {
     fontSize: 14,
-    color: '#2ecc71',
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   statsSection: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     padding: 16,
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 16,
   },
   statsGrid: {
@@ -605,27 +595,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginVertical: 8,
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   subscriptionSection: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     padding: 16,
     marginBottom: 16,
   },
   subscriptionCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 16,
   },
@@ -638,7 +628,7 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -652,7 +642,7 @@ const styles = StyleSheet.create({
   },
   trialInfo: {
     fontSize: 14,
-    color: '#f39c12',
+    color: theme.colors.warning,
     marginBottom: 16,
   },
   planFeatures: {
@@ -661,7 +651,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   feature: {
@@ -671,15 +661,15 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 8,
   },
   disabledFeature: {
-    color: '#999',
+    color: theme.colors.textSecondary,
     textDecorationLine: 'line-through',
   },
   upgradeButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -693,7 +683,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actionsSection: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginBottom: 16,
   },
   actionButton: {
@@ -702,22 +692,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: theme.colors.border,
   },
   actionText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 12,
   },
-  preferencesSection: {
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 16,
-  },
-  preferenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
 });
+
+

@@ -43,7 +43,7 @@ export default function LoginScreen() {
       await login(data.email, data.password);
       router.replace('/');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
+      Alert.alert('Login Failed', 'No details found. Try signing up.');
     } finally {
       setLoading('login', false);
     }

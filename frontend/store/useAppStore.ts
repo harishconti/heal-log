@@ -19,6 +19,7 @@ export interface User {
 
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
+  fontSize: 'small' | 'medium' | 'large';
   hapticEnabled: boolean;
   offlineMode: boolean;
   autoSync: boolean;
@@ -54,35 +55,35 @@ interface AppState {
   // Search and filter state
   searchQuery: string;
   selectedFilter: string;
-  
+
   // Granular loading states
   loading: LoadingState;
-  
+
   // Error states
   errors: ErrorState;
-  
+
   // App state
   isOffline: boolean;
   lastSyncTime: string | null;
   settings: AppSettings;
-  
+
   // Actions
   setUser: (user: User | null) => void;
-  
+
   // Search and filter actions
   setSearchQuery: (query: string) => void;
   setSelectedFilter: (filter: string) => void;
-  
+
   // Granular loading state actions
   setLoading: (key: keyof LoadingState, loading: boolean) => void;
   setError: (key: keyof ErrorState, error: string | null) => void;
   clearError: (key: keyof ErrorState) => void;
   clearAllErrors: () => void;
-  
+
   // App state actions
   setOffline: (offline: boolean) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
-  
+
   // Convenience getters
   isAnyLoading: () => boolean;
   hasAnyError: () => boolean;
@@ -92,6 +93,7 @@ interface AppState {
 
 const defaultSettings: AppSettings = {
   theme: 'system',
+  fontSize: 'medium',
   hapticEnabled: true,
   offlineMode: true,
   autoSync: true,

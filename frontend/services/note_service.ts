@@ -10,7 +10,7 @@ export const NoteService = {
         try {
             return await database.write(async () => {
                 return await database.collections.get<PatientNote>('patient_notes').create(note => {
-                    note.patient.id = data.patient_id;
+                    note.patientId = data.patient_id;  // Use patientId field directly
                     note.content = data.content;
                     note.visitType = data.visit_type;
                     note.timestamp = new Date();

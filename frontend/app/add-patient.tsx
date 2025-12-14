@@ -10,6 +10,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  StatusBar,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +44,8 @@ export default function AddPatientScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
 
   const { control, handleSubmit, setValue, watch } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -244,10 +249,17 @@ export default function AddPatientScreen() {
                   style={styles.pickerButton}
                   onPress={() => {
                     Alert.alert('Medical Group', 'Select medical specialty',
-                      MEDICAL_GROUPS.map(group => ({
-                        text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
-                        onPress: () => setValue('group', group),
-                      }))
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        ...MEDICAL_GROUPS.map(group => ({
+                          text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
+                          onPress: () => setValue('group', group),
+                        })),
+                        {
+                          text: '+ Create New Group',
+                          onPress: () => setShowNewGroupModal(true)
+                        }
+                      ]
                     );
                   }}
                 >
@@ -304,6 +316,51 @@ export default function AddPatientScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* New Group Modal */}
+      <Modal
+        visible={showNewGroupModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNewGroupModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New Group</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter group name..."
+              value={newGroupName}
+              onChangeText={setNewGroupName}
+              autoFocus
+              autoCapitalize="words"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowNewGroupModal(false);
+                  setNewGroupName('');
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalCreateButton}
+                onPress={() => {
+                  if (newGroupName.trim()) {
+                    setValue('group', newGroupName.trim().toLowerCase().replace(/\s+/g, '_'));
+                    setShowNewGroupModal(false);
+                    setNewGroupName('');
+                  }
+                }}
+              >
+                <Text style={styles.modalCreateText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -323,7 +380,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: 48,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
   },
   headerButton: {
     padding: 8,
@@ -456,5 +513,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginLeft: 36,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#f8f9fa',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalCancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  modalCancelText: {
+    color: '#666',
+    fontSize: 16,
+  },
+  modalCreateButton: {
+    backgroundColor: '#2ecc71',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  modalCreateText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -9,7 +9,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-  Switch
+  Switch,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -459,7 +461,10 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/(tabs)/settings')}
+          >
             <Ionicons name="settings" size={24} color="#666" />
             <Text style={styles.actionText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" />
@@ -516,7 +521,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: 48,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
   },
   backButton: {
     padding: 8,

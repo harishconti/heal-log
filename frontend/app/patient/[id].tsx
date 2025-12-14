@@ -11,7 +11,10 @@ import {
   ActivityIndicator,
   TextInput,
   Modal,
-  Linking
+  Linking,
+  Clipboard,
+  StatusBar,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -32,7 +35,7 @@ function PatientDetailsScreen({ patient, notes }) {
   const settings = useAppStore((state) => state.settings);
   const [showAddNote, setShowAddNote] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [newNoteType, setNewNoteType] = useState('regular');
+  const [newNoteType, setNewNoteType] = useState('initial');
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
@@ -68,10 +71,10 @@ function PatientDetailsScreen({ patient, notes }) {
     try {
       await database.write(async () => {
         await database.collections.get<PatientNote>('patient_notes').create(note => {
-          note.patient.id = patient.id;
+          note.patientId = patient.id;  // Use patientId field directly
           note.content = newNote.trim();
           note.visitType = newNoteType;
-          note.createdBy = user.id;
+          note.createdBy = user?.id || 'unknown';
           note.timestamp = new Date();
         });
       });
@@ -81,6 +84,7 @@ function PatientDetailsScreen({ patient, notes }) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (error) {
+      console.error('Failed to add note:', error);
       Alert.alert('Error', 'Failed to add note');
     }
   };
@@ -166,10 +170,21 @@ function PatientDetailsScreen({ patient, notes }) {
               </TouchableOpacity>
             )}
             {patient.email && (
-              <View style={styles.contactItem}>
+              <TouchableOpacity
+                style={styles.contactItem}
+                onPress={() => {
+                  Clipboard.setString(patient.email);
+                  triggerHaptic();
+                  Alert.alert('Copied', 'Email address copied to clipboard');
+                }}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="mail" size={20} color="#3498db" />
-                <Text style={styles.contactText}>{patient.email}</Text>
-              </View>
+                <Text style={[styles.contactText, { flex: 1 }]}>{patient.email}</Text>
+                <View style={[styles.callButton, { backgroundColor: '#3498db' }]}>
+                  <Ionicons name="copy-outline" size={16} color="#fff" />
+                </View>
+              </TouchableOpacity>
             )}
             {patient.address && (
               <View style={styles.contactItem}>
@@ -268,7 +283,7 @@ function PatientDetailsScreen({ patient, notes }) {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Visit Type</Text>
               <View style={styles.visitTypeButtons}>
-                {['regular', 'follow-up', 'emergency', 'initial'].map((type) => (
+                {['initial', 'follow-up', 'regular', 'emergency'].map((type) => (
                   <TouchableOpacity
                     key={type}
                     style={[
@@ -366,7 +381,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: 48,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
   },
   headerButton: {
     padding: 8,

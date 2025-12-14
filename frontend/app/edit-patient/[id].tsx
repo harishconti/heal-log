@@ -107,10 +107,10 @@ function EditPatientScreen({ patient }) {
 
   const showImagePicker = () => {
     Alert.alert('Update Photo', 'Choose an option', [
-      { text: 'Camera', onPress: takePhoto },
-      { text: 'Photo Library', onPress: pickImage },
-      { text: 'Remove Photo', onPress: () => setValue('photo', '', { shouldDirty: true }), style: 'destructive' },
       { text: 'Cancel', style: 'cancel' },
+      { text: 'Photo Library', onPress: pickImage },
+      { text: 'Camera', onPress: takePhoto },
+      { text: 'Remove Photo', onPress: () => setValue('photo', '', { shouldDirty: true }), style: 'destructive' },
     ]);
   };
 
@@ -233,6 +233,7 @@ function EditPatientScreen({ patient }) {
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Location</Text>
                 <TouchableOpacity style={styles.pickerButton} onPress={() => Alert.alert('Visit Location', 'Select location', [
+                  { text: 'Cancel', style: 'cancel' },
                   { text: 'Clinic', onPress: () => setValue('location', 'Clinic', { shouldDirty: true }) },
                   { text: 'Home Visit', onPress: () => setValue('location', 'Home Visit', { shouldDirty: true }) },
                   { text: 'Hospital', onPress: () => setValue('location', 'Hospital', { shouldDirty: true }) },
@@ -245,10 +246,13 @@ function EditPatientScreen({ patient }) {
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Medical Group</Text>
                 <TouchableOpacity style={styles.pickerButton} onPress={() => Alert.alert('Medical Group', 'Select specialty',
-                  MEDICAL_GROUPS.map(group => ({
-                    text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
-                    onPress: () => setValue('group', group, { shouldDirty: true }),
-                  }))
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    ...MEDICAL_GROUPS.map(group => ({
+                      text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
+                      onPress: () => setValue('group', group, { shouldDirty: true }),
+                    }))
+                  ]
                 )}>
                   <Text style={styles.pickerText}>{medicalGroup ? medicalGroup.charAt(0).toUpperCase() + medicalGroup.slice(1).replace('_', ' ') : 'Select'}</Text>
                   <Ionicons name="chevron-down" size={20} color="#666" />

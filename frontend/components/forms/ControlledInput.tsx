@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
 import { Control, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,8 @@ interface ControlledInputProps extends TextInputProps {
   name: string;
   label?: string;
   error?: string;
+  isPassword?: boolean;
+  iconName?: keyof typeof Ionicons.glyphMap;
 }
 
 export const ControlledInput: React.FC<ControlledInputProps> = ({
@@ -16,9 +18,12 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
   name,
   label,
   error,
+  isPassword = false,
+  iconName,
   ...textInputProps
 }) => {
   const { theme } = useTheme();
+  const [showPassword, setShowPassword] = useState(false);
 
   const styles = StyleSheet.create({
     container: {
@@ -30,15 +35,26 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
       marginBottom: 8,
       color: theme.colors.text,
     },
-    input: {
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
       borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      fontSize: 16,
       borderWidth: 1,
       backgroundColor: theme.colors.background,
       borderColor: error ? theme.colors.error : theme.colors.border,
+    },
+    leftIcon: {
+      paddingLeft: 12,
+    },
+    input: {
+      flex: 1,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      fontSize: 16,
       color: theme.colors.text,
+    },
+    eyeButton: {
+      padding: 12,
     },
     errorText: {
       color: theme.colors.error,
@@ -54,15 +70,38 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
       render={({ field: { onChange, onBlur, value } }) => (
         <View style={styles.container}>
           {label && <Text style={styles.label}>{label}</Text>}
-          <TextInput
-            style={styles.input}
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-            placeholder={textInputProps.placeholder}
-            placeholderTextColor={theme.colors.textSecondary}
-            {...textInputProps}
-          />
+          <View style={styles.inputWrapper}>
+            {iconName && (
+              <Ionicons
+                name={iconName}
+                size={20}
+                color={theme.colors.textSecondary}
+                style={styles.leftIcon}
+              />
+            )}
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder={textInputProps.placeholder}
+              placeholderTextColor={theme.colors.textSecondary}
+              secureTextEntry={isPassword && !showPassword}
+              {...textInputProps}
+            />
+            {isPassword && (
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={22}
+                  color={theme.colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
       )}

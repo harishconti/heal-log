@@ -39,7 +39,7 @@ export default function RegisterScreen() {
   const { register } = useAuth();
   const router = useRouter();
 
-  const { control, handleSubmit, setValue } = useForm<RegisterFormData>({
+  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       full_name: '',
@@ -94,6 +94,7 @@ export default function RegisterScreen() {
               iconName="person"
               autoCapitalize="words"
               placeholderTextColor="#999"
+              error={errors.full_name?.message}
             />
             <ControlledInput
               control={control}
@@ -104,6 +105,7 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               placeholderTextColor="#999"
+              error={errors.email?.message}
             />
             <ControlledInput
               control={control}
@@ -120,12 +122,15 @@ export default function RegisterScreen() {
                 style={styles.pickerContainer}
                 onPress={() => {
                   Alert.alert(
-                    'Medical Specialty',
-                    'Select your specialty',
-                    SPECIALTIES.map(specialty => ({
-                      text: specialty.charAt(0).toUpperCase() + specialty.slice(1),
-                      onPress: () => setMedicalSpecialty(specialty)
-                    }))
+                    'Select Department',
+                    'Choose your medical specialty',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      ...SPECIALTIES.map(specialty => ({
+                        text: specialty.charAt(0).toUpperCase() + specialty.slice(1),
+                        onPress: () => setMedicalSpecialty(specialty)
+                      }))
+                    ]
                   );
                 }}
               >
@@ -143,6 +148,7 @@ export default function RegisterScreen() {
               iconName="lock-closed"
               isPassword
               placeholderTextColor="#999"
+              error={errors.password?.message}
             />
             <ControlledInput
               control={control}
@@ -151,6 +157,7 @@ export default function RegisterScreen() {
               iconName="lock-closed"
               isPassword
               placeholderTextColor="#999"
+              error={errors.confirmPassword?.message}
             />
 
             <TouchableOpacity

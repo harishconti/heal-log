@@ -11,7 +11,8 @@ import {
   RefreshControl,
   Platform,
   ActivityIndicator,
-  LogBox
+  LogBox,
+  StatusBar
 } from 'react-native';
 
 LogBox.ignoreLogs([
@@ -185,6 +186,33 @@ function Index({ patients, groups, totalPatientCount }) {
     return buttons;
   }, [groups]);
 
+  // Filter patients based on search and selected filter - reactive to changes
+  const filteredPatients = useMemo(() => {
+    if (!patients) return [];
+
+    let result = patients;
+
+    // Apply search filter
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name?.toLowerCase().includes(lowerQuery) ||
+        p.patientId?.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    // Apply group/favorites filter
+    if (selectedFilter && selectedFilter !== 'all') {
+      if (selectedFilter === 'favorites') {
+        result = result.filter(p => p.isFavorite);
+      } else {
+        result = result.filter(p => p.group === selectedFilter);
+      }
+    }
+
+    return result;
+  }, [patients, searchQuery, selectedFilter]);
+
   if (authLoading || loading.patients) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -272,7 +300,7 @@ function Index({ patients, groups, totalPatientCount }) {
       </View>
 
       <FlashList
-        data={patients}
+        data={filteredPatients}
         renderItem={renderPatientCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.patientsList}
@@ -298,7 +326,7 @@ function Index({ patients, groups, totalPatientCount }) {
 
       <View style={[styles.statsFooter, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.statsText, { color: theme.colors.textSecondary }]}>
-          {patients.length} of {totalPatientCount} patients
+          {filteredPatients.length} of {totalPatientCount} patients
         </Text>
         <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
           {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : ''}
@@ -315,26 +343,10 @@ function Index({ patients, groups, totalPatientCount }) {
 
 const enhance = withObservables([], () => {
   const patientCollection = database.collections.get<Patient>('patients');
-  const searchQuery = useAppStore.getState().searchQuery;
-  const selectedFilter = useAppStore.getState().selectedFilter;
 
-  let query = patientCollection.query();
-
-  if (searchQuery) {
-    const likeQuery = Q.like(`%${searchQuery.toLowerCase()}%`);
-    query = query.where(Q.or(Q.where('name', likeQuery), Q.where('patient_id', likeQuery)));
-  }
-
-  if (selectedFilter && selectedFilter !== 'all') {
-    if (selectedFilter === 'favorites') {
-      query = query.where('is_favorite', true);
-    } else {
-      query = query.where('group', selectedFilter);
-    }
-  }
-
+  // Just observe all patients - filtering happens in component for reactivity
   return {
-    patients: query.observe(),
+    patients: patientCollection.query().observe(),
     groups: patientCollection.query(Q.where('group', Q.notEq(null))).observe().pipe(
       map(ps => [...new Set(ps.map(p => p.group))])
     ),
@@ -363,14 +375,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    ...Platform.select({
-      ios: {
-        paddingTop: 8,
-      },
-      android: {
-        paddingTop: 16,
-      },
-    }),
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 8,
   },
   headerLeft: {
     flex: 1,

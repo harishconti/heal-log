@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
@@ -31,10 +32,13 @@ const MEDICAL_GROUPS = [
 ];
 
 function EditPatientScreen({ patient }) {
+  const { theme, fontScale } = useTheme();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);
+
+  const styles = createStyles(theme, fontScale);
 
   const { control, handleSubmit, setValue, watch, reset, formState: { isDirty } } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -298,36 +302,38 @@ export default function EditPatientContainer() {
   return <EnhancedEditPatient id={id} />;
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+
+
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, fontSize: 16, color: '#666' },
+  loadingText: { marginTop: 16, fontSize: 16 * fontScale, color: theme.colors.textSecondary },
   keyboardAvoid: { flex: 1 },
-  header: { backgroundColor: '#2ecc71', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: 48 },
+  header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: 48 },
   headerButton: { padding: 8 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  saveText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  headerTitle: { fontSize: 20 * fontScale, fontWeight: 'bold', color: '#fff' },
+  saveText: { fontSize: 16 * fontScale, fontWeight: '600', color: '#fff' },
   disabledButton: { opacity: 0.5 },
   scrollContent: { paddingBottom: 32 },
-  photoSection: { alignItems: 'center', paddingVertical: 24, backgroundColor: '#fff', marginBottom: 16 },
+  photoSection: { alignItems: 'center', paddingVertical: 24, backgroundColor: theme.colors.card, marginBottom: 16 },
   photoContainer: { position: 'relative', borderRadius: 60, overflow: 'hidden' },
   patientPhoto: { width: 120, height: 120, borderRadius: 60 },
-  photoPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#e9ecef', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#dee2e6', borderStyle: 'dashed' },
-  photoText: { fontSize: 12, color: '#666', marginTop: 4 },
-  photoOverlay: { position: 'absolute', bottom: 0, right: 0, width: 36, height: 36, borderRadius: 18, backgroundColor: '#2ecc71', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#fff' },
-  section: { backgroundColor: '#fff', marginBottom: 16, padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 },
+  photoPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: theme.colors.border, borderStyle: 'dashed' },
+  photoText: { fontSize: 12 * fontScale, color: theme.colors.textSecondary, marginTop: 4 },
+  photoOverlay: { position: 'absolute', bottom: 0, right: 0, width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: theme.colors.card },
+  section: { backgroundColor: theme.colors.card, marginBottom: 16, padding: 16 },
+  sectionTitle: { fontSize: 18 * fontScale, fontWeight: '600', color: theme.colors.text, marginBottom: 16 },
   inputRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   inputHalf: { flex: 1 },
-  inputLabel: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 8 },
-  pickerButton: { backgroundColor: '#f8f9fa', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 1, borderColor: '#e9ecef', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 50 },
-  pickerText: { fontSize: 16, color: '#333' },
+  inputLabel: { fontSize: 14 * fontScale, fontWeight: '500', color: theme.colors.text, marginBottom: 8 },
+  pickerButton: { backgroundColor: theme.colors.surface, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 1, borderColor: theme.colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 50 },
+  pickerText: { fontSize: 16 * fontScale, color: theme.colors.text },
   favoriteOption: { paddingVertical: 12 },
   favoriteLeft: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  favoriteText: { fontSize: 16, color: '#333', marginLeft: 12, fontWeight: '500' },
-  favoriteSubtext: { fontSize: 14, color: '#666', marginLeft: 36 },
-  dangerSection: { backgroundColor: '#fff', marginBottom: 16, padding: 16 },
-  dangerTitle: { fontSize: 18, fontWeight: '600', color: '#e74c3c', marginBottom: 16 },
-  deleteButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: '#e74c3c', gap: 8 },
-  deleteText: { fontSize: 16, color: '#e74c3c', fontWeight: '500' },
+  favoriteText: { fontSize: 16 * fontScale, color: theme.colors.text, marginLeft: 12, fontWeight: '500' },
+  favoriteSubtext: { fontSize: 14 * fontScale, color: theme.colors.textSecondary, marginLeft: 36 },
+  dangerSection: { backgroundColor: theme.colors.card, marginBottom: 16, padding: 16 },
+  dangerTitle: { fontSize: 18 * fontScale, fontWeight: '600', color: theme.colors.error, marginBottom: 16 },
+  deleteButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.error, gap: 8 },
+  deleteText: { fontSize: 16 * fontScale, color: theme.colors.error, fontWeight: '500' },
 });

@@ -118,6 +118,7 @@ const darkTheme: Theme = {
 interface ThemeContextType {
   theme: Theme;
   isDark: boolean;
+  fontScale: number;
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 }
@@ -192,6 +193,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const currentTheme = getEffectiveTheme() === 'dark' ? darkTheme : lightTheme;
   const isDark = getEffectiveTheme() === 'dark';
 
+  // Calculate font scale based on settings
+  const getFontScale = (): number => {
+    switch (settings.fontSize) {
+      case 'small':
+        return 0.9;
+      case 'large':
+        return 1.1;
+      default:
+        return 1.0; // medium
+    }
+  };
+
+  const fontScale = getFontScale();
+
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark';
     updateSettings({ theme: newTheme });
@@ -206,6 +221,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       value={{
         theme: currentTheme,
         isDark,
+        fontScale,
         toggleTheme,
         setTheme,
       }}

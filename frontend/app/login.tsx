@@ -25,7 +25,7 @@ import { addBreadcrumb } from '@/utils/monitoring';
 export default function LoginScreen() {
   const { login } = useAuth();
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme, fontScale } = useTheme();
   const { loading, setLoading } = useAppStore();
 
   const { control, handleSubmit } = useForm<LoginFormData>({
@@ -53,7 +53,7 @@ export default function LoginScreen() {
     router.push('/register');
   };
 
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, fontScale);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -135,7 +135,7 @@ export default function LoginScreen() {
   );
 }
 
-const getStyles = (theme) => StyleSheet.create({
+const getStyles = (theme, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -153,14 +153,14 @@ const getStyles = (theme) => StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 28,
+    fontSize: 28 * fontScale,
     fontWeight: 'bold',
     color: theme.colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
@@ -184,7 +184,7 @@ const getStyles = (theme) => StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
   },
   divider: {
@@ -200,7 +200,7 @@ const getStyles = (theme) => StyleSheet.create({
   dividerText: {
     paddingHorizontal: 16,
     color: theme.colors.textSecondary,
-    fontSize: 14,
+    fontSize: 14 * fontScale,
   },
   registerButton: {
     borderWidth: 2,
@@ -211,7 +211,7 @@ const getStyles = (theme) => StyleSheet.create({
   },
   registerButtonText: {
     color: theme.colors.primary,
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     fontWeight: '600',
   },
   features: {
@@ -223,7 +223,7 @@ const getStyles = (theme) => StyleSheet.create({
     alignItems: 'center',
   },
   featureText: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     color: theme.colors.textSecondary,
     marginTop: 8,
     textAlign: 'center',

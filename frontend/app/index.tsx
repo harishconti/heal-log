@@ -39,7 +39,9 @@ import { Q } from '@nozbe/watermelondb';
 function Index({ patients, groups, totalPatientCount }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme, fontScale } = useTheme();
+
+  const styles = createStyles(theme, fontScale);
 
   const {
     searchQuery,
@@ -356,7 +358,8 @@ const enhance = withObservables([], () => {
 
 export default enhance(Index);
 
-const styles = StyleSheet.create({
+
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -366,7 +369,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     marginTop: 16,
   },
   header: {
@@ -381,12 +384,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 22 * fontScale,
     fontWeight: 'bold',
     color: '#fff',
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
@@ -427,7 +430,7 @@ const styles = StyleSheet.create({
   },
   offlineText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 14 * fontScale,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -448,7 +451,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 16 * fontScale,
   },
   filtersContainer: {
     paddingHorizontal: 16,
@@ -462,11 +465,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   filterText: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     fontWeight: '600',
   },
   syncTimeText: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
   },
   patientsList: {
     paddingHorizontal: 16,
@@ -505,20 +508,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   patientName: {
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
     marginBottom: 4,
   },
   patientId: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     marginBottom: 2,
   },
   patientContact: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     marginBottom: 4,
   },
   complaint: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     fontStyle: 'italic',
   },
   cardActions: {
@@ -535,7 +538,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   groupText: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     fontWeight: '500',
   },
   emptyState: {
@@ -543,13 +546,13 @@ const styles = StyleSheet.create({
     paddingVertical: 48,
   },
   emptyStateText: {
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     textAlign: 'center',
     paddingHorizontal: 32,
   },
@@ -562,10 +565,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statsText: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
   },
   planText: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     fontWeight: '500',
   },
 });
+

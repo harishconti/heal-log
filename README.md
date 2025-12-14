@@ -1,6 +1,6 @@
-# Clinic OS Lite
+# PatientLog
 
-Clinic OS Lite is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
+PatientLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
 ## Technical Architecture
 

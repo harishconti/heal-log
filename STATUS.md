@@ -102,7 +102,7 @@
 1. [ ] Go to https://play.google.com/console
 2. [ ] Pay $25 registration fee
 3. [ ] Complete developer profile
-4. [ ] Create new app: "Clinic OS Lite (Beta)"
+4. [ ] Create new app: "PatientLog (Beta)"
 
 ---
 

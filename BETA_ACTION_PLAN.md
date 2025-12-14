@@ -1,6 +1,6 @@
 # 🚀 BETA RELEASE ACTION PLAN - START HERE
 
-**Goal:** Launch Clinic OS Lite to beta testers within 7 days
+**Goal:** Launch PatientLog to beta testers within 7 days
 
 ---
 
@@ -94,7 +94,7 @@ STATUS: ⏳ PENDING
 2. Go to: https://play.google.com/console
 3. Pay $25 registration fee
 4. Complete developer profile
-5. Create new app: "Clinic OS Lite (Beta)"
+5. Create new app: "PatientLog (Beta)"
 
 **Account details to save:**
 ```
@@ -220,7 +220,7 @@ STATUS: ⏳ PENDING
    - Click opt-in link
    - Accept invitation
    - Download from Play Store
-   - Report feedback to beta@clinicoslite.com
+   - Report feedback to beta@patientlog.com
 
 **Beta testers to invite:**
 ```

@@ -1,10 +1,10 @@
-# Privacy Policy for Clinic OS Lite
+# Privacy Policy for PatientLog
 
 **Last Updated:** December 14, 2024
 
 ## Introduction
 
-Clinic OS Lite ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
+PatientLog ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
 
 ## Information We Collect
 
@@ -88,7 +88,7 @@ Each service has its own privacy policy governing data use.
 
 ## Children's Privacy
 
-Clinic OS Lite is not intended for use by anyone under 18 years of age. We do not knowingly collect information from children.
+PatientLog is not intended for use by anyone under 18 years of age. We do not knowingly collect information from children.
 
 ## International Data Transfers
 
@@ -122,4 +122,4 @@ For GDPR-related queries:
 
 ---
 
-By using Clinic OS Lite, you acknowledge that you have read and understood this Privacy Policy.
+By using PatientLog, you acknowledge that you have read and understood this Privacy Policy.

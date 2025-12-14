@@ -1,14 +1,14 @@
-# Terms of Service for Clinic OS Lite
+# Terms of Service for PatientLog
 
 **Effective Date:** December 14, 2024
 
 ## 1. Acceptance of Terms
 
-By accessing or using Clinic OS Lite ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
+By accessing or using PatientLog ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
 
 ## 2. Description of Service
 
-Clinic OS Lite is a patient management application designed for healthcare professionals to:
+PatientLog is a patient management application designed for healthcare professionals to:
 - Store and manage patient records
 - Create and maintain clinical notes
 - Import/export patient contact information
@@ -58,7 +58,7 @@ Your use of the App is also governed by our [Privacy Policy](./PRIVACY_POLICY.md
 
 ## 7. Medical Disclaimer
 
-**IMPORTANT:** Clinic OS Lite is a **record-keeping tool only**.
+**IMPORTANT:** PatientLog is a **record-keeping tool only**.
 
 - The App does NOT provide medical advice, diagnosis, or treatment
 - Always consult qualified healthcare professionals for medical decisions
@@ -213,7 +213,7 @@ During beta, there is no Service Level Agreement (SLA).
 
 ---
 
-**BY USING CLINIC OS LITE, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
+**BY USING PATIENTLOG, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
 
 Last Updated: December 14, 2024  
 Version: 1.0-beta

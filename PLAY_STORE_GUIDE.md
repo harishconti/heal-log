@@ -1,6 +1,6 @@
 # Google Play Store Submission Guide
 
-## 🎯 Goal: Submit Clinic OS Lite to Google Play Beta Track
+## 🎯 Goal: Submit PatientLog to Google Play Beta Track
 
 This guide will walk you through publishing your app to Google Play Console for beta testing.
 
@@ -61,7 +61,7 @@ Before starting, ensure you have:
 
 2. **Fill Basic Details:**
    ```
-   App name: Clinic OS Lite (Beta)
+   App name: PatientLog (Beta)
    Default language: English (United States)
    App or game: App
    Free or paid: Free
@@ -235,7 +235,7 @@ This is **CRITICAL** and detailed:
 
 **App name:**
 ```
-Clinic OS Lite - Beta
+PatientLog - Beta
 ```
 
 **Short description** (80 chars max):
@@ -245,9 +245,9 @@ Modern patient management for healthcare professionals. Offline-first.
 
 **Full description** (4000 chars max):
 ```markdown
-## Clinic OS Lite - Your Smart Clinical Partner
+## PatientLog - Your Smart Clinical Partner
 
-Clinic OS Lite is a modern, offline-first patient management application designed specifically for busy healthcare professionals.
+PatientLog is a modern, offline-first patient management application designed specifically for busy healthcare professionals.
 
 ### ✨ Key Features
 
@@ -296,7 +296,7 @@ Clinic OS Lite is a modern, offline-first patient management application designe
 • Solo practitioners
 • Small clinics
 
-### 🎯 Why Choose Clinic OS Lite?
+### 🎯 Why Choose PatientLog?
 
 **No Subscription (During Beta)** - Full features, no hidden costs
 **Offline Mode** - Works anywhere, anytime
@@ -320,12 +320,12 @@ Join our beta program and help shape the future of clinical software!
 
 ### 💪 Built for Healthcare Professionals
 
-Designed with input from practicing doctors, Clinic OS Lite understands your workflow and adapts to how you work.
+Designed with input from practicing doctors, PatientLog understands your workflow and adapts to how you work.
 
 ### 📞 Support
 
 Need help? We're here for you!
-• Email: support@clinicoslite.com
+• Email: support@patientlog.com
 • Response within 24 hours
 • Comprehensive documentation
 • Video tutorials
@@ -388,7 +388,7 @@ Tags: patient management, clinical notes, healthcare
 #### 4.4 Contact Details
 
 ```
-Email: support@clinicoslite.com (or your Gmail alias)
+Email: support@patientlog.com (or your Gmail alias)
 Phone: +91-XXXXXXXXXX (optional)
 Website: https://your-github-pages.com (optional)
 ```
@@ -421,7 +421,7 @@ Website: https://your-github-pages.com (optional)
 4. **Testers can opt-in via:**
    ```
    You'll get a unique URL like:
-   https://play.google.com/apps/testing/com.clinicoslite.app
+   https://play.google.com/apps/testing/com.patientlog.app
    
    Share this link with beta testers
    ```
@@ -472,7 +472,7 @@ Website: https://your-github-pages.com (optional)
    • Tablet UI optimization pending
    
    ### How to Help
-   Test thoroughly and report bugs to beta@clinicoslite.com
+   Test thoroughly and report bugs to beta@patientlog.com
    
    Thank you for being an early adopter! 🚀
    ```
@@ -527,17 +527,17 @@ Website: https://your-github-pages.com (optional)
 
 2. **Share with testers:**
    ```
-   Subject: Join Clinic OS Lite Beta Testing
+   Subject: Join PatientLog Beta Testing
    
    Hi [Tester Name],
    
-   You're invited to beta test Clinic OS Lite!
+   You're invited to beta test PatientLog!
    
    1. Join beta: [OPT-IN LINK]
    2. Accept invitation
    3. Download app from Play Store
    4. Test features listed in BETA_RELEASE_NOTES.md
-   5. Send feedback to beta@clinicoslite.com
+   5. Send feedback to beta@patientlog.com
    
    Thank you!
    ```
@@ -687,10 +687,10 @@ Deployment Guide: DEPLOYMENT_GUIDE.md file
 ### Key Emails to Set Up:
 
 ```
-support@clinicoslite.com  → User support
-beta@clinicoslite.com     → Beta feedback
-legal@clinicoslite.com    → Legal inquiries
-dpo@clinicoslite.com      → GDPR requests
+support@patientlog.com  → User support
+beta@patientlog.com     → Beta feedback
+legal@patientlog.com    → Legal inquiries
+dpo@patientlog.com      → GDPR requests
 ```
 
 ---

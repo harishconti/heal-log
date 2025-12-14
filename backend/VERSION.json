@@ -1,8 +1,8 @@
 {
-    "version": "1.0.10",
-    "build_date": "2025-12-14T11:26:00+05:30",
+    "version": "1.0.11",
+    "build_date": "2025-12-14T11:54:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Enabled New Architecture for Expo SDK 54 compatibility with reanimated 4.x",
+    "release_notes": "Fixed gradle.properties to enable New Architecture for native Android build",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

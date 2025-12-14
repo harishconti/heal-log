@@ -1,8 +1,8 @@
 {
-    "version": "1.0.22",
-    "build_date": "2025-12-15T00:50:00+05:30",
-    "commit": "all-core-screens-complete",
-    "release_notes": "🎉 COMPLETE: All 6 core screens now have dark mode + font scaling! Profile, Add-Patient, Patient-Details, Edit-Patient, Contacts-List, Login. Font size setting fully functional!",
+    "version": "1.0.24",
+    "build_date": "2025-12-15T01:10:00+05:30",
+    "commit": "scrollable-group-selector",
+    "release_notes": "Fixed: Replaced Alert with scrollable modal for Medical Group selection. Now shows ALL groups including 'diabetics' and all custom groups!",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

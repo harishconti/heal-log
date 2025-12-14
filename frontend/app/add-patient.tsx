@@ -25,6 +25,8 @@ import { patientSchema, PatientFormData } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
 import { PatientService } from '@/services/patient_service';
 import { addBreadcrumb } from '@/utils/monitoring';
+import { database } from '@/models/database';
+import Patient from '@/models/Patient';
 
 const MEDICAL_GROUPS = [
   'general',
@@ -48,6 +50,8 @@ export default function AddPatientScreen() {
   const [loading, setLoading] = useState(false);
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [allGroups, setAllGroups] = useState<string[]>(MEDICAL_GROUPS);
+  const [showGroupSelector, setShowGroupSelector] = useState(false);
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -68,8 +72,24 @@ export default function AddPatientScreen() {
   React.useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/login');
+    } else {
+      // Fetch all unique groups from database
+      fetchAllGroups();
     }
   }, [isAuthenticated]);
+
+  const fetchAllGroups = async () => {
+    try {
+      const patients = await database.collections.get<Patient>('patients').query().fetch();
+      const uniqueGroups = [...new Set(patients.map(p => p.group).filter(Boolean))];
+      // Merge with default groups, ensuring no duplicates
+      const combined = [...new Set([...MEDICAL_GROUPS, ...uniqueGroups])];
+      setAllGroups(combined.sort());
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setAllGroups(MEDICAL_GROUPS);
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -254,21 +274,7 @@ export default function AddPatientScreen() {
                 <Text style={styles.inputLabel}>Medical Group</Text>
                 <TouchableOpacity
                   style={styles.pickerButton}
-                  onPress={() => {
-                    Alert.alert('Medical Group', 'Select medical specialty',
-                      [
-                        {
-                          text: '+ Create New Group',
-                          onPress: () => setShowNewGroupModal(true)
-                        },
-                        { text: 'Cancel', style: 'cancel' },
-                        ...MEDICAL_GROUPS.map(group => ({
-                          text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
-                          onPress: () => setValue('group', group),
-                        })),
-                      ]
-                    );
-                  }}
+                  onPress={() => setShowGroupSelector(true)}
                 >
                   <Text style={styles.pickerText}>
                     {medicalGroup.charAt(0).toUpperCase() + medicalGroup.slice(1).replace('_', ' ')}
@@ -365,6 +371,64 @@ export default function AddPatientScreen() {
                 <Text style={styles.modalCreateText}>Create</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Group Selector Modal */}
+      <Modal
+        visible={showGroupSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGroupSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <Text style={styles.modalTitle}>Select Medical Group</Text>
+            <ScrollView style={styles.groupList}>
+              <TouchableOpacity
+                style={styles.createGroupOption}
+                onPress={() => {
+                  setShowGroupSelector(false);
+                  setTimeout(() => setShowNewGroupModal(true), 300);
+                }}
+              >
+                <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
+                <Text style={[styles.groupOptionText, { color: theme.colors.primary, fontWeight: '600' }]}>
+                  Create New Group
+                </Text>
+              </TouchableOpacity>
+              {allGroups.map((group) => (
+                <TouchableOpacity
+                  key={group}
+                  style={[
+                    styles.groupOption,
+                    medicalGroup === group && styles.groupOptionSelected
+                  ]}
+                  onPress={() => {
+                    setValue('group', group);
+                    setShowGroupSelector(false);
+                    fetchAllGroups(); // Refresh groups after selection
+                  }}
+                >
+                  <Text style={[
+                    styles.groupOptionText,
+                    medicalGroup === group && styles.groupOptionTextSelected
+                  ]}>
+                    {group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' ')}
+                  </Text>
+                  {medicalGroup === group && (
+                    <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setShowGroupSelector(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -576,6 +640,38 @@ const createStyles = (theme: any) => StyleSheet.create({
   modalCreateText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  groupList: {
+    maxHeight: 400,
+    width: '100%',
+  },
+  createGroupOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  groupOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  groupOptionSelected: {
+    backgroundColor: theme.colors.primaryMuted,
+  },
+  groupOptionText: {
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  groupOptionTextSelected: {
+    color: theme.colors.primary,
     fontWeight: '600',
   },
 });

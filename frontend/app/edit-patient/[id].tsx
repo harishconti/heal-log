@@ -11,6 +11,7 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +38,8 @@ function EditPatientScreen({ patient }) {
   const router = useRouter();
 
   const [saving, setSaving] = useState(false);
+  const [allGroups, setAllGroups] = useState<string[]>(MEDICAL_GROUPS);
+  const [showGroupSelector, setShowGroupSelector] = useState(false);
 
   const styles = createStyles(theme, fontScale);
 
@@ -70,8 +73,22 @@ function EditPatientScreen({ patient }) {
         initial_diagnosis: patient.initialDiagnosis || '',
       };
       reset(patientData);
+      // Fetch all groups when patient loads
+      fetchAllGroups();
     }
   }, [patient, reset]);
+
+  const fetchAllGroups = async () => {
+    try {
+      const patients = await database.collections.get<Patient>('patients').query().fetch();
+      const uniqueGroups = [...new Set(patients.map(p => p.group).filter(Boolean))];
+      const combined = [...new Set([...MEDICAL_GROUPS, ...uniqueGroups])];
+      setAllGroups(combined.sort());
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setAllGroups(MEDICAL_GROUPS);
+    }
+  };
 
 
   const pickImage = async () => {
@@ -249,15 +266,7 @@ function EditPatientScreen({ patient }) {
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Medical Group</Text>
-                <TouchableOpacity style={styles.pickerButton} onPress={() => Alert.alert('Medical Group', 'Select specialty',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    ...MEDICAL_GROUPS.map(group => ({
-                      text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
-                      onPress: () => setValue('group', group, { shouldDirty: true }),
-                    }))
-                  ]
-                )}>
+                <TouchableOpacity style={styles.pickerButton} onPress={() => setShowGroupSelector(true)}>
                   <Text style={styles.pickerText}>{medicalGroup ? medicalGroup.charAt(0).toUpperCase() + medicalGroup.slice(1).replace('_', ' ') : 'Select'}</Text>
                   <Ionicons name="chevron-down" size={20} color="#666" />
                 </TouchableOpacity>
@@ -287,6 +296,52 @@ function EditPatientScreen({ patient }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Group Selector Modal */}
+      <Modal
+        visible={showGroupSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGroupSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <Text style={styles.modalTitle}>Select Medical Group</Text>
+            <ScrollView style={styles.groupList}>
+              {allGroups.map((group) => (
+                <TouchableOpacity
+                  key={group}
+                  style={[
+                    styles.groupOption,
+                    medicalGroup === group && styles.groupOptionSelected
+                  ]}
+                  onPress={() => {
+                    setValue('group', group, { shouldDirty: true });
+                    setShowGroupSelector(false);
+                    fetchAllGroups();
+                  }}
+                >
+                  <Text style={[
+                    styles.groupOptionText,
+                    medicalGroup === group && styles.groupOptionTextSelected
+                  ]}>
+                    {group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' ')}
+                  </Text>
+                  {medicalGroup === group && (
+                    <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setShowGroupSelector(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -336,4 +391,14 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   dangerTitle: { fontSize: 18 * fontScale, fontWeight: '600', color: theme.colors.error, marginBottom: 16 },
   deleteButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.error, gap: 8 },
   deleteText: { fontSize: 16 * fontScale, color: theme.colors.error, fontWeight: '500' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { backgroundColor: theme.colors.background, borderRadius: 16, padding: 24, width: '90%', maxWidth: 400 },
+  modalTitle: { fontSize: 18 * fontScale, fontWeight: '600', color: theme.colors.text, marginBottom: 16 },
+  groupList: { maxHeight: 400, width: '100%' },
+  groupOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  groupOptionSelected: { backgroundColor: theme.colors.primaryMuted },
+  groupOptionText: { fontSize: 16 * fontScale, color: theme.colors.text },
+  groupOptionTextSelected: { color: theme.colors.primary, fontWeight: '600' },
+  modalCancelButton: { paddingHorizontal: 16, paddingVertical: 10, marginTop: 16, alignItems: 'center' },
+  modalCancelText: { color: theme.colors.textSecondary, fontSize: 16 * fontScale },
 });

@@ -16,9 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'expo-router';
-import api from '@/services/api';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { database } from '@/models/database';
+import { Patient } from '@/models/Patient';
 
 interface SubscriptionInfo {
   subscription_plan: string;
@@ -60,20 +59,31 @@ export default function ProfileScreen() {
         });
       }
 
-      // Fetch stats from correct endpoint
+      // Fetch stats from local database (source of truth)
       try {
-        const statsResponse = await api.get('/api/patients/stats/');
-        if (statsResponse.data && statsResponse.data.stats) {
-          setStats(statsResponse.data.stats);
-        } else {
-          setStats({
-            total_patients: 0,
-            favorite_patients: 0,
-            groups: []
-          });
-        }
+        const patientCollection = database.collections.get<Patient>('patients');
+
+        // Count all patients
+        const allPatients = await patientCollection.query().fetch();
+        const totalCount = allPatients.length;
+
+        // Count favorite patients
+        const favoriteCount = allPatients.filter(p => p.isFavorite).length;
+
+        // Get unique groups
+        const groups = [...new Set(allPatients.map(p => p.group).filter(Boolean))];
+        const groupsWithCount = groups.map(group => ({
+          _id: group,
+          count: allPatients.filter(p => p.group === group).length
+        }));
+
+        setStats({
+          total_patients: totalCount,
+          favorite_patients: favoriteCount,
+          groups: groupsWithCount
+        });
       } catch (error) {
-        console.error('Error loading stats data:', error);
+        console.error('Error loading stats from local DB:', error);
         setStats({
           total_patients: 0,
           favorite_patients: 0,

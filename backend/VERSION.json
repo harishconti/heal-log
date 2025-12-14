@@ -1,8 +1,8 @@
 {
-    "version": "1.0.5",
-    "build_date": "2025-12-14T10:21:00+05:30",
+    "version": "1.0.6",
+    "build_date": "2025-12-14T10:36:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Beta testing cleanup: removed demo login credentials from UI",
+    "release_notes": "Fixed profile stats showing stale data after patient deletion",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

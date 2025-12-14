@@ -1,8 +1,8 @@
 {
-    "version": "1.0.17",
-    "build_date": "2025-12-15T00:15:00+05:30",
-    "commit": "dark-mode-complete",
-    "release_notes": "Implemented complete dark mode support for profile and add-patient screens. All colors now use theme values.",
+    "version": "1.0.18",
+    "build_date": "2025-12-15T00:28:00+05:30",
+    "commit": "validation-errors",
+    "release_notes": "Added visual validation error messages to add-patient form. Users now see why save is blocked (e.g., invalid email)",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

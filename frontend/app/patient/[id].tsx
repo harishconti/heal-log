@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 // WatermelonDB imports
@@ -30,12 +31,15 @@ import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
 
 function PatientDetailsScreen({ patient, notes }) {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const settings = useAppStore((state) => state.settings);
   const [showAddNote, setShowAddNote] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [newNoteType, setNewNoteType] = useState('initial');
+
+  const styles = createStyles(theme);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
@@ -337,10 +341,11 @@ export default function PatientDetailsContainer() {
 }
 
 
-const styles = StyleSheet.create({
+
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -350,7 +355,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -360,11 +365,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: '#e74c3c',
+    color: theme.colors.error,
     marginVertical: 16,
   },
   backButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -395,7 +400,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   patientCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     margin: 16,
     padding: 16,
     borderRadius: 12,
@@ -420,7 +425,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -431,24 +436,24 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   patientId: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginBottom: 8,
   },
   groupBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
   },
   groupText: {
     fontSize: 12,
-    color: '#1976d2',
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   contactSection: {
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   contactItem: {
@@ -465,24 +470,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.border,
   },
   contactText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 12,
   },
   callButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   medicalCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -498,15 +503,15 @@ const styles = StyleSheet.create({
   },
   medicalLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   medicalValue: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
   },
   notesCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -527,12 +532,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   noteItem: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.surface,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
@@ -545,22 +550,22 @@ const styles = StyleSheet.create({
   },
   noteType: {
     fontSize: 12,
-    color: '#2ecc71',
+    color: theme.colors.primary,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   noteDate: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   noteContent: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   noteAuthor: {
     fontSize: 12,
-    color: '#999',
+    color: theme.colors.textSecondary,
     fontStyle: 'italic',
   },
   emptyNotes: {
@@ -569,13 +574,13 @@ const styles = StyleSheet.create({
   },
   emptyNotesText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginTop: 12,
     marginBottom: 4,
   },
   emptyNotesSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   actionButtons: {
@@ -606,7 +611,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   upgradeCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -626,16 +631,16 @@ const styles = StyleSheet.create({
   upgradeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
   },
   upgradeSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginTop: 4,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -644,21 +649,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    backgroundColor: '#fff',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
   },
   modalCancel: {
     fontSize: 16,
-    color: '#e74c3c',
+    color: theme.colors.error,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
   },
   modalSave: {
     fontSize: 16,
-    color: '#2ecc71',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
   modalContent: {
@@ -671,7 +676,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   visitTypeButtons: {
@@ -683,26 +688,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.colors.surface,
   },
   activeVisitType: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
   },
   visitTypeText: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   activeVisitTypeText: {
     color: '#fff',
     fontWeight: '600',
   },
   noteInput: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     minHeight: 120,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
+    color: theme.colors.text,
   },
 });

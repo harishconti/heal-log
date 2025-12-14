@@ -49,7 +49,7 @@ export default function AddPatientScreen() {
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
 
-  const { control, handleSubmit, setValue, watch } = useForm<PatientFormData>({
+  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
       full_name: '',
@@ -192,6 +192,7 @@ export default function AddPatientScreen() {
               label="Full Name *"
               placeholder="Enter patient's full name"
               autoCapitalize="words"
+              error={errors.full_name?.message}
             />
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
@@ -201,6 +202,7 @@ export default function AddPatientScreen() {
                   label="Phone"
                   placeholder="Phone number"
                   keyboardType="phone-pad"
+                  error={errors.phone_number?.message}
                 />
               </View>
               <View style={styles.inputHalf}>
@@ -211,6 +213,7 @@ export default function AddPatientScreen() {
                   placeholder="Email address"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  error={errors.email?.message}
                 />
               </View>
             </View>
@@ -254,15 +257,15 @@ export default function AddPatientScreen() {
                   onPress={() => {
                     Alert.alert('Medical Group', 'Select medical specialty',
                       [
+                        {
+                          text: '+ Create New Group',
+                          onPress: () => setShowNewGroupModal(true)
+                        },
                         { text: 'Cancel', style: 'cancel' },
                         ...MEDICAL_GROUPS.map(group => ({
                           text: group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' '),
                           onPress: () => setValue('group', group),
                         })),
-                        {
-                          text: '+ Create New Group',
-                          onPress: () => setShowNewGroupModal(true)
-                        }
                       ]
                     );
                   }}

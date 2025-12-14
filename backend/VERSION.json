@@ -1,8 +1,8 @@
 {
-    "version": "1.0.6",
-    "build_date": "2025-12-14T10:36:00+05:30",
+    "version": "1.0.7",
+    "build_date": "2025-12-14T10:48:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Fixed profile stats showing stale data after patient deletion",
+    "release_notes": "Updated all dependencies to Expo SDK 54 compatible versions, fixed flash-list Kotlin build error",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

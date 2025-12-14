@@ -1,8 +1,8 @@
 {
-    "version": "1.0.8",
-    "build_date": "2025-12-14T11:04:00+05:30",
+    "version": "1.0.9",
+    "build_date": "2025-12-14T11:12:00+05:30",
     "commit": "auto-populated-on-deploy",
-    "release_notes": "Added react-native-worklets dependency for reanimated 4.x compatibility",
+    "release_notes": "Downgraded reanimated to 3.16.x to avoid New Architecture requirement",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",

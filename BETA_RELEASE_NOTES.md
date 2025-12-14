@@ -163,7 +163,7 @@ Thank you for participating in the Clinic OS Lite beta program. Your feedback is
 6. **Frequency**: Always, sometimes, or once?
 
 **Where to report:**
-- **Email:** beta@clinicoslite.com
+- **Email:** ngharish.develop@gmail.com
 - **In-app:** Settings → Report Bug
 - **GitHub:** [Create an issue](#) (if you have access)
 
@@ -175,7 +175,7 @@ We want to hear your ideas! Tell us:
 - How important is it (1-10)?
 
 **Submit to:**
-- **Email:** features@clinicoslite.com
+- **Email:** ngharish.develop@gmail.com
 - **In-app:** Settings → Suggest Feature
 
 ### General Feedback
@@ -186,7 +186,7 @@ Share your experience:
 - How can we improve?
 
 **Contact:**
-- **Email:** feedback@clinicoslite.com
+- **Email:** ngharish.develop@gmail.com
 - **Survey:** [Take our 5-minute survey](#)
 
 ---
@@ -257,7 +257,7 @@ Share your experience:
 ## 📞 Support & Resources
 
 ### Need Help?
-- **Email**: support@clinicoslite.com
+- **Email**: ngharish.develop@gmail.com
 - **Response Time**: Within 24 hours
 - **FAQ**: [docs.clinicoslite.com/faq](#)
 - **Video Tutorials**: [YouTube channel](#)
@@ -284,7 +284,7 @@ Let's build something amazing together! 🚀
 
 ---
 
-**Questions?** Reach out anytime: beta@clinicoslite.com
+**Questions?** Reach out anytime: ngharish.develop@gmail.com
 
 **Follow us:**
 - Twitter: [@clinicoslite](#)

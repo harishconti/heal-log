@@ -161,7 +161,7 @@ We may update these Terms:
 ## 15. Dispute Resolution
 
 ### 15.1 Governing Law
-These Terms are governed by [Your Jurisdiction] law.
+These Terms are governed by the Laws of India.
 
 ### 15.2 Arbitration
 - Disputes will be resolved through binding arbitration
@@ -189,9 +189,9 @@ You may not assign these Terms. We may assign to affiliates or successors.
 
 For questions about these Terms:
 
-**Email**: legal@clinicoslite.com  
-**Support**: support@clinicoslite.com  
-**Address**: [Your Business Address]
+**Email**: ngharish.develop@gmail.com  
+**Support**: ngharish.develop@gmail.com  
+**Address**: Available upon request
 
 ## 18. Beta Testing Agreement
 

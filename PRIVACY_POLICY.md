@@ -105,8 +105,8 @@ We may update this Privacy Policy periodically. We will notify you of material c
 
 For privacy-related questions or requests:
 
-**Email**: [support@clinicoslite.com](mailto:support@clinicoslite.com)  
-**Address**: [Your Business Address]
+**Email**: [ngharish.develop@gmail.com](mailto:ngharish.develop@gmail.com)  
+**Address**: Available upon request
 
 ## Compliance
 
@@ -118,7 +118,7 @@ This app complies with:
 ## Data Protection Officer
 
 For GDPR-related queries:  
-**Email**: dpo@clinicoslite.com
+**Email**: ngharish.develop@gmail.com
 
 ---
 

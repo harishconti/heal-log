@@ -169,7 +169,9 @@ export default function ProfileScreen() {
         await saveProfilePhoto(result.assets[0].base64);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      console.error('Error picking profile photo:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Error', `Failed to pick image: ${errorMessage}`);
     }
   };
 
@@ -194,7 +196,9 @@ export default function ProfileScreen() {
         await saveProfilePhoto(result.assets[0].base64);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to take photo');
+      console.error('Error taking profile photo:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Error', `Failed to take photo: ${errorMessage}`);
     }
   };
 

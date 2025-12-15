@@ -1,18 +1,21 @@
 {
-    "version": "1.0.25",
-    "build_date": "2025-12-15T10:57:00+05:30",
-    "commit": "fix-notes-sync-table-mismatch",
-    "release_notes": "CRITICAL FIX: Patient notes now sync correctly! Fixed schema mismatch where frontend used 'patient_notes' table but backend used 'clinical_notes'.",
+    "version": "1.0.28",
+    "build_date": "2025-12-15T11:35:00+05:30",
+    "commit": "fix-app-crash-null-collection",
+    "release_notes": "Fixed critical app crash caused by database collection being null before initialization.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
         "Clinical notes with proper sync",
         "Sync (pull/push)",
-        "User profile management",
+        "User profile management with photo upload",
         "Beta features (known issues)",
         "Version tracking API"
     ],
     "fixes": [
+        "CRITICAL: Fixed app crash 'Cannot read property query of null' - added null safety check for database collection",
+        "Fixed database migration error on fresh installs - removed SQL copy from non-existent patient_notes table",
+        "Improved profile photo error handling - now shows actual error messages instead of generic 'Failed to pick image'",
         "CRITICAL: Fixed notes sync - renamed frontend table patient_notes to clinical_notes to match backend",
         "Added schema migration to v2 to preserve existing notes data",
         "Fixed sync push 409 error: Empty email strings now converted to None",

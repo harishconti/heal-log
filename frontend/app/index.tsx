@@ -344,16 +344,36 @@ function Index({ patients, groups, totalPatientCount }) {
 }
 
 const enhance = withObservables([], () => {
-  const patientCollection = database.collections.get<Patient>('patients');
+  try {
+    const patientCollection = database?.collections?.get<Patient>('patients');
 
-  // Just observe all patients - filtering happens in component for reactivity
-  return {
-    patients: patientCollection.query().observe(),
-    groups: patientCollection.query(Q.where('group', Q.notEq(null))).observe().pipe(
-      map(ps => [...new Set(ps.map(p => p.group))])
-    ),
-    totalPatientCount: patientCollection.query().observeCount(),
-  };
+    if (!patientCollection) {
+      console.warn('[Index] Patient collection not ready yet, returning empty observables');
+      // Return empty observables while database initializes
+      return {
+        patients: [],
+        groups: [],
+        totalPatientCount: 0,
+      };
+    }
+
+    // Just observe all patients - filtering happens in component for reactivity
+    return {
+      patients: patientCollection.query().observe(),
+      groups: patientCollection.query(Q.where('group', Q.notEq(null))).observe().pipe(
+        map(ps => [...new Set(ps.map(p => p.group))])
+      ),
+      totalPatientCount: patientCollection.query().observeCount(),
+    };
+  } catch (error) {
+    console.error('[Index] Error in withObservables:', error);
+    // Return empty observables on error
+    return {
+      patients: [],
+      groups: [],
+      totalPatientCount: 0,
+    };
+  }
 });
 
 export default enhance(Index);

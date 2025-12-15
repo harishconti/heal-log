@@ -5,7 +5,7 @@ export default class Patient extends Model {
   static table = 'patients';
 
   static associations = {
-    patient_notes: { type: 'has_many', foreignKey: 'patient_id' },
+    clinical_notes: { type: 'has_many', foreignKey: 'patient_id' },
   };
 
   @field('patient_id') patientId;
@@ -22,5 +22,5 @@ export default class Patient extends Model {
   @readonly @date('created_at') createdAt;
   @readonly @date('updated_at') updatedAt;
 
-  @relation('patient_notes', 'patient_id') notes;
+  @relation('clinical_notes', 'patient_id') notes;
 }

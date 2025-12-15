@@ -2,7 +2,7 @@ import { Model } from '@nozbe/watermelondb';
 import { field, text, readonly, date, relation } from '@nozbe/watermelondb/decorators';
 
 export default class PatientNote extends Model {
-  static table = 'patient_notes';
+  static table = 'clinical_notes';
 
   static associations = {
     patients: { type: 'belongs_to', key: 'patient_id' },

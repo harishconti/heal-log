@@ -9,7 +9,7 @@ export const NoteService = {
         addBreadcrumb('note_service', `Creating note for patient: ${data.patient_id}`);
         try {
             return await database.write(async () => {
-                return await database.collections.get<PatientNote>('patient_notes').create(note => {
+                return await database.collections.get<PatientNote>('clinical_notes').create(note => {
                     note.patientId = data.patient_id;  // Use patientId field directly
                     note.content = data.content;
                     note.visitType = data.visit_type;
@@ -27,7 +27,7 @@ export const NoteService = {
         addBreadcrumb('note_service', `Updating note: ${noteId}`);
         try {
             return await database.write(async () => {
-                const note = await database.collections.get<PatientNote>('patient_notes').find(noteId);
+                const note = await database.collections.get<PatientNote>('clinical_notes').find(noteId);
                 await note.update(n => {
                     n.content = content;
                 });
@@ -43,7 +43,7 @@ export const NoteService = {
         addBreadcrumb('note_service', `Deleting note: ${noteId}`);
         try {
             await database.write(async () => {
-                const note = await database.collections.get<PatientNote>('patient_notes').find(noteId);
+                const note = await database.collections.get<PatientNote>('clinical_notes').find(noteId);
                 await note.markAsDeleted();
             });
         } catch (error) {
@@ -54,7 +54,7 @@ export const NoteService = {
 
     async getNotesByPatient(patientId: string) {
         try {
-            return await database.collections.get<PatientNote>('patient_notes')
+            return await database.collections.get<PatientNote>('clinical_notes')
                 .query(
                     Q.where('patient_id', patientId),
                     Q.sortBy('timestamp', Q.desc)

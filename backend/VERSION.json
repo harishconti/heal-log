@@ -1,18 +1,20 @@
 {
-    "version": "1.0.24",
-    "build_date": "2025-12-15T01:10:00+05:30",
-    "commit": "scrollable-group-selector",
-    "release_notes": "Fixed: Replaced Alert with scrollable modal for Medical Group selection. Now shows ALL groups including 'diabetics' and all custom groups!",
+    "version": "1.0.25",
+    "build_date": "2025-12-15T10:57:00+05:30",
+    "commit": "fix-notes-sync-table-mismatch",
+    "release_notes": "CRITICAL FIX: Patient notes now sync correctly! Fixed schema mismatch where frontend used 'patient_notes' table but backend used 'clinical_notes'.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
-        "Clinical notes",
+        "Clinical notes with proper sync",
         "Sync (pull/push)",
         "User profile management",
         "Beta features (known issues)",
         "Version tracking API"
     ],
     "fixes": [
+        "CRITICAL: Fixed notes sync - renamed frontend table patient_notes to clinical_notes to match backend",
+        "Added schema migration to v2 to preserve existing notes data",
         "Fixed sync push 409 error: Empty email strings now converted to None",
         "Convert string ID to MongoDB ObjectId() before querying database",
         "Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields",

@@ -1,8 +1,8 @@
 {
-    "version": "1.0.28",
-    "build_date": "2025-12-15T11:35:00+05:30",
-    "commit": "fix-app-crash-null-collection",
-    "release_notes": "Fixed critical app crash caused by database collection being null before initialization.",
+    "version": "1.0.29",
+    "build_date": "2025-12-15T11:42:00+05:30",
+    "commit": "fix-all-patient-notes-refs",
+    "release_notes": "Fixed ALL remaining patient_notes references to clinical_notes. App should no longer crash on patient details screen.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Patient management (CRUD)",
@@ -13,6 +13,7 @@
         "Version tracking API"
     ],
     "fixes": [
+        "CRITICAL: Fixed remaining patient_notes references in patient detail screen - now uses clinical_notes",
         "CRITICAL: Fixed app crash 'Cannot read property query of null' - added null safety check for database collection",
         "Fixed database migration error on fresh installs - removed SQL copy from non-existent patient_notes table",
         "Improved profile photo error handling - now shows actual error messages instead of generic 'Failed to pick image'",

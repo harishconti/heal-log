@@ -74,7 +74,7 @@ function PatientDetailsScreen({ patient, notes }) {
     if (!patient || !newNote.trim()) return;
     try {
       await database.write(async () => {
-        await database.collections.get<PatientNote>('patient_notes').create(note => {
+        await database.collections.get<PatientNote>('clinical_notes').create(note => {
           note.patientId = patient.id;  // Use patientId field directly
           note.content = newNote.trim();
           note.visitType = newNoteType;
@@ -328,7 +328,7 @@ function PatientDetailsScreen({ patient, notes }) {
 
 const enhance = withObservables(['id'], ({ id }) => ({
   patient: database.collections.get<Patient>('patients').findAndObserve(id),
-  notes: database.collections.get<PatientNote>('patient_notes').query(
+  notes: database.collections.get<PatientNote>('clinical_notes').query(
     Q.where('patient_id', id)
   ).observe(),
 }));

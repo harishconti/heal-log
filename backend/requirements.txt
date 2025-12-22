@@ -42,3 +42,6 @@ locust==2.24.0
 # Monitoring & Logging
 sentry-sdk[fastapi]==2.18.0
 structlog==24.1.0
+
+# Email
+aiosmtplib==3.0.1

@@ -1,10 +1,12 @@
 {
-    "version": "1.0.29",
-    "build_date": "2025-12-15T11:42:00+05:30",
-    "commit": "fix-all-patient-notes-refs",
-    "release_notes": "Fixed ALL remaining patient_notes references to clinical_notes. App should no longer crash on patient details screen.",
+    "version": "1.0.32",
+    "build_date": "2025-12-22T18:10:00+05:30",
+    "commit": "rebrand-to-heallog",
+    "release_notes": "Rebranded to HealLog. Updated email templates and sender to use heallog.com domain.",
     "features": [
         "Authentication (login, register, token refresh)",
+        "Email OTP verification for new registrations",
+        "Password reset via secure token",
         "Patient management (CRUD)",
         "Clinical notes with proper sync",
         "Sync (pull/push)",
@@ -13,6 +15,7 @@
         "Version tracking API"
     ],
     "fixes": [
+        "Duplicate email registration now returns HTTP 409 Conflict for better frontend handling",
         "CRITICAL: Fixed remaining patient_notes references in patient detail screen - now uses clinical_notes",
         "CRITICAL: Fixed app crash 'Cannot read property query of null' - added null safety check for database collection",
         "Fixed database migration error on fresh installs - removed SQL copy from non-existent patient_notes table",

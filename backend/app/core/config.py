@@ -57,6 +57,15 @@ class Settings(BaseSettings):
     EMAIL_USER: Optional[str] = None
     EMAIL_PASSWORD: Optional[str] = None
     EMAIL_TO: Optional[str] = None
+    EMAIL_FROM: Optional[str] = "HealLog <support@heallog.com>"
+    
+    # OTP Settings
+    OTP_EXPIRE_MINUTES: int = 5
+    OTP_MAX_ATTEMPTS: int = 3
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+    
+    # Password Reset Settings
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 60
 
     class Config:
         case_sensitive = True

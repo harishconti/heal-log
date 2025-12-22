@@ -23,6 +23,10 @@ class RateLimitException(APIException):
     def __init__(self, detail: str = "Rate limit exceeded. Please try again later."):
         super().__init__(status_code=429, detail=detail)
 
+class DuplicateEmailException(APIException):
+    def __init__(self, detail: str = "An account with this email already exists. Please sign in instead."):
+        super().__init__(status_code=409, detail=detail)
+
 class NotFoundException(APIException):
     def __init__(self, detail: str = "Resource not found."):
         super().__init__(status_code=404, detail=detail)

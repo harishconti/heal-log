@@ -1,6 +1,5 @@
 from fastapi_cache.decorator import cache
-from fastapi_cache.decorator import cache
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.schemas.user import User
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
@@ -124,7 +123,7 @@ class AnalyticsService:
         Retrieves health analytics for the application.
         """
         active_users = await User.find(
-            {"updated_at": {"$gte": datetime.now() - timedelta(days=1)}}
+            {"updated_at": {"$gte": datetime.now(timezone.utc) - timedelta(days=1)}}
         ).count()
         total_patients = await Patient.find().count()
         total_notes = await ClinicalNote.find().count()

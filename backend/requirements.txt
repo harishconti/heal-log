@@ -45,3 +45,6 @@ structlog==24.1.0
 
 # Email
 aiosmtplib==3.0.1
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0

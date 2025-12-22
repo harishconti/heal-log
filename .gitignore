@@ -123,6 +123,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# OAuth Credentials (NEVER commit!)
+backend/config/oauth_credentials.json
+backend/config/token.json
+client_secret_*.json
+
 # Spyder project settings
 .spyderproject
 .spyderworkspace

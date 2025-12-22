@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.core.security import require_role, get_current_user
 from app.schemas.user import User
+from app.schemas.role import UserRole
 from app.services.user_service import user_service
 import time
 
@@ -14,7 +15,7 @@ metrics_data = {
     "active_users": set(),
 }
 
-@router.get("/metrics", dependencies=[Depends(require_role("ADMIN"))])
+@router.get("/metrics", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def get_metrics(current_user: User = Depends(get_current_user)):
     """
     API metrics endpoint (admin only).

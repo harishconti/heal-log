@@ -6,12 +6,16 @@ from app.api import (
     webhooks, sync, debug, feedback, telemetry, beta, health, metrics
 )
 from app.core.exceptions import APIException, api_exception_handler
+from app.middleware.logging import LoggingMiddleware
 
 def create_test_app(limiter):
     app = FastAPI()
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_exception_handler(APIException, api_exception_handler)
+
+    # Add middleware
+    app.add_middleware(LoggingMiddleware)
 
     app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
     app.include_router(users.router, prefix="/api/users", tags=["Users"])

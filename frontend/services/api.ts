@@ -174,4 +174,68 @@ export const changePassword = async (currentPassword: string, newPassword: strin
   }
 };
 
+// ============== OTP & Password Reset APIs ==============
+
+/**
+ * Verify OTP code for email verification
+ */
+export const verifyOTP = async (email: string, otp_code: string) => {
+  try {
+    const response = await api.post('/api/auth/verify-otp', {
+      email,
+      otp_code,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error verifying OTP:', error);
+    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to verify OTP';
+    throw new Error(message);
+  }
+};
+
+/**
+ * Resend OTP code for email verification
+ */
+export const resendOTP = async (email: string) => {
+  try {
+    const response = await api.post('/api/auth/resend-otp', { email });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error resending OTP:', error);
+    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to resend OTP';
+    throw new Error(message);
+  }
+};
+
+/**
+ * Request password reset email
+ */
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await api.post('/api/auth/forgot-password', { email });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error requesting password reset:', error);
+    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to send reset email';
+    throw new Error(message);
+  }
+};
+
+/**
+ * Reset password with token
+ */
+export const resetPassword = async (token: string, new_password: string) => {
+  try {
+    const response = await api.post('/api/auth/reset-password', {
+      token,
+      new_password,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error resetting password:', error);
+    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to reset password';
+    throw new Error(message);
+  }
+};
+
 export default api;

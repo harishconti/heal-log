@@ -21,6 +21,7 @@ import { ControlledInput } from '@/components/forms/ControlledInput';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppStore } from '@/store/useAppStore';
 import { addBreadcrumb } from '@/utils/monitoring';
+import { getErrorMessage, isVerificationError } from '@/utils/errorMessages';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -28,7 +29,7 @@ export default function LoginScreen() {
   const { theme, fontScale } = useTheme();
   const { loading, setLoading } = useAppStore();
 
-  const { control, handleSubmit } = useForm<LoginFormData>({
+  const { control, handleSubmit, getValues } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -43,7 +44,28 @@ export default function LoginScreen() {
       await login(data.email, data.password);
       router.replace('/');
     } catch (error: any) {
-      Alert.alert('Login Failed', 'No details found. Try signing up.');
+      const errorMessage = error.message || 'Login failed';
+
+      // Check if user needs to verify email
+      if (isVerificationError(errorMessage)) {
+        Alert.alert(
+          'Email Not Verified',
+          'Please verify your email to continue. A verification code has been sent to your email.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Verify Now',
+              onPress: () => router.push({
+                pathname: '/verify-otp',
+                params: { email: data.email }
+              })
+            }
+          ]
+        );
+      } else {
+        const userMessage = getErrorMessage(errorMessage, 'login');
+        Alert.alert('Login Failed', userMessage);
+      }
     } finally {
       setLoading('login', false);
     }
@@ -51,6 +73,10 @@ export default function LoginScreen() {
 
   const navigateToRegister = () => {
     router.push('/register');
+  };
+
+  const navigateToForgotPassword = () => {
+    router.push('/forgot-password');
   };
 
   const styles = getStyles(theme, fontScale);
@@ -65,7 +91,7 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Ionicons name="medical" size={64} color={theme.colors.primary} />
-            <Text style={styles.title}>Medical Contacts</Text>
+            <Text style={styles.title}>HealLog</Text>
             <Text style={styles.subtitle}>Professional Patient Management</Text>
           </View>
 
@@ -87,6 +113,14 @@ export default function LoginScreen() {
               isPassword
               placeholderTextColor={theme.colors.textSecondary}
             />
+
+            {/* Forgot Password Link */}
+            <TouchableOpacity
+              style={styles.forgotPasswordLink}
+              onPress={navigateToForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.loginButton, loading.login && styles.loginButtonDisabled]}
@@ -135,7 +169,7 @@ export default function LoginScreen() {
   );
 }
 
-const getStyles = (theme, fontScale: number) => StyleSheet.create({
+const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -166,6 +200,16 @@ const getStyles = (theme, fontScale: number) => StyleSheet.create({
   },
   form: {
     marginBottom: 32,
+  },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+    marginTop: -8,
+  },
+  forgotPasswordText: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.primary,
+    fontWeight: '500',
   },
   loginButton: {
     backgroundColor: theme.colors.primary,

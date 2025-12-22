@@ -53,17 +53,28 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+  register: (userData: RegisterData) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  setUser: (user: User | null) => void;
+  setIsAuthenticated: (isAuth: boolean) => void;
 }
 
 interface RegisterData {
   email: string;
-  phone: string;
+  phone?: string;
   password: string;
   full_name: string;
   medical_specialty: string;
+}
+
+interface RegisterResponse {
+  success: boolean;
+  requires_verification?: boolean;
+  email?: string;
+  message?: string;
+  access_token?: string;
+  user?: User;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -187,26 +198,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: RegisterData) => {
+  const register = async (userData: RegisterData): Promise<RegisterResponse> => {
     console.log('📝 [Auth] Attempting registration...');
     try {
       const response = await api.post('/api/auth/register', userData);
-
-      const { access_token, user: newUser } = response.data;
+      const data = response.data;
 
       console.log('✅ [Auth] Registration successful');
 
-      // Store auth data
-      await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
+      // Check if OTP verification is required (new flow)
+      if (data.requires_verification) {
+        console.log('📧 [Auth] OTP verification required');
+        return {
+          success: true,
+          requires_verification: true,
+          email: data.email || userData.email,
+          message: data.message,
+        };
+      }
 
-      setToken(access_token);
-      setUser(newUser);
+      // Legacy flow - direct login after registration
+      const { access_token, user: newUser } = data;
 
-      console.log('✅ [Auth] Token saved successfully');
+      if (access_token && newUser) {
+        await SecureStorageAdapter.setItem('token', access_token);
+        setToken(access_token);
+        setUser(newUser);
+        console.log('✅ [Auth] Token saved successfully');
+      }
+
+      return {
+        success: true,
+        requires_verification: false,
+        access_token,
+        user: newUser,
+      };
 
     } catch (error: any) {
       console.error('❌ [Auth] Registration error:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.detail || 'Registration failed');
+      throw new Error(error.response?.data?.error?.message || error.response?.data?.detail || 'Registration failed');
     }
   };
 
@@ -272,6 +302,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Wrapper to allow external components to set authentication state (for OTP verification)
+  const handleSetUser = (newUser: User | null) => {
+    setUser(newUser);
+  };
+
+  const handleSetIsAuthenticated = (isAuth: boolean) => {
+    // This is derived from user && token, so we just need to ensure both are set/cleared
+    if (!isAuth) {
+      setToken(null);
+      setUser(null);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -280,7 +323,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
-    refreshUser
+    refreshUser,
+    setUser: handleSetUser,
+    setIsAuthenticated: handleSetIsAuthenticated,
   };
 
   return (

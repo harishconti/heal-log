@@ -16,8 +16,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, RegisterFormData } from '@/lib/validation';
+import { registerSchema, RegisterFormData, getPasswordStrength } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
+import { useTheme } from '@/contexts/ThemeContext';
+import { getErrorMessage, isDuplicateEmailError } from '@/utils/errorMessages';
 
 const SPECIALTIES = [
   'general',
@@ -38,8 +40,9 @@ export default function RegisterScreen() {
 
   const { register } = useAuth();
   const router = useRouter();
+  const { theme, fontScale } = useTheme();
 
-  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+  const { control, handleSubmit, formState: { errors }, watch } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       full_name: '',
@@ -50,16 +53,45 @@ export default function RegisterScreen() {
     }
   });
 
+  const password = watch('password');
+  const passwordStrength = getPasswordStrength(password || '');
+
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await register({
+      const response = await register({
         ...data,
         medical_specialty: medicalSpecialty,
       });
-      router.replace('/');
+
+      // Check if OTP verification is required
+      if (response?.requires_verification) {
+        // Redirect to OTP verification screen
+        router.push({
+          pathname: '/verify-otp',
+          params: { email: data.email }
+        });
+      } else {
+        // Legacy flow (if backend doesn't require verification)
+        router.replace('/');
+      }
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'An unexpected error occurred.');
+      const errorMessage = error.message || 'An unexpected error occurred.';
+
+      // Smart redirect for duplicate email
+      if (isDuplicateEmailError(errorMessage)) {
+        Alert.alert(
+          'Account Exists',
+          'This email is already registered. Would you like to sign in instead?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign In', onPress: () => router.back() }
+          ]
+        );
+      } else {
+        const userMessage = getErrorMessage(errorMessage, 'signup');
+        Alert.alert('Registration Failed', userMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +100,8 @@ export default function RegisterScreen() {
   const navigateToLogin = () => {
     router.back();
   };
+
+  const styles = getStyles(theme, fontScale);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,10 +113,10 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={navigateToLogin} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#2ecc71" />
+              <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
             </TouchableOpacity>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join Medical Contacts today</Text>
+            <Text style={styles.subtitle}>Join HealLog today</Text>
           </View>
 
           {/* Registration Form */}
@@ -114,6 +148,7 @@ export default function RegisterScreen() {
               iconName="call"
               keyboardType="phone-pad"
               placeholderTextColor="#999"
+              error={errors.phone?.message}
             />
 
             <View style={styles.inputContainer}>
@@ -144,12 +179,28 @@ export default function RegisterScreen() {
             <ControlledInput
               control={control}
               name="password"
-              placeholder="Password *"
+              placeholder="Password * (min 8 chars, upper/lower/number/special)"
               iconName="lock-closed"
               isPassword
               placeholderTextColor="#999"
               error={errors.password?.message}
             />
+
+            {/* Password Strength Indicator */}
+            {password && password.length > 0 && (
+              <View style={styles.strengthContainer}>
+                <View style={styles.strengthBar}>
+                  <View style={[
+                    styles.strengthFill,
+                    { width: `${(passwordStrength.score / 6) * 100}%`, backgroundColor: passwordStrength.color }
+                  ]} />
+                </View>
+                <Text style={[styles.strengthText, { color: passwordStrength.color }]}>
+                  {passwordStrength.label}
+                </Text>
+              </View>
+            )}
+
             <ControlledInput
               control={control}
               name="confirmPassword"
@@ -182,25 +233,20 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Subscription Plans */}
-          <View style={styles.plansSection}>
-            <Text style={styles.plansTitle}>Subscription Plans</Text>
-            <View style={styles.plans}>
-              <View style={styles.plan}>
-                <Text style={styles.planName}>Regular</Text>
-                <Text style={styles.planPrice}>Free Trial</Text>
-                <Text style={styles.planFeature}>• Android App</Text>
-                <Text style={styles.planFeature}>• Basic Features</Text>
-                <Text style={styles.planFeature}>• 30-day Trial</Text>
-              </View>
-              <View style={[styles.plan, styles.planPro]}>
-                <Text style={styles.planName}>Pro</Text>
-                <Text style={styles.planPrice}>$9.99/month</Text>
-                <Text style={styles.planFeature}>• Android App</Text>
-                <Text style={styles.planFeature}>• Web Dashboard</Text>
-                <Text style={styles.planFeature}>• Advanced Analytics</Text>
-                <Text style={styles.planFeature}>• Priority Support</Text>
-              </View>
+          {/* Features Section */}
+          <View style={styles.featuresSection}>
+            <Text style={styles.featuresTitle}>Why Choose HealLog?</Text>
+            <View style={styles.featureItem}>
+              <Ionicons name="people" size={24} color={theme.colors.primary} />
+              <Text style={styles.featureName}>Easy Patient Management</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons name="document-text" size={24} color={theme.colors.primary} />
+              <Text style={styles.featureName}>Digital Records</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons name="shield-checkmark" size={24} color={theme.colors.primary} />
+              <Text style={styles.featureName}>Secure & Private</Text>
             </View>
           </View>
         </ScrollView>
@@ -209,10 +255,10 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   keyboardAvoid: {
     flex: 1,
@@ -234,14 +280,14 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 28 * fontScale,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 16 * fontScale,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   form: {
@@ -250,7 +296,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -271,11 +317,33 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   pickerText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 16 * fontScale,
+    color: theme.colors.text,
+  },
+  strengthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: -8,
+    gap: 12,
+  },
+  strengthBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: theme.colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  strengthFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  strengthText: {
+    fontSize: 12 * fontScale,
+    fontWeight: '600',
   },
   registerButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -291,64 +359,39 @@ const styles = StyleSheet.create({
   },
   registerButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
   },
   loginLink: {
     alignItems: 'center',
   },
   loginLinkText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 16 * fontScale,
+    color: theme.colors.textSecondary,
   },
   loginLinkBold: {
-    color: '#2ecc71',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
-  plansSection: {
+  featuresSection: {
     marginTop: 'auto',
+    alignItems: 'center',
+    paddingTop: 24,
   },
-  plansTitle: {
-    fontSize: 18,
+  featuresTitle: {
+    fontSize: 18 * fontScale,
     fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
+    color: theme.colors.text,
     marginBottom: 16,
   },
-  plans: {
+  featureItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-  },
-  plan: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  planPro: {
-    borderWidth: 2,
-    borderColor: '#2ecc71',
-  },
-  planName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  planPrice: {
-    fontSize: 14,
-    color: '#2ecc71',
-    fontWeight: '500',
     marginBottom: 12,
   },
-  planFeature: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+  featureName: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
   },
 });

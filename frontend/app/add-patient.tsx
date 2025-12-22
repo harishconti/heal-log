@@ -13,6 +13,7 @@ import {
   StatusBar,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +28,7 @@ import { PatientService } from '@/services/patient_service';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 const MEDICAL_GROUPS = [
   'general',
@@ -140,12 +142,24 @@ export default function AddPatientScreen() {
 
   const onSubmit = async (data: PatientFormData) => {
     setLoading(true);
-    addBreadcrumb('patient', `Attempting to add new patient: ${data.full_name}`);
+
+    // Sanitize inputs - trim whitespace
+    const sanitizedData = {
+      ...data,
+      full_name: data.full_name?.trim(),
+      email: data.email?.trim().toLowerCase(),
+      phone_number: data.phone_number?.trim(),
+      address: data.address?.trim(),
+      initial_complaint: data.initial_complaint?.trim(),
+      initial_diagnosis: data.initial_diagnosis?.trim(),
+    };
+
+    addBreadcrumb('patient', `Attempting to add new patient: ${sanitizedData.full_name}`);
     try {
       await PatientService.createPatient({
-        ...data,
+        ...sanitizedData,
         location,
-        group: medicalGroup,
+        group: medicalGroup || 'general',
         photo,
         is_favorite: isFavorite,
       });
@@ -154,8 +168,9 @@ export default function AddPatientScreen() {
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Failed to add patient';
-      Alert.alert('Error', message);
+      const errorText = error.response?.data?.detail || error.message || 'Failed to add patient';
+      const userMessage = getErrorMessage(errorText, 'add_patient');
+      Alert.alert('Error', userMessage);
     } finally {
       setLoading(false);
     }

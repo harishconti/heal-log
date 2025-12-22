@@ -4,10 +4,13 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/": [
-        "./"
+      "@/*": [
+        "./*"
       ]
-    }
+    },
+    "useDefineForClassFields": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "**/*.ts",

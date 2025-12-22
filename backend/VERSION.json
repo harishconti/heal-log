@@ -1,8 +1,8 @@
 {
-    "version": "1.0.33",
-    "build_date": "2025-12-22T19:55:00+05:30",
-    "commit": "frontend-otp-and-password-reset-screens",
-    "release_notes": "Added frontend screens for OTP verification and forgot password. Improved validation with password strength indicator.",
+    "version": "1.0.34",
+    "build_date": "2025-12-22T20:30:00+05:30",
+    "commit": "complete-frontend-fixes",
+    "release_notes": "Completed all frontend fixes: input sanitization, real-time password match indicator, improved patient form error handling.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",
@@ -10,6 +10,8 @@
         "Frontend OTP verification screen with auto-submit",
         "Frontend forgot password multi-step wizard",
         "Password strength indicator on registration",
+        "Real-time password match confirmation",
+        "Input sanitization (trim whitespace)",
         "Smart error messages with context awareness",
         "Patient management (CRUD)",
         "Clinical notes with proper sync",
@@ -19,6 +21,9 @@
         "Version tracking API"
     ],
     "fixes": [
+        "Added input sanitization to registration and patient forms",
+        "Real-time password confirmation match indicator",
+        "Patient form now uses context-aware error messages",
         "Duplicate email registration now returns HTTP 409 Conflict for better frontend handling",
         "CRITICAL: Fixed remaining patient_notes references in patient detail screen - now uses clinical_notes",
         "CRITICAL: Fixed app crash 'Cannot read property query of null' - added null safety check for database collection",

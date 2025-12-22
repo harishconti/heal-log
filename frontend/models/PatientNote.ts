@@ -8,11 +8,11 @@ export default class PatientNote extends Model {
     patients: { type: 'belongs_to', key: 'patient_id' },
   };
 
-  @field('patient_id') patientId!: string;
-  @text('content') content!: string;
-  @date('timestamp') timestamp!: Date;
-  @text('visit_type') visitType!: string;
-  @text('created_by') createdBy!: string;
+  @field('patient_id') patientId;
+  @text('content') content;
+  @date('timestamp') timestamp;
+  @text('visit_type') visitType;
+  @text('created_by') createdBy;
 
   @relation('patients', 'patient_id') patient;
 }

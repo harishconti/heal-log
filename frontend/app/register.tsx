@@ -54,13 +54,23 @@ export default function RegisterScreen() {
   });
 
   const password = watch('password');
+  const confirmPassword = watch('confirmPassword');
   const passwordStrength = getPasswordStrength(password || '');
+  const passwordsMatch = password && confirmPassword && password === confirmPassword;
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      const response = await register({
+      // Sanitize inputs before submission
+      const sanitizedData = {
         ...data,
+        full_name: data.full_name.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone?.trim() || '',
+      };
+
+      const response = await register({
+        ...sanitizedData,
         medical_specialty: medicalSpecialty,
       });
 
@@ -69,7 +79,7 @@ export default function RegisterScreen() {
         // Redirect to OTP verification screen
         router.push({
           pathname: '/verify-otp',
-          params: { email: data.email }
+          params: { email: sanitizedData.email }
         });
       } else {
         // Legacy flow (if backend doesn't require verification)
@@ -211,6 +221,20 @@ export default function RegisterScreen() {
               error={errors.confirmPassword?.message}
             />
 
+            {/* Real-time password match indicator */}
+            {confirmPassword && confirmPassword.length > 0 && (
+              <View style={styles.matchIndicator}>
+                <Ionicons
+                  name={passwordsMatch ? "checkmark-circle" : "close-circle"}
+                  size={16}
+                  color={passwordsMatch ? "#2ecc71" : "#e74c3c"}
+                />
+                <Text style={[styles.matchText, { color: passwordsMatch ? "#2ecc71" : "#e74c3c" }]}>
+                  {passwordsMatch ? "Passwords match" : "Passwords don't match"}
+                </Text>
+              </View>
+            )}
+
             <TouchableOpacity
               style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
@@ -341,6 +365,17 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   strengthText: {
     fontSize: 12 * fontScale,
     fontWeight: '600',
+  },
+  matchIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: -8,
+    gap: 6,
+  },
+  matchText: {
+    fontSize: 12 * fontScale,
+    fontWeight: '500',
   },
   registerButton: {
     backgroundColor: theme.colors.primary,

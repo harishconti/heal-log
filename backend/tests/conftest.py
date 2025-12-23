@@ -3,6 +3,7 @@ import os
 import pytest_asyncio
 import asyncio
 from mongomock_motor import AsyncMongoMockClient
+from unittest.mock import MagicMock
 
 # Add the project root to the sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -19,6 +20,7 @@ from app.schemas.telemetry import Telemetry
 from app.schemas.beta_feedback import BetaFeedback
 from app.services.user_service import user_service
 from app.services.feedback_service import feedback_service
+from app.db import session as db_session
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop():
@@ -40,6 +42,9 @@ async def db_client():
     client = AsyncMongoMockClient()
     database = client["test_medical_contacts"]
 
+    # Patch the global client in app.db.session so that get_database() returns this mock client
+    db_session.client = client
+
     # Initialize Beanie with all the document models
     await init_beanie(
         database=database,
@@ -49,6 +54,7 @@ async def db_client():
     yield client
 
     client.close()
+    db_session.client = None
 
 @pytest_asyncio.fixture(autouse=True)
 async def db(db_client):

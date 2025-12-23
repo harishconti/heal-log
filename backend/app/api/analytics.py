@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from typing import List, Dict, Any
 from app.core.security import require_pro_user, require_role
-from app.services import analytics_service
+from app.services.analytics_service import analytics_service
 from app.core.limiter import limiter
 from app.schemas.role import UserRole
 from app.schemas.user import User
 from datetime import datetime
+import logging
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ async def get_patient_growth(
         growth_data = await analytics_service.get_patient_growth_analytics(current_user.id)
         return growth_data
     except Exception as e:
+        logging.error(f"Error fetching patient growth: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching analytics data."
@@ -40,6 +42,7 @@ async def get_notes_activity(
         notes_data = await analytics_service.get_notes_analytics(current_user.id)
         return notes_data
     except Exception as e:
+        logging.error(f"Error fetching notes activity: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching notes analytics."
@@ -58,6 +61,7 @@ async def get_weekly_activity(
         activity_data = await analytics_service.get_activity_analytics(current_user.id)
         return activity_data
     except Exception as e:
+        logging.error(f"Error fetching weekly activity: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching activity analytics."
@@ -76,6 +80,7 @@ async def get_demographics(
         demographics_data = await analytics_service.get_demographics_analytics(current_user.id)
         return demographics_data
     except Exception as e:
+        logging.error(f"Error fetching demographics: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching demographics."
@@ -104,6 +109,7 @@ async def export_analytics(
             "exported_at": datetime.now().isoformat()
         }
     except Exception as e:
+        logging.error(f"Error exporting analytics: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while exporting analytics."
@@ -122,6 +128,7 @@ async def get_health_analytics(
         health_data = await analytics_service.get_health_analytics()
         return health_data
     except Exception as e:
+        logging.error(f"Error fetching health analytics: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching health analytics data."

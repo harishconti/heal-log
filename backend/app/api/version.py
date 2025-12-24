@@ -36,33 +36,18 @@ def get_version_info() -> dict:
 async def get_version():
     """
     Get the current version of the backend API.
-    
+
     Returns:
-        Version information including version number, build date, commit hash,
-        uptime, and environment details.
+        Minimal version information for public consumption.
+        Sensitive details like commit hash, uptime, and environment are omitted.
     """
     version_info = get_version_info()
-    
-    # Calculate uptime
-    uptime_seconds = (datetime.now(timezone.utc) - SERVER_START_TIME).total_seconds()
-    uptime_hours = uptime_seconds / 3600
-    uptime_days = uptime_seconds / 86400
-    
+
+    # Return minimal version info - avoid exposing internal details
     return {
         "status": "ok",
         "version": version_info.get("version", "unknown"),
         "build_date": version_info.get("build_date", "unknown"),
-        "commit": os.getenv("RAILWAY_GIT_COMMIT_SHA", version_info.get("commit", "local")),
-        "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
-        "uptime": {
-            "started_at": SERVER_START_TIME.isoformat(),
-            "seconds": int(uptime_seconds),
-            "hours": round(uptime_hours, 2),
-            "days": round(uptime_days, 2)
-        },
-        "release_notes": version_info.get("release_notes", ""),
-        "features": version_info.get("features", []),
-        "fixes": version_info.get("fixes", [])
     }
 
 @router.get("/version/short")

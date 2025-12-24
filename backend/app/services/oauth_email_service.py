@@ -67,48 +67,55 @@ class OAuthEmailService:
     
     def _send_email(self, recipient_email: str, subject: str, html_body: str, text_body: str = "") -> Tuple[bool, str]:
         """Internal method to send email using OAuth 2.0"""
+        server = None
         try:
             # Get fresh access token
             access_token = self.get_access_token()
             if not access_token:
                 return False, "Failed to get access token"
-            
+
             # Create XOAUTH2 string
             auth_string = self.create_xoauth2_string(access_token)
-            
+
             # Connect to Gmail SMTP
             server = smtplib.SMTP(self.smtp_host, self.smtp_port)
             server.ehlo()
             server.starttls()
             server.ehlo()
-            
+
             # Authenticate using XOAUTH2
             server.docmd('AUTH', 'XOAUTH2 ' + auth_string)
-            
+
             # Create email message
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = f"HealLog <{self.email}>"
             msg["To"] = recipient_email
-            
+
             # Add both plain text and HTML
             if text_body:
                 msg.attach(MIMEText(text_body, "plain"))
             msg.attach(MIMEText(html_body, "html"))
-            
+
             # Send email
             server.sendmail(self.email, recipient_email, msg.as_string())
-            server.quit()
-            
+
             logger.info(f"✅ Email sent to {recipient_email}")
             return True, "Email sent successfully"
-            
+
         except smtplib.SMTPAuthenticationError as e:
             logger.error(f"SMTP Authentication error: {str(e)}")
             return False, f"Authentication failed: {str(e)}"
         except Exception as e:
             logger.error(f"Email error: {str(e)}")
             return False, str(e)
+        finally:
+            # Ensure SMTP connection is always closed to prevent resource leaks
+            if server:
+                try:
+                    server.quit()
+                except Exception:
+                    pass  # Ignore errors during cleanup
     
     async def send_otp_email(self, recipient_email: str, otp_code: str) -> Tuple[bool, str]:
         """Send OTP verification email"""

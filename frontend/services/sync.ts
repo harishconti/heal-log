@@ -68,6 +68,8 @@ export async function sync() {
             if (error.response.status === 401) {
               console.warn('🔐 [Sync] Auth token expired or invalid');
               addBreadcrumb('sync', 'Auth token expired', 'warning');
+              // Re-throw auth errors so the app can handle them properly
+              throw error;
             }
           } else if (error.request) {
             console.error('❌ [Sync] Pull network error:', error.message);
@@ -77,7 +79,8 @@ export async function sync() {
             addBreadcrumb('sync', 'Pull error', 'error');
           }
 
-          // Graceful degradation - return empty changes
+          // Graceful degradation for non-auth errors - return empty changes with warning
+          console.warn('⚠️ [Sync] Sync pull failed, returning empty changes for offline resilience');
           return { changes: {}, timestamp: lastPulledAt || Date.now() };
         }
       },

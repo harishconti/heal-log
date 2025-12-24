@@ -43,17 +43,22 @@ async def get_all_patients(
     search: Optional[str] = None,
     group: Optional[str] = None,
     favorites_only: bool = False,
+    skip: int = Query(0, ge=0, description="Number of patients to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum patients to return"),
     current_user: User = Depends(get_current_user)
 ):
     """
     Retrieve all patients for the current user, with optional filters.
+    Supports pagination with skip and limit parameters.
     """
     try:
         patients = await patient_service.get_patients_by_user_id(
             user_id=current_user.id,
             search=search,
             group=group,
-            favorites_only=favorites_only
+            favorites_only=favorites_only,
+            skip=skip,
+            limit=limit
         )
         return patients
     except ValueError as e:
@@ -64,6 +69,54 @@ async def get_all_patients(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching patients."
         )
+
+# --- Utility Routes (MUST be defined BEFORE /{id} routes to avoid path conflicts) ---
+
+@router.get("/groups/", response_model=dict)
+@limiter.limit("60/minute")
+async def get_patient_groups(request: Request, current_user: User = Depends(get_current_user)):
+    """
+    Get a list of unique patient groups for the user.
+    """
+    try:
+        groups = await patient_service.get_patient_groups(current_user.id)
+        return {"success": True, "groups": groups}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error fetching groups for user {current_user.id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while fetching groups."
+        )
+
+@router.get("/stats/", response_model=dict)
+@limiter.limit("30/minute")
+async def get_statistics(request: Request, current_user: User = Depends(get_current_user)):
+    """
+    Get user-specific statistics (total patients, favorites, etc.).
+    """
+    try:
+        stats = await patient_service.get_user_stats(current_user.id)
+        return {"success": True, "stats": stats}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error fetching stats for user {current_user.id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while fetching statistics."
+        )
+
+@router.get("/pro-feature/", response_model=dict)
+@limiter.limit("30/minute")
+async def pro_feature_endpoint(request: Request, current_user: User = Depends(require_pro_user)):
+    """
+    An example endpoint that is only accessible to PRO users.
+    """
+    return {"success": True, "message": f"Welcome, PRO user {current_user.id}! You have access to this exclusive feature."}
+
+# --- Single Patient Routes (/{id} patterns MUST come after static paths) ---
 
 @router.get("/{id}", response_model=PatientResponse)
 @limiter.limit("120/minute")
@@ -143,51 +196,3 @@ async def get_patient_notes(
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return notes
-
-# --- Other Utility Routes ---
-
-@router.get("/groups/", response_model=dict)
-@limiter.limit("60/minute")
-async def get_patient_groups(request: Request, current_user: User = Depends(get_current_user)):
-    """
-    Get a list of unique patient groups for the user.
-    """
-    try:
-        groups = await patient_service.get_patient_groups(current_user.id)
-        return {"success": True, "groups": groups}
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
-        logging.error(f"Error fetching groups for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching groups."
-        )
-
-@router.get("/stats/", response_model=dict)
-@limiter.limit("30/minute")
-async def get_statistics(request: Request, current_user: User = Depends(get_current_user)):
-    """
-    Get user-specific statistics (total patients, favorites, etc.).
-    """
-    try:
-        stats = await patient_service.get_user_stats(current_user.id)
-        return {"success": True, "stats": stats}
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
-        logging.error(f"Error fetching stats for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching statistics."
-        )
-
-# --- Pro-Only Endpoint Example ---
-
-@router.get("/pro-feature/", response_model=dict)
-@limiter.limit("30/minute")
-async def pro_feature_endpoint(request: Request, current_user: User = Depends(require_pro_user)):
-    """
-    An example endpoint that is only accessible to PRO users.
-    """
-    return {"success": True, "message": f"Welcome, PRO user {current_user.id}! You have access to this exclusive feature."}

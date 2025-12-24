@@ -26,6 +26,9 @@
       "node": "22.11.0",
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://doctor-log-production.up.railway.app"
       }
     }
   },

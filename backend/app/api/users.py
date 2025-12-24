@@ -70,7 +70,7 @@ async def update_user_me(
         logging.error(f"[UPDATE_USER] Error updating user {current_user.id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update user profile: {str(e)}"
+            detail="Failed to update user profile. Please try again later."
         )
 
 @router.post("/me/password")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
-from app.models.user import User
+from app.schemas.user import User
 from app.core.security import get_current_user
 
 router = APIRouter()

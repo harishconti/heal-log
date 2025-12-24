@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.core.exceptions import SyncConflictException
+from app.core.limiter import limiter
 from app.core.security import get_current_user
 from app.schemas.sync import PullChangesResponse, SyncRequest
 from app.services.sync_service import pull_changes, push_changes
@@ -13,7 +14,9 @@ from app.schemas.user import User
 router = APIRouter()
 
 @router.post("/pull", response_model=PullChangesResponse)
+@limiter.limit("30/minute")
 async def pull_changes_endpoint(
+    request: Request,
     sync_request: SyncRequest,
     current_user: User = Depends(get_current_user)
 ):
@@ -29,7 +32,9 @@ async def pull_changes_endpoint(
         raise SyncConflictException(detail=str(e))
 
 @router.post("/push")
+@limiter.limit("30/minute")
 async def push_changes_endpoint(
+    request: Request,
     sync_request: SyncRequest,
     current_user: User = Depends(get_current_user)
 ):

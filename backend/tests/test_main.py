@@ -3,7 +3,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.api import (
     auth, users, patients, documents, analytics, payments,
-    webhooks, sync, debug, feedback, telemetry, beta, health, metrics, version
+    webhooks, sync, debug, feedback, telemetry, beta, health, metrics, version, export
 )
 from app.core.exceptions import APIException, api_exception_handler
 from app.middleware.logging import LoggingMiddleware
@@ -38,6 +38,7 @@ def create_test_app(limiter):
     app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
     app.include_router(telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
     app.include_router(beta.router, prefix="/api/beta", tags=["Beta"])
+    app.include_router(export.router, prefix="/api/export", tags=["Export"])
     app.include_router(health.router, prefix="/api", tags=["Health"])
     app.include_router(metrics.router, prefix="/api", tags=["Metrics"])
     app.include_router(version.router, prefix="/api", tags=["Version"])

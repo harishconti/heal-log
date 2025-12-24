@@ -113,7 +113,7 @@ async def test_verify_otp_success(db, app):
         full_name="OTP Test User",
         password_hash=get_password_hash("password123"),
         is_verified=False,
-        otp_code="123456",
+        otp_code="12345678",
         otp_expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
         otp_attempts=0
     )
@@ -125,7 +125,7 @@ async def test_verify_otp_success(db, app):
             "/api/auth/verify-otp",
             json={
                 "email": "otptest@example.com",
-                "otp_code": "123456"
+                "otp_code": "12345678"
             }
         )
     
@@ -151,7 +151,7 @@ async def test_verify_otp_wrong_code(db, app):
         full_name="Wrong OTP User",
         password_hash=get_password_hash("password123"),
         is_verified=False,
-        otp_code="123456",
+        otp_code="12345678",
         otp_expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
         otp_attempts=0
     )
@@ -163,7 +163,7 @@ async def test_verify_otp_wrong_code(db, app):
             "/api/auth/verify-otp",
             json={
                 "email": "wrongotp@example.com",
-                "otp_code": "654321"  # Wrong code
+                "otp_code": "87654321"  # Wrong code
             }
         )
     
@@ -182,7 +182,7 @@ async def test_verify_otp_expired(db, app):
         full_name="Expired OTP User",
         password_hash=get_password_hash("password123"),
         is_verified=False,
-        otp_code="123456",
+        otp_code="12345678",
         otp_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),  # Expired
         otp_attempts=0
     )
@@ -194,7 +194,7 @@ async def test_verify_otp_expired(db, app):
             "/api/auth/verify-otp",
             json={
                 "email": "expiredotp@example.com",
-                "otp_code": "123456"
+                "otp_code": "12345678"
             }
         )
     

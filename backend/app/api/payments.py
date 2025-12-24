@@ -6,6 +6,7 @@ import os
 from fastapi import APIRouter, Depends, Request, status, Header, HTTPException
 
 from app.core.exceptions import BetaUserException, NotFoundException
+from app.schemas.user import User
 from app.core.limiter import limiter
 from app.core.security import get_current_user
 from app.services import user_service
@@ -59,7 +60,7 @@ def verify_stripe_signature(payload: bytes, signature: str, secret: str) -> bool
 @limiter.limit("5/minute")
 async def create_checkout_session(
     request: Request,
-    current_user_id: str = Depends(get_current_user)
+    user: User = Depends(get_current_user)
 ):
     """
     Creates a new checkout session for a user to upgrade to the PRO plan.
@@ -67,13 +68,11 @@ async def create_checkout_session(
     # In a real application, this would integrate with a payment provider like Stripe.
     # For this implementation, we will simulate the process.
 
-    # 1. Get the user from the database.
-    user = await user_service.get_user_by_id(current_user_id)
     if not user:
         raise NotFoundException(detail="User not found")
 
     # 2. Check if the user is a beta user.
-    if user.role != "beta":
+    if not user.is_beta_tester:
         raise BetaUserException()
 
     # 3. Check if the user is already on the PRO plan.

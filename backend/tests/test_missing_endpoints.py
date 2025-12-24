@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 import uuid
+from unittest.mock import patch
 from app.schemas.user import User, UserPlan
 from app.schemas.role import UserRole
 from app.core.security import create_access_token
@@ -86,8 +87,8 @@ async def test_metrics_endpoint_unauthorized(app):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get("/api/metrics")
 
-    # Expect 403 Forbidden as it requires auth/permissions
-    assert response.status_code == 403
+    # Expect 401 Unauthorized because no token is provided
+    assert response.status_code == 401
 
 @pytest.mark.asyncio
 async def test_documents_endpoints(db, app):
@@ -170,15 +171,20 @@ async def test_telemetry_endpoint(db, app):
     assert response.json()["status"] == "ok"
 
 @pytest.mark.asyncio
-async def test_webhooks_endpoint(app):
+@patch("app.api.webhooks.verify_stripe_signature")
+@patch("app.api.webhooks.STRIPE_WEBHOOK_SECRET", "test_secret")
+async def test_webhooks_endpoint(mock_verify, app):
     """
-    Tests webhooks endpoint (e.g., Stripe).
+    Tests webhooks endpoint (e.g., Stripe) with valid signature.
     """
+    mock_verify.return_value = True
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/webhooks/stripe",
-            json={"type": "test_event"}
+            json={"type": "test_event"},
+            headers={"Stripe-Signature": "t=123,v1=valid_sig"}
         )
 
     assert response.status_code == 200

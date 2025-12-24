@@ -32,15 +32,20 @@ async def clear_all_caches(
     """
     logging.info(f"Admin user {current_user.email} requested cache clear")
     try:
-        # Clear patient service caches
-        patient_service.get_patients_by_user_id.cache_clear()
-        patient_service.get_patient_groups.cache_clear()
-        patient_service.get_user_stats.cache_clear()
-        logging.info("Cleared patient_service caches.")
+        from fastapi_cache import FastAPICache
 
-        # Clear analytics service caches
-        analytics_service.get_patient_growth_analytics.cache_clear()
-        logging.info("Cleared analytics_service caches.")
+        if FastAPICache.get_backend():
+            # Clear patient service caches
+            await FastAPICache.clear(namespace="get_patients_by_user_id")
+            await FastAPICache.clear(namespace="get_patient_groups")
+            await FastAPICache.clear(namespace="get_user_stats")
+
+            # Clear analytics service caches
+            await FastAPICache.clear(namespace="get_patient_growth_analytics")
+
+            logging.info("Cleared application caches via FastAPICache.")
+        else:
+            logging.warning("No FastAPICache backend configured.")
 
         logging.info("All application caches cleared successfully.")
         return {"success": True, "message": "All caches cleared"}

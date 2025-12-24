@@ -162,11 +162,13 @@ JWT_SECRET_KEY=your-secret-key
 
 ## Project Status
 
-See [INTEGRATION_TEST_REPORT.md](./INTEGRATION_TEST_REPORT.md) for detailed test results and current status.
+See [integration_test_report.md](./integration_test_report.md) and [BACKEND_API_REVIEW.md](./BACKEND_API_REVIEW.md) for detailed test results and current status.
 
 **Latest Test Results (Dec 2025):**
-- ✅ 100% pass rate on core functionality
-- ✅ All critical endpoints operational
-- ✅ Sync functionality working
-- 📊 Average response time: 685ms
+- ✅ 48 backend tests passing
+- ✅ All critical endpoints operational (Auth, Patients, Sync, Analytics)
+- ✅ Sync functionality working with offline-first support
+- ✅ OTP verification and password reset functional
+
+See [IMPROVEMENT_REPORT.md](./IMPROVEMENT_REPORT.md) for planned enhancements and [CODEBASE_ISSUES_REPORT.md](./CODEBASE_ISSUES_REPORT.md) for known issues.
 

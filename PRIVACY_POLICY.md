@@ -1,6 +1,6 @@
 # Privacy Policy for PatientLog
 
-**Last Updated:** December 14, 2024
+**Last Updated:** December 24, 2025
 
 ## Introduction
 

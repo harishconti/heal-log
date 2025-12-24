@@ -267,10 +267,10 @@ Pro:
 
 | Phase | What | When | Status |
 |-------|------|------|--------|
-| **Beta** | Free only, no Pro | Now (Dec 14-20) | ✅ Current |
-| **Test** | Test in-app purchase | Jan 2026 | 📅 Plan |
-| **Production** | Live with Pro option | Jan 31, 2026 | 📅 Plan |
-| **Day 91+** | Prompt to upgrade | May 2026 (for Jan users) | 📅 Plan |
+| **Beta** | Free only, no Pro | Current | ✅ Active |
+| **Test** | Test in-app purchase | Q1 2026 | 📅 Planned |
+| **Production** | Live with Pro option | Q1 2026 | 📅 Planned |
+| **Day 91+** | Prompt to upgrade | Q2 2026 (for Q1 users) | 📅 Planned |
 
 ---
 
@@ -315,4 +315,4 @@ Check these files for more details:
 
 **Your business model is solid. Go with "FREE" and add Pro later!** ✅
 
-*Last updated: December 14, 2025*
+*Last updated: December 24, 2025*

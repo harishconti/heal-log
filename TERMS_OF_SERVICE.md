@@ -1,6 +1,6 @@
 # Terms of Service for PatientLog
 
-**Effective Date:** December 14, 2024
+**Effective Date:** December 24, 2025
 
 ## 1. Acceptance of Terms
 
@@ -215,5 +215,5 @@ During beta, there is no Service Level Agreement (SLA).
 
 **BY USING PATIENTLOG, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
 
-Last Updated: December 14, 2024  
-Version: 1.0-beta
+Last Updated: December 24, 2025
+Version: 1.1-beta

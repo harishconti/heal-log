@@ -1,6 +1,9 @@
 import logging
+import hmac
+import hashlib
+import os
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, status, Header, HTTPException
 
 from app.core.exceptions import BetaUserException, NotFoundException
 from app.core.limiter import limiter
@@ -9,6 +12,48 @@ from app.services import user_service
 
 
 router = APIRouter()
+
+# Stripe webhook secret - must be set in environment for production
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+
+def verify_stripe_signature(payload: bytes, signature: str, secret: str) -> bool:
+    """
+    Verifies the Stripe webhook signature using HMAC-SHA256.
+
+    Stripe sends a signature in the format: t=timestamp,v1=signature
+    We verify using HMAC-SHA256(timestamp.payload, secret)
+    """
+    if not secret:
+        logging.error("STRIPE_WEBHOOK_SECRET is not configured")
+        return False
+
+    try:
+        # Parse the signature header
+        elements = dict(item.split("=", 1) for item in signature.split(","))
+        timestamp = elements.get("t")
+        expected_sig = elements.get("v1")
+
+        if not timestamp or not expected_sig:
+            logging.error("Invalid Stripe signature format")
+            return False
+
+        # Create the signed payload string
+        signed_payload = f"{timestamp}.{payload.decode('utf-8')}"
+
+        # Compute HMAC-SHA256
+        computed_sig = hmac.new(
+            secret.encode('utf-8'),
+            signed_payload.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Constant-time comparison to prevent timing attacks
+        return hmac.compare_digest(computed_sig, expected_sig)
+    except Exception as e:
+        logging.error(f"Error verifying Stripe signature: {e}")
+        return False
+
 
 @router.post("/create-checkout-session", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
@@ -41,21 +86,57 @@ async def create_checkout_session(
 
     return {"checkout_url": checkout_session_url}
 
-@router.post("/webhooks/stripe", status_code=status.HTTP_200_OK)
-async def stripe_webhook(request: Request):
-    """
-    Handles incoming webhooks from Stripe (or another payment provider).
-    """
-    # This is a simplified webhook handler. In a real application, you would:
-    # 1. Verify the webhook signature to ensure it's from a trusted source.
-    # 2. Parse the event payload to determine the event type.
-    # 3. Handle the 'checkout.session.completed' event to update the user's subscription.
 
-    payload = await request.json()
-    event_type = payload.get("type")
+@router.post("/webhooks/stripe", status_code=status.HTTP_200_OK)
+@limiter.limit("100/minute")  # Rate limit webhook endpoint
+async def stripe_webhook(
+    request: Request,
+    stripe_signature: str = Header(None, alias="Stripe-Signature")
+):
+    """
+    Handles incoming webhooks from Stripe.
+    Verifies webhook signature before processing.
+    """
+    # Get raw payload for signature verification
+    payload = await request.body()
+
+    # Verify webhook signature (CRITICAL: prevents forged webhook attacks)
+    if not STRIPE_WEBHOOK_SECRET:
+        logging.error("STRIPE_WEBHOOK_SECRET not configured - rejecting webhook")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook processing not configured"
+        )
+
+    if not stripe_signature:
+        logging.warning("Stripe webhook received without signature header")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing Stripe-Signature header"
+        )
+
+    if not verify_stripe_signature(payload, stripe_signature, STRIPE_WEBHOOK_SECRET):
+        logging.warning("Stripe webhook signature verification failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid webhook signature"
+        )
+
+    # Parse the verified payload
+    try:
+        import json
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON payload"
+        )
+
+    event_type = event.get("type")
+    logging.info(f"Processing verified Stripe webhook: {event_type}")
 
     if event_type == "checkout.session.completed":
-        user_id = payload.get("data", {}).get("object", {}).get("user_id")
+        user_id = event.get("data", {}).get("object", {}).get("metadata", {}).get("user_id")
         if user_id:
             updated_user = await user_service.update_user(
                 user_id,

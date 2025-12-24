@@ -1,18 +1,36 @@
-from fastapi import APIRouter, status, Request, HTTPException
+from fastapi import APIRouter, status, Request, HTTPException, Depends
 from app.services.patient_service import patient_service
 from app.services.analytics_service import analytics_service
 from app.services.user_service import user_service
+from app.core.security import require_role
+from app.core.config import settings
+from app.schemas.role import UserRole
 import logging
 
 router = APIRouter()
 
-@router.post("/clear-all-caches", response_model=dict)
-async def clear_all_caches(request: Request):
+
+def check_debug_enabled():
+    """
+    Dependency to ensure debug endpoints are only available in non-production environments.
+    """
+    if settings.ENV == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debug endpoints are disabled in production"
+        )
+
+
+@router.post("/clear-all-caches", response_model=dict, dependencies=[Depends(check_debug_enabled)])
+async def clear_all_caches(
+    request: Request,
+    current_user=Depends(require_role(UserRole.ADMIN))
+):
     """
     A debug endpoint to clear all application-level caches.
-    Should only be enabled in testing environments.
+    Requires admin role and is disabled in production.
     """
-    logging.info("Received request to clear all application caches...")
+    logging.info(f"Admin user {current_user.email} requested cache clear")
     try:
         # Clear patient service caches
         patient_service.get_patients_by_user_id.cache_clear()
@@ -24,10 +42,6 @@ async def clear_all_caches(request: Request):
         analytics_service.get_patient_growth_analytics.cache_clear()
         logging.info("Cleared analytics_service caches.")
 
-        # There might be other caches, e.g., in user_service.
-        # Add them here if they exist.
-        # Example: user_service.get_user_by_email.cache_clear()
-
         logging.info("All application caches cleared successfully.")
         return {"success": True, "message": "All caches cleared"}
     except Exception as e:
@@ -37,12 +51,12 @@ async def clear_all_caches(request: Request):
             detail="Failed to clear caches."
         )
 
-import sentry_sdk
-from app.core.exceptions import APIException
 
-@router.get("/sentry-test")
-async def sentry_test():
+@router.get("/sentry-test", dependencies=[Depends(check_debug_enabled)])
+async def sentry_test(current_user=Depends(require_role(UserRole.ADMIN))):
     """
     Raises an exception to test Sentry's automatic error reporting.
+    Requires admin role and is disabled in production.
     """
+    logging.info(f"Admin user {current_user.email} triggered Sentry test")
     raise Exception("Sentry test exception from debug endpoint.")

@@ -1,4 +1,5 @@
 import logging
+import re
 from fastapi_cache.decorator import cache
 from app.schemas.patient import PatientCreate, PatientUpdate, Patient
 from app.schemas.clinical_note import NoteCreate, ClinicalNote
@@ -8,6 +9,24 @@ import uuid
 from datetime import datetime, timezone
 from .base_service import BaseService
 from fastapi_cache import FastAPICache
+
+
+def sanitize_regex_input(user_input: str, max_length: int = 100) -> str:
+    """
+    Sanitizes user input for safe use in MongoDB regex queries.
+
+    - Escapes all regex special characters to prevent injection
+    - Limits input length to prevent ReDoS attacks
+    - Returns empty string if input is None or empty
+    """
+    if not user_input:
+        return ""
+
+    # Truncate to max length to prevent ReDoS
+    truncated = user_input[:max_length]
+
+    # Escape all regex special characters
+    return re.escape(truncated)
 
 class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
@@ -64,19 +83,22 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         """
         query = [self.model.user_id == user_id]
         if search:
-            search_regex = {"$regex": search, "$options": "i"}
-            query.append(
-                {"$or": [
-                    {"name": search_regex},
-                    {"patient_id": search_regex},
-                    {"phone": search_regex},
-                    {"email": search_regex}
-                ]}
-            )
+            # SECURITY: Sanitize search input to prevent NoSQL regex injection
+            sanitized_search = sanitize_regex_input(search)
+            if sanitized_search:
+                search_regex = {"$regex": sanitized_search, "$options": "i"}
+                query.append(
+                    {"$or": [
+                        {"name": search_regex},
+                        {"patient_id": search_regex},
+                        {"phone": search_regex},
+                        {"email": search_regex}
+                    ]}
+                )
         if group:
             query.append(self.model.group == group)
         if favorites_only:
-            query.append(self.model.is_favorite == True)
+            query.append(self.model.is_favorite is True)
         return query
 
     @cache(namespace="get_patients_by_user_id", expire=60)

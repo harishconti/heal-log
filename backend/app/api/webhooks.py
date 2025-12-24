@@ -1,18 +1,76 @@
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Request, Response, status, Header, HTTPException
 import logging
+import hmac
+import hashlib
+import os
 
 router = APIRouter()
 
-@router.post("/stripe", status_code=status.HTTP_200_OK)
-async def stripe_webhook(request: Request):
+# Stripe webhook secret - must be set in environment for production
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+
+def verify_stripe_signature(payload: bytes, signature: str, secret: str) -> bool:
     """
-    Basic webhook endpoint for Stripe.
-    In a real application, this would handle events from Stripe.
+    Verifies the Stripe webhook signature using HMAC-SHA256.
+    """
+    if not secret:
+        return False
+
+    try:
+        elements = dict(item.split("=", 1) for item in signature.split(","))
+        timestamp = elements.get("t")
+        expected_sig = elements.get("v1")
+
+        if not timestamp or not expected_sig:
+            return False
+
+        signed_payload = f"{timestamp}.{payload.decode('utf-8')}"
+        computed_sig = hmac.new(
+            secret.encode('utf-8'),
+            signed_payload.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        return hmac.compare_digest(computed_sig, expected_sig)
+    except Exception as e:
+        logging.error(f"Error verifying Stripe signature: {e}")
+        return False
+
+
+@router.post("/stripe", status_code=status.HTTP_200_OK)
+async def stripe_webhook(
+    request: Request,
+    stripe_signature: str = Header(None, alias="Stripe-Signature")
+):
+    """
+    Webhook endpoint for Stripe with signature verification.
     """
     payload = await request.body()
-    # For now, we'll just log the payload and headers.
-    # In a real app, you would verify the signature and process the event.
-    logging.info(f"Received Stripe webhook with headers: {request.headers}")
-    logging.info(f"Webhook payload: {payload.decode('utf-8')}")
+
+    # Verify webhook signature (CRITICAL: prevents forged webhook attacks)
+    if not STRIPE_WEBHOOK_SECRET:
+        logging.error("STRIPE_WEBHOOK_SECRET not configured - rejecting webhook")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook processing not configured"
+        )
+
+    if not stripe_signature:
+        logging.warning("Stripe webhook received without signature header")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing Stripe-Signature header"
+        )
+
+    if not verify_stripe_signature(payload, stripe_signature, STRIPE_WEBHOOK_SECRET):
+        logging.warning("Stripe webhook signature verification failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid webhook signature"
+        )
+
+    # Signature verified - safe to log and process
+    logging.info("Received verified Stripe webhook")
 
     return Response(status_code=status.HTTP_200_OK)

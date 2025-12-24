@@ -41,7 +41,11 @@ class Settings(BaseSettings):
         return v
 
     # --- CORS Settings ---
-    ALLOWED_ORIGINS: str = "*"
+    # SECURITY: Default to restrictive CORS for development only.
+    # In production, set ALLOWED_ORIGINS to your specific frontend domain(s).
+    # Example: ALLOWED_ORIGINS=https://your-app.com,https://www.your-app.com
+    # NEVER use "*" in production!
+    ALLOWED_ORIGINS: str = "http://localhost:8081,http://localhost:3000"
 
     # --- Sentry Configuration (Optional) ---
     SENTRY_DSN: Optional[str] = Field(default=None)
@@ -73,21 +77,28 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# --- Environment-Specific Overrides ---
-# In a production environment, you would override the ALLOWED_ORIGINS
-# with a more restrictive list. For example, by setting the
-# an environment variable:
-# export ALLOWED_ORIGINS="https://your-frontend.com,https://another-domain.com"
-#
-# If the ENV is 'production', we enforce a stricter CORS policy.
+# --- Environment-Specific CORS Validation ---
+# SECURITY: Validate CORS settings in production to prevent security misconfigurations
 if settings.ENV == "production":
-    # In a real production scenario, this should be a specific, trusted domain.
-    # The default "*" is replaced with a more secure, empty list,
-    # forcing the developer to explicitly set origins via environment variables.
-    settings.ALLOWED_ORIGINS = []
+    # Check for insecure wildcard CORS
+    if settings.ALLOWED_ORIGINS == "*" or "*" in settings.ALLOWED_ORIGINS:
+        raise ValueError(
+            "SECURITY ERROR: Wildcard CORS ('*') is not allowed in production. "
+            "Set ALLOWED_ORIGINS to your specific frontend domain(s). "
+            "Example: ALLOWED_ORIGINS=https://your-app.com,https://www.your-app.com"
+        )
 
-# --- Security Note on CORS ---
-# In a production environment, the wildcard ("*") for ALLOWED_ORIGINS is insecure.
-# It is strongly recommended to restrict it to your frontend's specific domain.
-# For example:
-# ALLOWED_ORIGINS=["https://your-frontend-domain.com"]
+    # Check for empty CORS (which would block all requests)
+    if not settings.ALLOWED_ORIGINS or settings.ALLOWED_ORIGINS.strip() == "":
+        raise ValueError(
+            "SECURITY ERROR: ALLOWED_ORIGINS must be set in production. "
+            "Example: ALLOWED_ORIGINS=https://your-app.com"
+        )
+
+    # Warn if localhost is in production CORS
+    if "localhost" in settings.ALLOWED_ORIGINS.lower():
+        import logging
+        logging.warning(
+            "SECURITY WARNING: localhost found in ALLOWED_ORIGINS in production. "
+            "This may be a security risk. Remove localhost origins for production."
+        )

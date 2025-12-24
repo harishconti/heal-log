@@ -7,24 +7,28 @@ import { useAppStore, User } from '@/store/useAppStore';
 import { authEvents } from '@/utils/events';
 
 // Platform-specific secure storage
+// SECURITY NOTE: On web, we use sessionStorage instead of localStorage.
+// sessionStorage is cleared when the browser tab closes, reducing XSS attack window.
+// Native platforms use SecureStore which provides encrypted storage.
+// For production web deployments, consider implementing HttpOnly cookies.
 const SecureStorageAdapter = {
   async setItem(key: string, value: string) {
     if (Platform.OS === 'web') {
-      // Use localStorage for web
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(key, value);
+      // Use sessionStorage for web (more secure than localStorage - clears on tab close)
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(key, value);
       }
     } else {
-      // Use SecureStore for native platforms
+      // Use SecureStore for native platforms (encrypted storage)
       await SecureStore.setItemAsync(key, value);
     }
   },
 
   async getItem(key: string): Promise<string | null> {
     if (Platform.OS === 'web') {
-      // Use localStorage for web
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage.getItem(key);
+      // Use sessionStorage for web
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return window.sessionStorage.getItem(key);
       }
       return null;
     } else {
@@ -35,9 +39,9 @@ const SecureStorageAdapter = {
 
   async removeItem(key: string) {
     if (Platform.OS === 'web') {
-      // Use localStorage for web
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(key);
+      // Use sessionStorage for web
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.removeItem(key);
       }
     } else {
       // Use SecureStore for native platforms

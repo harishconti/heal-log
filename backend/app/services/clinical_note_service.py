@@ -16,11 +16,17 @@ async def create_note(patient_id: str, note_data: NoteCreate, user_id: str) -> C
     await note.insert()
     return note
 
-async def get_notes_for_patient(patient_id: str, user_id: str) -> List[ClinicalNote]:
+async def get_notes_for_patient(
+    patient_id: str,
+    user_id: str,
+    skip: int = 0,
+    limit: int = 100
+) -> List[ClinicalNote]:
     """
-    Retrieves all clinical notes for a specific patient that belong to the user.
+    Retrieves clinical notes for a specific patient that belong to the user.
+    Supports pagination with skip and limit parameters.
     """
     return await ClinicalNote.find(
         ClinicalNote.patient_id == patient_id,
         ClinicalNote.user_id == user_id
-    ).to_list()
+    ).sort(-ClinicalNote.created_at).skip(skip).limit(limit).to_list()

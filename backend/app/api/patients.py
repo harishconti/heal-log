@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from typing import List, Optional
+from typing import List, Optional, Literal
+from datetime import datetime
 from app.core.security import get_current_user, require_pro_user, require_role
 from app.schemas.role import UserRole
 from app.services.patient_service import patient_service
@@ -9,10 +10,9 @@ from app.schemas.patient import (
 )
 from app.schemas.clinical_note import NoteCreate, ClinicalNoteResponse
 from app.schemas.user import User
+import logging
 
 router = APIRouter()
-
-import logging
 
 @router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("20/minute")
@@ -40,16 +40,34 @@ async def create_patient(
 @limiter.limit("60/minute")
 async def get_all_patients(
     request: Request,
-    search: Optional[str] = None,
-    group: Optional[str] = None,
-    favorites_only: bool = False,
+    search: Optional[str] = Query(None, description="Search by name, patient ID, phone, or email"),
+    group: Optional[str] = Query(None, description="Filter by patient group"),
+    favorites_only: bool = Query(False, description="Only return favorite patients"),
+    date_from: Optional[datetime] = Query(None, description="Filter patients created on or after this date (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter patients created on or before this date (ISO format)"),
+    sort_by: Literal["name", "created_at", "updated_at"] = Query("created_at", description="Field to sort by"),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     skip: int = Query(0, ge=0, description="Number of patients to skip"),
     limit: int = Query(100, ge=1, le=500, description="Maximum patients to return"),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Retrieve all patients for the current user, with optional filters.
-    Supports pagination with skip and limit parameters.
+    Retrieve patients for the current user with advanced filtering options.
+
+    **Filters:**
+    - `search`: Text search across name, patient ID, phone, and email
+    - `group`: Filter by patient group/category
+    - `favorites_only`: Only return favorite patients
+    - `date_from`: Filter patients created on or after this date
+    - `date_to`: Filter patients created on or before this date
+
+    **Sorting:**
+    - `sort_by`: Sort by 'name', 'created_at', or 'updated_at'
+    - `sort_order`: 'asc' for ascending, 'desc' for descending
+
+    **Pagination:**
+    - `skip`: Number of patients to skip (for pagination)
+    - `limit`: Maximum number of patients to return (max 500)
     """
     try:
         patients = await patient_service.get_patients_by_user_id(
@@ -57,6 +75,10 @@ async def get_all_patients(
             search=search,
             group=group,
             favorites_only=favorites_only,
+            date_from=date_from,
+            date_to=date_to,
+            sort_by=sort_by,
+            sort_order=sort_order,
             skip=skip,
             limit=limit
         )
@@ -187,12 +209,14 @@ async def add_patient_note(
 async def get_patient_notes(
     request: Request,
     id: str,
+    skip: int = Query(0, ge=0, description="Number of notes to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum notes to return"),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all notes for a specific patient.
+    Get notes for a specific patient with pagination support.
     """
-    notes = await patient_service.get_patient_notes(id, current_user.id)
+    notes = await patient_service.get_patient_notes(id, current_user.id, skip=skip, limit=limit)
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return notes

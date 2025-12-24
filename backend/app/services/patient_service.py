@@ -4,7 +4,7 @@ from fastapi_cache.decorator import cache
 from app.schemas.patient import PatientCreate, PatientUpdate, Patient
 from app.schemas.clinical_note import NoteCreate, ClinicalNote
 from app.services import clinical_note_service
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 import uuid
 from datetime import datetime, timezone
 from .base_service import BaseService
@@ -76,10 +76,13 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         user_id: str,
         search: Optional[str] = None,
         group: Optional[str] = None,
-        favorites_only: bool = False
+        favorites_only: bool = False,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None
     ) -> List[Any]:
         """
         Builds the Beanie query for fetching patients based on filters.
+        Supports text search, group filter, favorites, and date range filtering.
         """
         query = [self.model.user_id == user_id]
         if search:
@@ -99,6 +102,10 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
             query.append(self.model.group == group)
         if favorites_only:
             query.append(self.model.is_favorite == True)
+        if date_from:
+            query.append(self.model.created_at >= date_from)
+        if date_to:
+            query.append(self.model.created_at <= date_to)
         return query
 
     @cache(namespace="get_patients_by_user_id", expire=60)
@@ -108,15 +115,31 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         search: Optional[str] = None,
         group: Optional[str] = None,
         favorites_only: bool = False,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        sort_by: Literal["name", "created_at", "updated_at"] = "created_at",
+        sort_order: Literal["asc", "desc"] = "desc",
         skip: int = 0,
         limit: int = 100
     ) -> List[Patient]:
         """
         Retrieves a list of patients for a user, with optional filters.
         Supports pagination with skip and limit parameters.
+        Supports sorting by name, created_at, or updated_at.
+        Supports date range filtering on created_at.
         """
-        query = self._build_patient_query(user_id, search, group, favorites_only)
-        return await self.model.find(*query).sort(-self.model.created_at).skip(skip).limit(limit).to_list()
+        query = self._build_patient_query(
+            user_id, search, group, favorites_only, date_from, date_to
+        )
+
+        # Build sort criteria
+        sort_field = getattr(self.model, sort_by)
+        if sort_order == "desc":
+            sort_criteria = -sort_field
+        else:
+            sort_criteria = +sort_field
+
+        return await self.model.find(*query).sort(sort_criteria).skip(skip).limit(limit).to_list()
 
     async def update(self, patient_id: str, patient_data: PatientUpdate, user_id: str) -> Optional[Patient]:
         patient = await self.get(patient_id, user_id=user_id)
@@ -167,15 +190,21 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         return note
 
-    async def get_patient_notes(self, patient_id: str, user_id: str) -> Optional[List[ClinicalNote]]:
+    async def get_patient_notes(
+        self,
+        patient_id: str,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> Optional[List[ClinicalNote]]:
         """
-        Retrieves all notes for a specific patient.
+        Retrieves notes for a specific patient with pagination support.
         """
         patient = await self.get(patient_id, user_id=user_id)
         if not patient:
             return None
 
-        return await clinical_note_service.get_notes_for_patient(patient_id, user_id)
+        return await clinical_note_service.get_notes_for_patient(patient_id, user_id, skip=skip, limit=limit)
 
     @cache(namespace="get_patient_groups", expire=60)
     async def get_patient_groups(self, user_id: str) -> List[str]:

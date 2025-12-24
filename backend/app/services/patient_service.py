@@ -167,15 +167,21 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         return note
 
-    async def get_patient_notes(self, patient_id: str, user_id: str) -> Optional[List[ClinicalNote]]:
+    async def get_patient_notes(
+        self,
+        patient_id: str,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> Optional[List[ClinicalNote]]:
         """
-        Retrieves all notes for a specific patient.
+        Retrieves notes for a specific patient with pagination support.
         """
         patient = await self.get(patient_id, user_id=user_id)
         if not patient:
             return None
 
-        return await clinical_note_service.get_notes_for_patient(patient_id, user_id)
+        return await clinical_note_service.get_notes_for_patient(patient_id, user_id, skip=skip, limit=limit)
 
     @cache(namespace="get_patient_groups", expire=60)
     async def get_patient_groups(self, user_id: str) -> List[str]:

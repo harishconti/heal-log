@@ -187,12 +187,14 @@ async def add_patient_note(
 async def get_patient_notes(
     request: Request,
     id: str,
+    skip: int = Query(0, ge=0, description="Number of notes to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum notes to return"),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all notes for a specific patient.
+    Get notes for a specific patient with pagination support.
     """
-    notes = await patient_service.get_patient_notes(id, current_user.id)
+    notes = await patient_service.get_patient_notes(id, current_user.id, skip=skip, limit=limit)
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return notes

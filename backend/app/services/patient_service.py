@@ -107,13 +107,16 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         user_id: str,
         search: Optional[str] = None,
         group: Optional[str] = None,
-        favorites_only: bool = False
+        favorites_only: bool = False,
+        skip: int = 0,
+        limit: int = 100
     ) -> List[Patient]:
         """
         Retrieves a list of patients for a user, with optional filters.
+        Supports pagination with skip and limit parameters.
         """
         query = self._build_patient_query(user_id, search, group, favorites_only)
-        return await self.model.find(*query).sort(-self.model.created_at).to_list()
+        return await self.model.find(*query).sort(-self.model.created_at).skip(skip).limit(limit).to_list()
 
     async def update(self, patient_id: str, patient_data: PatientUpdate, user_id: str) -> Optional[Patient]:
         patient = await self.get(patient_id, user_id=user_id)

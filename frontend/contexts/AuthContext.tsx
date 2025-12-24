@@ -156,7 +156,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    initializeApp();
+    initializeApp().catch(err => {
+      console.error('❌ [Auth] Unhandled initialization error:', err);
+      setIsLoading(false);
+    });
 
     // Subscribe to auth events (e.g. 401 from API)
     const unsubscribe = authEvents.on('auth:logout', () => {

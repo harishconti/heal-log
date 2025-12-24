@@ -22,10 +22,16 @@ async def health_check(db = Depends(get_database)):
         logging.error(f"MongoDB connection failed: {e}")
         mongo_status = "error"
 
-    # Check cache status
+    # Check cache status with null safety
+    cache_status = "unknown"
     try:
-        await FastAPICache.get_backend().ping()
-        cache_status = "ok"
+        backend = FastAPICache.get_backend()
+        if backend is not None:
+            await backend.ping()
+            cache_status = "ok"
+        else:
+            logging.warning("Cache backend is not initialized")
+            cache_status = "not_configured"
     except Exception as e:
         logging.error(f"Cache connection failed: {e}")
         cache_status = "error"

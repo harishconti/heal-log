@@ -26,7 +26,7 @@ class Patient(Document):
         name = "patients"
         indexes = [
             IndexModel([("user_id", 1), ("patient_id", 1)], unique=True),
-            [("user_id", 1), ("created_at", -1)]
+            IndexModel([("user_id", 1), ("created_at", -1)])
         ]
 
     class Config:

@@ -88,4 +88,4 @@ async def test_get_known_issues_authenticated_non_beta(async_client, regular_tok
 @pytest.mark.asyncio
 async def test_get_known_issues_unauthenticated(async_client):
     response = await async_client.get("/api/beta/known-issues")
-    assert response.status_code == 403
+    assert response.status_code == 401

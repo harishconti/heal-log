@@ -1,6 +1,8 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { authEvents } from '@/utils/events';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://doctor-log-production.up.railway.app';
@@ -138,8 +140,8 @@ export const submitFeedback = async (feedback: Feedback) => {
       description: feedback.description,
       device_info: {
         os_version: Platform.OS + ' ' + Platform.Version,
-        app_version: '1.0.0', // TODO: Get real version
-        device_model: 'Unknown' // TODO: Get real model
+        app_version: Constants.expoConfig?.version || '1.0.0',
+        device_model: Device.modelName || 'Unknown'
       }
     };
 

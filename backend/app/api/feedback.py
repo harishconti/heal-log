@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
 from app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
 from app.services.feedback_service import feedback_service
-from app.models.user import User
+from app.schemas.user import User
 from app.core.security import get_optional_current_user
 from app.core.limiter import limiter
 from fastapi import Request

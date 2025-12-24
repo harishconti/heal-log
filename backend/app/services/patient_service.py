@@ -98,7 +98,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         if group:
             query.append(self.model.group == group)
         if favorites_only:
-            query.append(self.model.is_favorite is True)
+            query.append(self.model.is_favorite == True)
         return query
 
     @cache(namespace="get_patients_by_user_id", expire=60)

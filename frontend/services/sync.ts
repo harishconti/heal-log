@@ -15,10 +15,6 @@ export async function sync() {
       return;
     }
 
-    // 🔍 DEBUG: Log token info (first/last 10 chars only for security)
-    console.log('🔑 Token exists:', token ? `${token.substring(0, 10)}...${token.substring(token.length - 10)}` : 'null');
-    console.log('🔑 Token length:', token?.length);
-
     console.log('🔄 [Sync] Starting sync process...');
 
     await synchronize({

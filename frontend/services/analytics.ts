@@ -58,9 +58,9 @@ export const trackOfflineOnlineTime = async (isOnline: boolean) => {
     const lastChanged = new Date(time.lastChanged);
     const diff = new Date(now).getTime() - lastChanged.getTime();
     if (isOnline) {
-      time.offline += diff;
-    } else {
       time.online += diff;
+    } else {
+      time.offline += diff;
     }
     time.lastChanged = now;
     await AsyncStorage.setItem(OFFLINE_ONLINE_TIME_KEY, JSON.stringify(time));

@@ -133,7 +133,7 @@ class AnalyticsService:
             {"success": True}
         ).count()
 
-        sync_success_rate = successful_sync_events / total_sync_events if total_sync_events > 0 else 1.0
+        sync_success_rate = successful_sync_events / total_sync_events if total_sync_events > 0 else 0.0
 
         return {
             "active_users": active_users,

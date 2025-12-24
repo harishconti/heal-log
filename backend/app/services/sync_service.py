@@ -67,7 +67,7 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
 async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user_id: str) -> None:
     """
     Applies changes from the client to the database.
-    This version uses Beanie Documents for creating and updating records.
+    Uses batch queries to avoid N+1 query problems.
     """
     try:
         # Helper function to sanitize patient data
@@ -76,54 +76,96 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
             if 'email' in data and data['email'] == '':
                 data['email'] = None
             return data
-        
-        # Process created records
+
+        # Process created records (bulk insert)
         if 'patients' in changes and 'created' in changes['patients']:
+            patients_to_create = []
             for patient_data in changes['patients']['created']:
                 patient_data['user_id'] = user_id
                 patient_data = sanitize_patient_data(patient_data)
-                new_patient = Patient(**patient_data)
-                await new_patient.insert()
+                patients_to_create.append(Patient(**patient_data))
+            if patients_to_create:
+                await Patient.insert_many(patients_to_create)
 
         if 'clinical_notes' in changes and 'created' in changes['clinical_notes']:
+            notes_to_create = []
             for note_data in changes['clinical_notes']['created']:
                 note_data['user_id'] = user_id
-                new_note = ClinicalNote(**note_data)
-                await new_note.insert()
+                notes_to_create.append(ClinicalNote(**note_data))
+            if notes_to_create:
+                await ClinicalNote.insert_many(notes_to_create)
 
-        # Process updated records
+        # Process updated records with batch fetch
         if 'patients' in changes and 'updated' in changes['patients']:
+            # Extract and validate all patient IDs first
+            patient_updates = []
             for patient_data in changes['patients']['updated']:
-                patient_id = patient_data.pop('id')
-                patient_data = sanitize_patient_data(patient_data)
-                patient = await Patient.get(patient_id)
-                if patient and patient.user_id == user_id:
-                    client_updated_at = datetime.fromtimestamp(patient_data['updated_at'] / 1000.0, tz=timezone.utc)
-                    if client_updated_at < patient.updated_at.replace(tzinfo=timezone.utc):
-                        raise SyncConflictException(f"Conflict detected for patient {patient_id}")
-                    patient_data['updated_at'] = datetime.now(timezone.utc)
-                    await patient.update({"$set": patient_data})
+                patient_id = patient_data.pop('id', None)
+                if not patient_id:
+                    raise ValueError("Missing 'id' field in patient update data")
+                if 'updated_at' not in patient_data:
+                    raise ValueError(f"Missing 'updated_at' field in patient update data for {patient_id}")
+                patient_updates.append((patient_id, sanitize_patient_data(patient_data)))
+
+            if patient_updates:
+                # Batch fetch all patients at once
+                patient_ids = [pid for pid, _ in patient_updates]
+                existing_patients = await Patient.find(
+                    {"_id": {"$in": patient_ids}, "user_id": user_id}
+                ).to_list()
+                patients_by_id = {str(p.id): p for p in existing_patients}
+
+                # Process updates
+                for patient_id, patient_data in patient_updates:
+                    patient = patients_by_id.get(patient_id)
+                    if patient:
+                        client_updated_at = datetime.fromtimestamp(patient_data['updated_at'] / 1000.0, tz=timezone.utc)
+                        server_updated_at = patient.updated_at.astimezone(timezone.utc) if patient.updated_at.tzinfo else patient.updated_at.replace(tzinfo=timezone.utc)
+                        if client_updated_at < server_updated_at:
+                            raise SyncConflictException(f"Conflict detected for patient {patient_id}")
+                        patient_data['updated_at'] = datetime.now(timezone.utc)
+                        await patient.update({"$set": patient_data})
 
         if 'clinical_notes' in changes and 'updated' in changes['clinical_notes']:
+            # Extract and validate all note IDs first
+            note_updates = []
             for note_data in changes['clinical_notes']['updated']:
-                note_id = note_data.pop('id')
-                note = await ClinicalNote.get(note_id)
-                if note and note.user_id == user_id:
-                    note_data['updated_at'] = datetime.now(timezone.utc)
-                    await note.update({"$set": note_data})
+                note_id = note_data.pop('id', None)
+                if not note_id:
+                    raise ValueError("Missing 'id' field in clinical note update data")
+                note_updates.append((note_id, note_data))
 
-        # Process deleted records
+            if note_updates:
+                # Batch fetch all notes at once
+                note_ids = [nid for nid, _ in note_updates]
+                existing_notes = await ClinicalNote.find(
+                    {"_id": {"$in": note_ids}, "user_id": user_id}
+                ).to_list()
+                notes_by_id = {str(n.id): n for n in existing_notes}
+
+                # Process updates
+                for note_id, note_data in note_updates:
+                    note = notes_by_id.get(note_id)
+                    if note:
+                        note_data['updated_at'] = datetime.now(timezone.utc)
+                        await note.update({"$set": note_data})
+
+        # Process deleted records with batch operations
         if 'patients' in changes and 'deleted' in changes['patients']:
-            for patient_id in changes['patients']['deleted']:
-                patient = await Patient.get(patient_id)
-                if patient and patient.user_id == user_id:
-                    await patient.delete()
+            patient_ids_to_delete = changes['patients']['deleted']
+            if patient_ids_to_delete:
+                # Batch delete all patients that belong to this user
+                await Patient.find(
+                    {"_id": {"$in": patient_ids_to_delete}, "user_id": user_id}
+                ).delete()
 
         if 'clinical_notes' in changes and 'deleted' in changes['clinical_notes']:
-            for note_id in changes['clinical_notes']['deleted']:
-                note = await ClinicalNote.get(note_id)
-                if note and note.user_id == user_id:
-                    await note.delete()
+            note_ids_to_delete = changes['clinical_notes']['deleted']
+            if note_ids_to_delete:
+                # Batch delete all notes that belong to this user
+                await ClinicalNote.find(
+                    {"_id": {"$in": note_ids_to_delete}, "user_id": user_id}
+                ).delete()
 
         await SyncEvent(user_id=user_id, success=True).insert()
     except Exception as e:

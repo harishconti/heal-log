@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.log('🔄 [Auth] Fetching user data (blocking)...');
               const response = await api.get('/api/auth/me');
               setToken(storedToken);
-              setUser(response.data);
+              setUser(response.data.user);
               console.log('✅ [Auth] User data fetched successfully');
             } catch (error: any) {
               console.error('❌ [Auth] Blocking auth failed:', error);

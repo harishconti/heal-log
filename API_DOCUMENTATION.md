@@ -1,6 +1,6 @@
 # API Documentation
 
-Complete API reference for the PatientLog backend.
+Complete API reference for the HealLog backend.
 
 **Base URL:** `https://your-domain.com/api`
 **API Version:** 3.0

@@ -1,10 +1,10 @@
-# Privacy Policy for PatientLog
+# Privacy Policy for HealLog
 
 **Last Updated:** December 24, 2025
 
 ## Introduction
 
-PatientLog ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
+HealLog ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
 
 ## Information We Collect
 
@@ -88,7 +88,7 @@ Each service has its own privacy policy governing data use.
 
 ## Children's Privacy
 
-PatientLog is not intended for use by anyone under 18 years of age. We do not knowingly collect information from children.
+HealLog is not intended for use by anyone under 18 years of age. We do not knowingly collect information from children.
 
 ## International Data Transfers
 
@@ -122,4 +122,4 @@ For GDPR-related queries:
 
 ---
 
-By using PatientLog, you acknowledge that you have read and understood this Privacy Policy.
+By using HealLog, you acknowledge that you have read and understood this Privacy Policy.

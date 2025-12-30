@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
           <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
           <Text style={styles.title}>Welcome to the Beta!</Text>
           <Text style={styles.subtitle}>
-            Thank you for helping us test and improve PatientLog.
+            Thank you for helping us test and improve HealLog.
           </Text>
         </View>
 

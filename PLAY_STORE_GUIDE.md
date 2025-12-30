@@ -1,6 +1,6 @@
 # Google Play Store Submission Guide
 
-## 🎯 Goal: Submit PatientLog to Google Play Beta Track
+## 🎯 Goal: Submit HealLog to Google Play Beta Track
 
 This guide will walk you through publishing your app to Google Play Console for beta testing.
 
@@ -61,7 +61,7 @@ Before starting, ensure you have:
 
 2. **Fill Basic Details:**
    ```
-   App name: PatientLog (Beta)
+   App name: HealLog (Beta)
    Default language: English (United States)
    App or game: App
    Free or paid: Free
@@ -235,7 +235,7 @@ This is **CRITICAL** and detailed:
 
 **App name:**
 ```
-PatientLog - Beta
+HealLog - Beta
 ```
 
 **Short description** (80 chars max):
@@ -245,9 +245,9 @@ Modern patient management for healthcare professionals. Offline-first.
 
 **Full description** (4000 chars max):
 ```markdown
-## PatientLog - Your Smart Clinical Partner
+## HealLog - Your Smart Clinical Partner
 
-PatientLog is a modern, offline-first patient management application designed specifically for busy healthcare professionals.
+HealLog is a modern, offline-first patient management application designed specifically for busy healthcare professionals.
 
 ### ✨ Key Features
 
@@ -296,7 +296,7 @@ PatientLog is a modern, offline-first patient management application designed sp
 • Solo practitioners
 • Small clinics
 
-### 🎯 Why Choose PatientLog?
+### 🎯 Why Choose HealLog?
 
 **No Subscription (During Beta)** - Full features, no hidden costs
 **Offline Mode** - Works anywhere, anytime
@@ -320,12 +320,12 @@ Join our beta program and help shape the future of clinical software!
 
 ### 💪 Built for Healthcare Professionals
 
-Designed with input from practicing doctors, PatientLog understands your workflow and adapts to how you work.
+Designed with input from practicing doctors, HealLog understands your workflow and adapts to how you work.
 
 ### 📞 Support
 
 Need help? We're here for you!
-• Email: support@patientlog.com
+• Email: support@heallog.com
 • Response within 24 hours
 • Comprehensive documentation
 • Video tutorials
@@ -388,7 +388,7 @@ Tags: patient management, clinical notes, healthcare
 #### 4.4 Contact Details
 
 ```
-Email: support@patientlog.com (or your Gmail alias)
+Email: support@heallog.com
 Phone: +91-XXXXXXXXXX (optional)
 Website: https://your-github-pages.com (optional)
 ```
@@ -421,7 +421,7 @@ Website: https://your-github-pages.com (optional)
 4. **Testers can opt-in via:**
    ```
    You'll get a unique URL like:
-   https://play.google.com/apps/testing/com.patientlog.app
+   https://play.google.com/apps/testing/com.heallog.app
    
    Share this link with beta testers
    ```
@@ -472,7 +472,7 @@ Website: https://your-github-pages.com (optional)
    • Tablet UI optimization pending
    
    ### How to Help
-   Test thoroughly and report bugs to beta@patientlog.com
+   Test thoroughly and report bugs to support@heallog.com
    
    Thank you for being an early adopter! 🚀
    ```
@@ -527,17 +527,17 @@ Website: https://your-github-pages.com (optional)
 
 2. **Share with testers:**
    ```
-   Subject: Join PatientLog Beta Testing
-   
+   Subject: Join HealLog Beta Testing
+
    Hi [Tester Name],
-   
-   You're invited to beta test PatientLog!
+
+   You're invited to beta test HealLog!
    
    1. Join beta: [OPT-IN LINK]
    2. Accept invitation
    3. Download app from Play Store
    4. Test features listed in BETA_RELEASE_NOTES.md
-   5. Send feedback to beta@patientlog.com
+   5. Send feedback to support@heallog.com
    
    Thank you!
    ```
@@ -687,10 +687,10 @@ Deployment Guide: DEPLOYMENT_GUIDE.md file
 ### Key Emails to Set Up:
 
 ```
-support@patientlog.com  → User support
-beta@patientlog.com     → Beta feedback
-legal@patientlog.com    → Legal inquiries
-dpo@patientlog.com      → GDPR requests
+support@heallog.com  → User support
+beta@heallog.com     → Beta feedback
+legal@heallog.com    → Legal inquiries
+dpo@heallog.com      → GDPR requests
 ```
 
 ---

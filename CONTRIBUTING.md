@@ -1,6 +1,6 @@
-# Contributing to PatientLog
+# Contributing to HealLog
 
-Thank you for your interest in contributing to PatientLog! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to HealLog! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 

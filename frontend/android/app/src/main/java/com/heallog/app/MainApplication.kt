@@ -1,4 +1,4 @@
-package com.patientlog.app
+package com.heallog.app
 
 import android.app.Application
 import android.content.res.Configuration

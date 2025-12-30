@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.patientlog.app'
+    namespace 'com.heallog.app'
     defaultConfig {
-        applicationId 'com.patientlog.app'
+        applicationId 'com.heallog.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -33,13 +33,37 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
     async def get_next_patient_id(self, user_id: str) -> str:
         """
         Generates the next patient ID for a given user.
-        """
-        last_patient = await self.model.find(self.model.user_id == user_id).sort(-self.model.patient_id).limit(1).first_or_none()
-        if not last_patient or not last_patient.patient_id.startswith("PAT"):
-            return "PAT001"
+        Format: PTYYYYMM001 (e.g., PT202501001 for first patient in Jan 2025)
 
-        last_num = int(last_patient.patient_id[3:])
-        return f"PAT{last_num + 1:03d}"
+        The ID includes:
+        - PT: Prefix for patient
+        - YYYY: 4-digit year
+        - MM: 2-digit month
+        - 001: 3-digit sequential number (resets each month)
+        """
+        now = datetime.now(timezone.utc)
+        year_month = now.strftime("%Y%m")  # e.g., "202501"
+        prefix = f"PT{year_month}"  # e.g., "PT202501"
+
+        # Find all patients for this user with current month's prefix
+        patients_this_month = await self.model.find(
+            self.model.user_id == user_id,
+            {"patient_id": {"$regex": f"^{prefix}"}}
+        ).to_list()
+
+        if not patients_this_month:
+            return f"{prefix}001"
+
+        # Extract sequence numbers and find the max
+        max_seq = 0
+        for patient in patients_this_month:
+            try:
+                seq = int(patient.patient_id[8:])  # Extract last 3 digits
+                max_seq = max(max_seq, seq)
+            except (ValueError, IndexError):
+                continue
+
+        return f"{prefix}{max_seq + 1:03d}"
 
     async def create(self, obj_in: PatientCreate, user_id: str) -> Patient:
         """

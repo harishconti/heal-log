@@ -333,9 +333,9 @@ function Index({ patients, groups, totalPatientCount }) {
         <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
           {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : ''}
         </Text>
-        {user?.subscription_plan && (
+        {user?.plan && (
           <Text style={[styles.planText, { color: theme.colors.primary }]}>
-            {user.subscription_plan.charAt(0).toUpperCase() + user.subscription_plan.slice(1)} Plan
+            {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
           </Text>
         )}
       </View>

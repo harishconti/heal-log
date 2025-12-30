@@ -23,9 +23,9 @@ import { database } from '@/models/database';
 import { Patient } from '@/models/Patient';
 
 interface SubscriptionInfo {
-  subscription_plan: string;
+  plan: string;
   subscription_status: string;
-  trial_end_date: string;
+  subscription_end_date: string;
 }
 
 interface Stats {
@@ -57,9 +57,9 @@ export default function ProfileScreen() {
       // Set subscription info directly from user object
       if (user) {
         setSubscriptionInfo({
-          subscription_plan: user.plan || 'regular',
-          subscription_status: user.subscription_status || 'unknown',
-          trial_end_date: user.subscription_end_date || new Date().toISOString()
+          plan: user.plan || 'basic',
+          subscription_status: user.subscription_status || 'trialing',
+          subscription_end_date: user.subscription_end_date || new Date().toISOString()
         });
       }
 
@@ -259,8 +259,9 @@ export default function ProfileScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return '#2ecc71';
-      case 'trial': return '#f39c12';
-      case 'inactive': return '#e74c3c';
+      case 'trialing': return '#f39c12';
+      case 'canceled': return '#e74c3c';
+      case 'past_due': return '#e67e22';
       default: return '#95a5a6';
     }
   };
@@ -355,8 +356,8 @@ export default function ProfileScreen() {
             <View style={styles.subscriptionCard}>
               <View style={styles.subscriptionHeader}>
                 <Text style={styles.planName}>
-                  {subscriptionInfo.subscription_plan.charAt(0).toUpperCase() +
-                    subscriptionInfo.subscription_plan.slice(1)} Plan
+                  {subscriptionInfo.plan.charAt(0).toUpperCase() +
+                    subscriptionInfo.plan.slice(1)} Plan
                 </Text>
                 <View style={[
                   styles.statusBadge,
@@ -369,9 +370,9 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {subscriptionInfo.subscription_status === 'trial' && (
+              {subscriptionInfo.subscription_status === 'trialing' && (
                 <Text style={styles.trialInfo}>
-                  Trial ends: {formatDate(subscriptionInfo.trial_end_date)}
+                  Trial ends: {formatDate(subscriptionInfo.subscription_end_date)}
                 </Text>
               )}
 
@@ -390,7 +391,7 @@ export default function ProfileScreen() {
                   <Text style={styles.featureText}>Medical Notes</Text>
                 </View>
 
-                {subscriptionInfo.subscription_plan === 'regular' && (
+                {subscriptionInfo.plan === 'basic' && (
                   <>
                     <View style={styles.feature}>
                       <Ionicons name="close" size={16} color="#e74c3c" />
@@ -403,7 +404,7 @@ export default function ProfileScreen() {
                   </>
                 )}
 
-                {subscriptionInfo.subscription_plan === 'pro' && (
+                {subscriptionInfo.plan === 'pro' && (
                   <>
                     <View style={styles.feature}>
                       <Ionicons name="checkmark" size={16} color="#2ecc71" />
@@ -421,7 +422,7 @@ export default function ProfileScreen() {
                 )}
               </View>
 
-              {subscriptionInfo.subscription_plan === 'regular' && (
+              {subscriptionInfo.plan === 'basic' && (
                 <TouchableOpacity
                   style={styles.upgradeButton}
                   onPress={() => router.push('/upgrade')}

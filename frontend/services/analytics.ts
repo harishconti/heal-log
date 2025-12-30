@@ -5,18 +5,16 @@ const LAST_SCREEN_VIEW_KEY = "last_screen_view";
 const FEATURE_ADOPTION_KEY = "feature_adoption";
 const OFFLINE_ONLINE_TIME_KEY = "offline_online_time";
 
-// ⚠️ Telemetry endpoint not implemented on backend yet
-// Temporarily disabled to prevent 404 errors
-const TELEMETRY_ENABLED = false;
+// Telemetry is now enabled - backend endpoint is implemented at /api/telemetry
+const TELEMETRY_ENABLED = true;
 
 const sendTelemetry = async (eventType: string, payload: any) => {
   if (!TELEMETRY_ENABLED) {
-    // Silently skip telemetry - backend endpoint not ready
     return;
   }
-  
+
   try {
-    await api.post('/telemetry/', { event_type: eventType, payload });
+    await api.post('/api/telemetry/', { event_type: eventType, payload });
   } catch (error: any) {
     // Suppress errors to avoid impacting user experience
     if (error.response?.status === 404) {

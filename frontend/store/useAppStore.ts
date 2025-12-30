@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
 /**
  * User plan types - matches backend UserPlan enum
  */

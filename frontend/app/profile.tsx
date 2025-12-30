@@ -20,7 +20,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
-import { Patient } from '@/models/Patient';
+import Patient from '@/models/Patient';
 
 interface SubscriptionInfo {
   plan: string;

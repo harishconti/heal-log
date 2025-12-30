@@ -102,9 +102,24 @@ pytest
 
 ---
 
-## API Documentation
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Documentation](./API_DOCUMENTATION.md) | Complete API reference with examples |
+| [Contributing](./CONTRIBUTING.md) | Contribution guidelines |
+| [Changelog](./CHANGELOG.md) | Version history |
+| [Security](./SECURITY.md) | Security policy and reporting |
+| [Deployment Guide](./DEPLOYMENT_GUIDE.md) | Deployment instructions |
+| [Play Store Guide](./PLAY_STORE_GUIDE.md) | Google Play submission |
+
+---
+
+## API Overview
 
 Interactive API documentation is available at `/docs` when the backend is running.
+
+See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 
 ### Authentication
 
@@ -186,27 +201,11 @@ ALLOWED_ORIGINS=http://localhost:3000
 
 ---
 
-## Deployment
-
-See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for deployment instructions.
-
-**Recommended platforms:**
-- Railway.app
-- Render.com
-- Fly.io
-
----
-
-## Play Store Release
-
-See [PLAY_STORE_GUIDE.md](./PLAY_STORE_GUIDE.md) for Google Play submission instructions.
-
----
-
 ## Legal
 
 - [Privacy Policy](./PRIVACY_POLICY.md)
 - [Terms of Service](./TERMS_OF_SERVICE.md)
+- [Security Policy](./SECURITY.md)
 
 ---
 

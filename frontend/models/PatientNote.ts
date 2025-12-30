@@ -10,9 +10,10 @@ export default class PatientNote extends Model {
 
   @field('patient_id') patientId;
   @text('content') content;
-  @date('timestamp') timestamp;
+  @date('created_at') createdAt;
+  @date('updated_at') updatedAt;
   @text('visit_type') visitType;
-  @text('created_by') createdBy;
+  @text('user_id') userId;
 
   @relation('patients', 'patient_id') patient;
 }

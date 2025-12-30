@@ -15,6 +15,11 @@ export type UserPlan = 'basic' | 'pro';
 export type SubscriptionStatus = 'trialing' | 'active' | 'canceled' | 'past_due';
 
 /**
+ * User role types - matches backend UserRole enum
+ */
+export type UserRole = 'admin' | 'doctor' | 'patient';
+
+/**
  * User interface - matches backend User schema
  */
 export interface User {
@@ -24,6 +29,7 @@ export interface User {
   full_name: string;
   medical_specialty: string;
   plan: UserPlan;
+  role: UserRole;
   subscription_status: SubscriptionStatus;
   subscription_end_date: string;
   is_verified: boolean;

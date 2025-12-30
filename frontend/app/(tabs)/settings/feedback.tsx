@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import FeedbackForm from '@/components/forms/FeedbackForm';
 import { useTheme } from '@/contexts/ThemeContext';
-import { api } from '@/services/api';
+import api from '@/services/api';
 import Toast from 'react-native-toast-message';
 
 const FeedbackScreen = () => {
@@ -15,7 +15,7 @@ const FeedbackScreen = () => {
   const handleSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await api.post('/feedback/submit', data);
+      await api.post('/api/feedback/submit', data);
       Toast.show({
         type: 'success',
         text1: 'Feedback Submitted',

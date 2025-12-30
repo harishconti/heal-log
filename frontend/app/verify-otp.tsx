@@ -99,8 +99,8 @@ export default function VerifyOTPScreen() {
 
             // Store tokens
             if (Platform.OS === 'web') {
-                window.localStorage.setItem('token', response.access_token);
-                window.localStorage.setItem('refresh_token', response.refresh_token);
+                window.sessionStorage.setItem('token', response.access_token);
+                window.sessionStorage.setItem('refresh_token', response.refresh_token);
             } else {
                 await SecureStore.setItemAsync('token', response.access_token);
                 await SecureStore.setItemAsync('refresh_token', response.refresh_token);

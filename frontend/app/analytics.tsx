@@ -6,20 +6,45 @@ import { Ionicons } from '@expo/vector-icons';
 import { AnalyticsService, GrowthData, NotesData, ActivityData, DemographicsData } from '@/services/analytics_service';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const ChartBar = ({ label, value, maxValue, color }: { label: string, value: number, maxValue: number, color: string }) => {
+interface ChartBarProps {
+    label: string;
+    value: number;
+    maxValue: number;
+    color: string;
+    labelColor: string;
+}
+
+const ChartBar = ({ label, value, maxValue, color, labelColor }: ChartBarProps) => {
     const height = maxValue > 0 ? (value / maxValue) * 150 : 0;
     return (
-        <View style={styles.barContainer}>
-            <View style={[styles.bar, { height, backgroundColor: color }]} />
-            <Text style={styles.barLabel}>{label}</Text>
+        <View style={barStyles.barContainer}>
+            <View style={[barStyles.bar, { height, backgroundColor: color }]} />
+            <Text style={[barStyles.barLabel, { color: labelColor }]}>{label}</Text>
         </View>
     );
 };
+
+const barStyles = StyleSheet.create({
+    barContainer: {
+        alignItems: 'center',
+        marginRight: 12,
+        width: 40,
+    },
+    bar: {
+        width: 20,
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    barLabel: {
+        fontSize: 10,
+    },
+});
 
 export default function AnalyticsScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { theme } = useTheme();
+    const styles = createStyles(theme);
     const [loading, setLoading] = useState(true);
     const [growthData, setGrowthData] = useState<GrowthData[]>([]);
     const [notesData, setNotesData] = useState<NotesData[]>([]);
@@ -74,7 +99,7 @@ export default function AnalyticsScreen() {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Practice Analytics</Text>
                 <TouchableOpacity onPress={handleExport} style={styles.exportButton}>
@@ -94,6 +119,7 @@ export default function AnalyticsScreen() {
                                     value={item.count}
                                     maxValue={getMaxCount(growthData)}
                                     color={theme.colors.primary}
+                                    labelColor={theme.colors.textSecondary}
                                 />
                             ))}
                         </View>
@@ -110,6 +136,7 @@ export default function AnalyticsScreen() {
                                 value={item.count}
                                 maxValue={getMaxCount(activityData)}
                                 color={theme.colors.secondary}
+                                labelColor={theme.colors.textSecondary}
                             />
                         ))}
                     </View>
@@ -129,18 +156,18 @@ export default function AnalyticsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.card,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: theme.colors.border,
     },
     backButton: {
         marginRight: 16,
@@ -149,6 +176,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         flex: 1,
+        color: theme.colors.text,
     },
     exportButton: {
         padding: 8,
@@ -157,7 +185,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     section: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.card,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
@@ -171,7 +199,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         marginBottom: 16,
-        color: '#333',
+        color: theme.colors.text,
     },
     chartContainer: {
         flexDirection: 'row',
@@ -179,34 +207,20 @@ const styles = StyleSheet.create({
         height: 180,
         paddingTop: 10,
     },
-    barContainer: {
-        alignItems: 'center',
-        marginRight: 12,
-        width: 40,
-    },
-    bar: {
-        width: 20,
-        borderRadius: 4,
-        marginBottom: 8,
-    },
-    barLabel: {
-        fontSize: 10,
-        color: '#666',
-    },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: theme.colors.border,
     },
     rowLabel: {
         fontSize: 16,
-        color: '#333',
+        color: theme.colors.text,
     },
     rowValue: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#666',
+        color: theme.colors.textSecondary,
     },
 });

@@ -136,7 +136,9 @@ export const submitFeedback = async (feedback: Feedback) => {
     // Let's update the frontend to match the backend expectation or map it here.
 
     const payload = {
-      feedback_type: feedback.feedbackType === 'feature' ? 'suggestion' : feedback.feedbackType,
+      feedback_type: feedback.feedbackType === 'feature' ? 'suggestion' :
+                     feedback.feedbackType === 'other' ? 'general' :
+                     feedback.feedbackType,
       description: feedback.description,
       device_info: {
         os_version: Platform.OS + ' ' + Platform.Version,

@@ -10,8 +10,9 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Name regex: letters, spaces, hyphens, apostrophes only
 const nameRegex = /^[a-zA-Z\s\-']+$/;
 
-// Password regex: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+// Password regex: min 12 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+// Special chars aligned with backend: !@#$%^&*(),.?":{}|<>
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{12,}$/;
 
 // Patient ID regex: PTYYYYMM001 format (PT + 4-digit year + 2-digit month + 3-digit sequence)
 export const patientIdRegex = /^PT\d{6}\d{3}$/;
@@ -86,9 +87,9 @@ export const registerSchema = z.object({
     })
     .optional(),
   password: z.string()
-    .min(8, "Password must be at least 8 characters")
+    .min(12, "Password must be at least 12 characters")
     .refine(password => passwordRegex.test(password), {
-      message: "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)"
+      message: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?\":{}|<>)"
     }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -100,7 +101,9 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const noteSchema = z.object({
   content: z.string().min(1, "Note content cannot be empty"),
-  visit_type: z.string().min(1, "Visit type is required"),
+  visit_type: z.enum(["regular", "follow-up", "emergency"], {
+    errorMap: () => ({ message: "Visit type must be 'regular', 'follow-up', or 'emergency'" })
+  }),
   patient_id: z.string().min(1, "Patient ID is required"),
 });
 
@@ -118,9 +121,9 @@ export type OTPFormData = z.infer<typeof otpSchema>;
 export const passwordResetSchema = z.object({
   token: z.string().min(1, "Reset token is required"),
   new_password: z.string()
-    .min(8, "Password must be at least 8 characters")
+    .min(12, "Password must be at least 12 characters")
     .refine(password => passwordRegex.test(password), {
-      message: "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)"
+      message: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?\":{}|<>)"
     }),
   confirmPassword: z.string(),
 }).refine((data) => data.new_password === data.confirmPassword, {
@@ -138,12 +141,12 @@ export const getPasswordStrength = (password: string): {
 } => {
   let score = 0;
 
-  if (password.length >= 8) score++;
   if (password.length >= 12) score++;
+  if (password.length >= 16) score++;
   if (/[a-z]/.test(password)) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/\d/.test(password)) score++;
-  if (/[@$!%*?&]/.test(password)) score++;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
 
   if (score <= 2) return { score, label: 'Weak', color: '#e74c3c' };
   if (score <= 4) return { score, label: 'Medium', color: '#f39c12' };

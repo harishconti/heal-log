@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
 /**
  * User plan types - matches backend UserPlan enum
  */
@@ -15,6 +13,11 @@ export type UserPlan = 'basic' | 'pro';
 export type SubscriptionStatus = 'trialing' | 'active' | 'canceled' | 'past_due';
 
 /**
+ * User role types - matches backend UserRole enum
+ */
+export type UserRole = 'admin' | 'doctor' | 'patient';
+
+/**
  * User interface - matches backend User schema
  */
 export interface User {
@@ -24,6 +27,7 @@ export interface User {
   full_name: string;
   medical_specialty: string;
   plan: UserPlan;
+  role: UserRole;
   subscription_status: SubscriptionStatus;
   subscription_end_date: string;
   is_verified: boolean;

@@ -4,15 +4,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
+/**
+ * User plan types - matches backend UserPlan enum
+ */
+export type UserPlan = 'basic' | 'pro';
+
+/**
+ * Subscription status types - matches backend SubscriptionStatus enum
+ */
+export type SubscriptionStatus = 'trialing' | 'active' | 'canceled' | 'past_due';
+
+/**
+ * User interface - matches backend User schema
+ */
 export interface User {
   id: string;
   email: string;
   phone: string;
   full_name: string;
   medical_specialty: string;
-  subscription_plan: 'regular' | 'pro';
-  subscription_status: 'active' | 'inactive' | 'trial';
-  trial_end_date: string;
+  plan: UserPlan;
+  subscription_status: SubscriptionStatus;
+  subscription_end_date: string;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }

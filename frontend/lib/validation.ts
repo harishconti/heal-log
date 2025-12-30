@@ -13,6 +13,9 @@ const nameRegex = /^[a-zA-Z\s\-']+$/;
 // Password regex: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
+// Patient ID regex: PTYYYYMM001 format (PT + 4-digit year + 2-digit month + 3-digit sequence)
+export const patientIdRegex = /^PT\d{6}\d{3}$/;
+
 // Date validation helper
 const isValidDate = (dateString: string): boolean => {
   if (!dateString) return true;

@@ -1,7 +1,7 @@
 from beanie import Document
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 
 class DeviceInfo(BaseModel):
     os_version: Optional[str] = None
@@ -21,7 +21,7 @@ class BetaFeedback(Document):
     steps_to_reproduce: Optional[str] = None
     device_info: DeviceInfo
     screenshot_url: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "beta_feedback"

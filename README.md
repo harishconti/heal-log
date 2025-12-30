@@ -1,6 +1,6 @@
-# PatientLog
+# HealLog
 
-PatientLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
+HealLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
 ## Features
 
@@ -194,7 +194,7 @@ EXPO_PUBLIC_BACKEND_URL=http://10.0.2.2:8000
 
 ```
 MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=doctor_log
+DATABASE_NAME=heallog
 JWT_SECRET_KEY=your-secret-key
 ALLOWED_ORIGINS=http://localhost:3000
 ```

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in PatientLog, please report it responsibly.
+If you discover a security vulnerability in HealLog, please report it responsibly.
 
 ### How to Report
 
@@ -163,4 +163,4 @@ Security patches are released as needed. Subscribe to releases on GitHub for not
 
 ## Acknowledgments
 
-We appreciate security researchers who help keep PatientLog secure. Responsible disclosure is encouraged and appreciated.
+We appreciate security researchers who help keep HealLog secure. Responsible disclosure is encouraged and appreciated.

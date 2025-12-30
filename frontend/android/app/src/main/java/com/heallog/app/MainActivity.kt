@@ -1,4 +1,4 @@
-package com.patientlog.app
+package com.heallog.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

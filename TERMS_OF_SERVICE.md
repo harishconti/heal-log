@@ -1,14 +1,14 @@
-# Terms of Service for PatientLog
+# Terms of Service for HealLog
 
 **Effective Date:** December 24, 2025
 
 ## 1. Acceptance of Terms
 
-By accessing or using PatientLog ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
+By accessing or using HealLog ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
 
 ## 2. Description of Service
 
-PatientLog is a patient management application designed for healthcare professionals to:
+HealLog is a patient management application designed for healthcare professionals to:
 - Store and manage patient records
 - Create and maintain clinical notes
 - Import/export patient contact information
@@ -58,7 +58,7 @@ Your use of the App is also governed by our [Privacy Policy](./PRIVACY_POLICY.md
 
 ## 7. Medical Disclaimer
 
-**IMPORTANT:** PatientLog is a **record-keeping tool only**.
+**IMPORTANT:** HealLog is a **record-keeping tool only**.
 
 - The App does NOT provide medical advice, diagnosis, or treatment
 - Always consult qualified healthcare professionals for medical decisions
@@ -213,7 +213,7 @@ During beta, there is no Service Level Agreement (SLA).
 
 ---
 
-**BY USING PATIENTLOG, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
+**BY USING HEALLOG, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
 
 Last Updated: December 24, 2025
 Version: 1.1-beta

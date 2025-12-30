@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # MongoDB connection settings
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "doctor_log")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "heallog")
 
 async def create_indexes():
     """Create database indexes for performance optimization"""

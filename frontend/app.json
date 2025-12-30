@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PatientLog",
-    "slug": "patientlog",
+    "name": "HealLog",
+    "slug": "heallog",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,14 +10,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.patientlog.app"
+      "bundleIdentifier": "com.heallog.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.patientlog.app",
+      "package": "com.heallog.app",
       "versionCode": 1,
       "edgeToEdgeEnabled": true
     },

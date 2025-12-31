@@ -175,6 +175,7 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 |----------|--------|-------------|
 | `/api/patients/{id}/notes` | POST | Create clinical note |
 | `/api/patients/{id}/notes` | GET | List patient notes (paginated) |
+| `/api/patients/{id}/notes/{note_id}` | DELETE | Delete clinical note |
 
 ### Sync
 

@@ -9,7 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Added
+- Delete clinical notes endpoint (`DELETE /api/patients/{id}/notes/{note_id}`)
+  - Doctor-only access with rate limiting (20/minute)
+  - Returns appropriate 404 errors for missing patient or note
+
+### Fixed
+- **Critical:** Redis cache errors no longer crash patient create/delete operations
+  - Cache invalidation now wrapped in try/except with graceful fallback
+  - Errors logged as warnings instead of raising exceptions
+- OTP schema updated to accept 8-digit codes (was incorrectly validating 6-digit)
 
 ---
 

@@ -419,6 +419,27 @@ Authorization: Bearer <token>
 | `skip` | integer | 0 | Pagination offset |
 | `limit` | integer | 100 | Max results (max: 500) |
 
+### Delete Note
+
+Delete a specific clinical note from a patient's record. (Doctor-only)
+
+```
+DELETE /patients/{patient_id}/notes/{note_id}
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Note deleted successfully"
+}
+```
+
+**Error Responses:**
+- `404` - Patient not found
+- `404` - Note not found
+
 ---
 
 ## Sync
@@ -800,5 +821,6 @@ Authorization: Bearer <admin_token>
 | `/auth/forgot-password` | 3/minute |
 | `/patients/` POST | 20/minute |
 | `/patients/` GET | 60/minute |
+| `/patients/{id}/notes` DELETE | 20/minute |
 | `/sync/*` | 30/minute |
 | `/export/*` | 5/minute |

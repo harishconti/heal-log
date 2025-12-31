@@ -37,8 +37,8 @@ Thank you for your interest in contributing to HealLog! This document provides g
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/doctor-log.git
-cd doctor-log
+git clone https://github.com/YOUR_USERNAME/heal-log.git
+cd heal-log
 ```
 
 ---
@@ -98,26 +98,39 @@ npm test
 ## Project Structure
 
 ```
-doctor-log/
+heal-log/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # API route handlers
-│   │   ├── core/         # Config, security, middleware
-│   │   ├── db/           # Database connection
-│   │   ├── schemas/      # Pydantic models
-│   │   └── services/     # Business logic
-│   ├── tests/            # Test files
+│   │   ├── api/          # API route handlers (16 routers)
+│   │   ├── core/         # Config, security, exceptions, logging
+│   │   ├── db/           # Database connection and initialization
+│   │   ├── models/       # Beanie ODM document models
+│   │   ├── schemas/      # Pydantic request/response schemas
+│   │   ├── services/     # Business logic (13 services)
+│   │   └── middleware/   # Request logging middleware
+│   ├── tests/            # Test files (48 tests)
+│   ├── scripts/          # Database scripts
 │   ├── main.py           # Application entry
 │   └── requirements.txt
 │
 ├── frontend/
-│   ├── app/              # Expo Router pages
-│   ├── components/       # React components
+│   ├── app/              # Expo Router pages (15+ screens)
+│   ├── components/       # React components (core, forms, ui)
 │   ├── contexts/         # React contexts
 │   ├── models/           # WatermelonDB models
-│   ├── services/         # API services
-│   └── store/            # Zustand store
+│   ├── services/         # API services (11 services)
+│   ├── store/            # Zustand store
+│   └── constants/        # App constants
 │
+├── web-dashboard/        # React + Vite web dashboard
+│   ├── src/
+│   │   ├── pages/        # Dashboard pages
+│   │   ├── components/   # React components
+│   │   ├── api/          # API clients
+│   │   └── store/        # Zustand stores
+│   └── package.json
+│
+├── scripts/              # Utility scripts (version bump, env generation)
 └── docs/                 # Documentation
 ```
 

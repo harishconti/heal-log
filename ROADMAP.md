@@ -4,40 +4,51 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Current Version: 1.0.0-beta
+## Current Version: 1.0.34
 
 ### Released Features
-- User registration and authentication
-- Email OTP verification
-- Password reset flow
-- Patient management (CRUD)
-- Clinical notes
-- Offline-first data storage
-- Cloud sync
+- User registration and authentication with JWT
+- Email OTP verification (8-digit codes)
+- Password reset via secure token
+- Patient management (CRUD with search, filtering, grouping)
+- Clinical notes with visit types
+- Offline-first data storage (WatermelonDB)
+- Cloud sync (push/pull)
 - Profile management with photo upload
 - Dark mode support
-- Web dashboard (basic)
+- Web dashboard for Pro users (React + Vite)
+- CSV data export (patients, notes, all data)
+- Beta feedback system
+- Telemetry and analytics
+- Stripe payment integration
+- Rate limiting and security headers
+- Input sanitization (NoSQL injection prevention)
 
 ---
 
 ## Phase 1: Beta Release (Current)
 
-**Status:** In Progress
+**Status:** Complete (v1.0.34)
 
 ### Critical (Must Have)
 - [x] Core authentication flow
 - [x] Patient management
 - [x] Clinical notes
 - [x] Offline sync
+- [x] Enhanced error handling
+- [x] Security hardening
+- [x] 48 backend tests passing
 - [ ] Push notifications
 - [ ] Device compatibility testing
 - [ ] Play Store submission
 
 ### High Priority
-- [ ] Enhanced error handling
-- [ ] Performance optimization
-- [ ] Comprehensive testing
-- [ ] Documentation
+- [x] Rate limiting
+- [x] Security headers
+- [x] Input validation/sanitization
+- [ ] Performance optimization for large datasets
+- [x] Comprehensive testing
+- [x] Documentation
 
 ---
 
@@ -77,29 +88,31 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 **Target:** Q2 2026
 
-### Subscription Features
-- [ ] **Multi-device Sync**
+### Subscription Features (Implemented)
+- [x] **Multi-device Sync**
   - Unlimited devices
-  - Real-time sync
+  - Offline-first sync
 
-- [ ] **Advanced Analytics**
-  - Patient statistics
-  - Visit trends
-  - Revenue tracking
+- [x] **Advanced Analytics** (Pro only)
+  - Patient growth charts
+  - Notes activity metrics
+  - Weekly activity reports
+  - Demographics breakdown
 
-- [ ] **File Attachments**
+- [x] **Document Management**
   - Medical document upload
-  - Lab report attachments
-  - Image annotations
+  - Patient file attachments
 
-- [ ] **Templates**
+- [ ] **Templates** (Planned)
   - Note templates
   - Prescription templates
   - Custom form fields
 
-### Web Dashboard Enhancements
-- [ ] Full patient management
-- [ ] Analytics dashboard
+### Web Dashboard (Implemented)
+- [x] Full patient management
+- [x] Analytics dashboard with charts
+- [x] Patient search and filtering
+- [x] Profile management
 - [ ] Bulk import/export
 - [ ] User management (for clinics)
 
@@ -201,8 +214,11 @@ Have a feature idea? Here's how to submit it:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.0-beta.1 | Dec 2025 | Initial beta release |
-| 1.0.0 | Jan 2026 | Production release (planned) |
+| 1.0.34 | Dec 2025 | Current stable release |
+| 3.1.0 | Dec 2025 | Web dashboard, integration fixes |
+| 3.0.0 | Dec 2025 | Security hardening, pagination, export |
+| 2.0.0 | Dec 2025 | OTP verification, beta features |
+| 1.0.0 | Dec 2025 | Initial release |
 | 1.5.0 | Q2 2026 | Pro features (planned) |
 | 2.0.0 | Q3 2026 | Clinic edition (planned) |
 

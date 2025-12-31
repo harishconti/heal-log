@@ -31,33 +31,39 @@ HealLog is a patient management application designed for healthcare professional
 ## Technology Stack
 
 ### Frontend (Mobile App)
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | React Native + Expo | Cross-platform mobile development |
-| Navigation | Expo Router | File-based routing |
-| State Management | React Context | Global state management |
-| Local Database | WatermelonDB | Offline-first data storage |
-| HTTP Client | Axios | API communication |
-| UI Components | Custom + Expo | Native-feeling UI |
-| Authentication | JWT + SecureStore | Secure token storage |
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| Framework | React Native + Expo | 0.81.5 / 54.0.29 | Cross-platform mobile development |
+| Navigation | Expo Router | 6.0.19 | File-based routing |
+| State Management | Zustand | 4.5.2 | Global state management |
+| Local Database | WatermelonDB | 0.28.0 | Offline-first data storage |
+| HTTP Client | Axios | 1.12.2 | API communication |
+| Form Handling | React Hook Form + Zod | 7.51.3 / 3.23.8 | Form validation |
+| Authentication | JWT + SecureStore | - | Secure token storage |
 
 ### Backend (API)
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | FastAPI | High-performance Python API |
-| Database | MongoDB | Document database for flexible schemas |
-| Authentication | JWT | Stateless authentication |
-| Validation | Pydantic | Request/response validation |
-| Email | SMTP/SendGrid | Transactional emails |
-| Payments | Stripe | Subscription management |
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| Framework | FastAPI | 0.116.1 | High-performance Python API |
+| Server | Uvicorn | 0.32.1 | ASGI server |
+| Database | MongoDB | Atlas | Document database |
+| ODM | Beanie | 1.26.0 | Async MongoDB ODM |
+| Authentication | JWT (python-jose) | 3.4.0 | Stateless authentication |
+| Validation | Pydantic | 2.10.4 | Request/response validation |
+| Email | aiosmtplib | 3.0.1 | Async transactional emails |
+| Rate Limiting | SlowAPI | 0.1.9 | Request rate limiting |
+| Error Tracking | Sentry | 2.18.0 | Error monitoring |
+| Payments | Stripe | - | Subscription management |
 
 ### Web Dashboard
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | React + Vite | Fast web development |
-| Styling | Tailwind CSS | Utility-first styling |
-| Charts | Recharts | Data visualization |
-| State | React Query | Server state management |
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| Framework | React + Vite | 19.2.0 / 7.2.4 | Fast web development |
+| Styling | Tailwind CSS | 4.1.18 | Utility-first styling |
+| Charts | Recharts | 3.6.0 | Data visualization |
+| State | Zustand | 5.0.9 | Global state management |
+| Routing | React Router DOM | 7.11.0 | Client-side routing |
+| Form Handling | React Hook Form + Zod | 7.69.0 / 4.2.1 | Form validation |
 
 ---
 
@@ -66,7 +72,7 @@ HealLog is a patient management application designed for healthcare professional
 ```
 heal-log/
 ├── frontend/                 # React Native mobile app
-│   ├── app/                  # Expo Router screens
+│   ├── app/                  # Expo Router screens (15+ screens)
 │   │   ├── (auth)/           # Authentication screens
 │   │   ├── (tabs)/           # Main tab screens
 │   │   └── _layout.tsx       # Root layout
@@ -75,28 +81,39 @@ heal-log/
 │   │   ├── forms/            # Form components
 │   │   └── ui/               # UI primitives
 │   ├── contexts/             # React contexts
-│   ├── database/             # WatermelonDB setup
-│   ├── services/             # API services
+│   ├── models/               # WatermelonDB models
+│   ├── services/             # API services (11 services)
+│   ├── store/                # Zustand global store
 │   └── constants/            # App constants
 │
 ├── backend/                  # FastAPI backend
 │   ├── app/                  # Application modules
-│   │   ├── routers/          # API route handlers
-│   │   ├── models/           # Pydantic models
-│   │   ├── services/         # Business logic
-│   │   └── database.py       # Database connection
-│   ├── tests/                # Test files
+│   │   ├── api/              # API route handlers (16 routers)
+│   │   ├── core/             # Config, security, exceptions
+│   │   ├── db/               # Database connection
+│   │   ├── models/           # Beanie ODM models
+│   │   ├── schemas/          # Pydantic schemas
+│   │   ├── services/         # Business logic (13 services)
+│   │   └── middleware/       # Request logging
+│   ├── tests/                # Test files (48 tests)
+│   ├── scripts/              # Database scripts
 │   └── main.py               # Application entry point
 │
 ├── web-dashboard/            # React web dashboard
 │   ├── src/
 │   │   ├── components/       # React components
-│   │   ├── pages/            # Page components
-│   │   ├── services/         # API services
-│   │   └── App.tsx           # Root component
+│   │   │   ├── ui/           # UI primitives
+│   │   │   └── charts/       # Chart components
+│   │   ├── pages/            # Page components (11 pages)
+│   │   ├── api/              # API clients
+│   │   ├── store/            # Zustand stores
+│   │   └── types/            # TypeScript types
 │   └── index.html            # Entry HTML
 │
 ├── scripts/                  # Utility scripts
+│   ├── bump-version.js       # Version management
+│   ├── clean_mongo.js        # Database cleanup
+│   └── generate-env.js       # Environment generation
 ├── docs/                     # Documentation
 └── docker-compose.yml        # Local development setup
 ```
@@ -160,15 +177,23 @@ heal-log/
 #### Users
 ```javascript
 {
-  _id: ObjectId,
-  id: UUID,                    // For sync compatibility
-  email: String,
-  name: String,
-  specialization: String,
+  _id: UUID,
+  email: String (unique, indexed),
   phone: String,
+  full_name: String,
+  medical_specialty: String,
   password_hash: String,
+  plan: "basic" | "pro",
+  role: "admin" | "doctor" | "patient",
+  subscription_status: "trialing" | "active" | "canceled" | "past_due",
+  subscription_end_date: DateTime,
+  is_beta_tester: Boolean,
   is_verified: Boolean,
-  role: "doctor" | "admin",
+  otp_code: String,
+  otp_expires_at: DateTime,
+  otp_attempts: Number,
+  password_reset_token: String,
+  password_reset_expires_at: DateTime,
   created_at: DateTime,
   updated_at: DateTime
 }
@@ -177,17 +202,19 @@ heal-log/
 #### Patients
 ```javascript
 {
-  _id: ObjectId,
-  id: UUID,
-  doctor_id: UUID,
+  _id: UUID,
+  patient_id: String,            // Format: PTYYYYMM001
+  user_id: UUID (indexed),
   name: String,
-  email: String,
   phone: String,
-  gender: String,
-  age: Number,
+  email: String,
   address: String,
-  medical_history: String,
-  is_deleted: Boolean,
+  location: String,
+  initial_complaint: String,
+  initial_diagnosis: String,
+  photo: String,                 // Base64 encoded
+  group: String,
+  is_favorite: Boolean,
   created_at: DateTime,
   updated_at: DateTime
 }
@@ -196,26 +223,29 @@ heal-log/
 #### Clinical Notes
 ```javascript
 {
-  _id: ObjectId,
-  id: UUID,
-  patient_id: UUID,
-  doctor_id: UUID,
-  title: String,
+  _id: UUID,
+  patient_id: UUID (indexed),
+  user_id: UUID (indexed),
   content: String,
-  diagnosis: String,
-  prescription: String,
-  visit_date: DateTime,
-  is_deleted: Boolean,
+  visit_type: "regular" | "follow-up" | "emergency",
   created_at: DateTime,
   updated_at: DateTime
 }
 ```
 
+### Additional Collections
+- `documents` - Patient document uploads
+- `feedback` - User feedback submissions
+- `beta_feedback` - Beta testing feedback
+- `telemetry` - Analytics events
+- `error_events` - Error logs
+- `query_performance_events` - Performance metrics
+- `sync_events` - Sync tracking
+
 ### WatermelonDB Schema (Mobile)
 
-The mobile app uses WatermelonDB with the same schema structure, adding:
-- `sync_status`: 'synced' | 'pending' | 'error'
-- Local-only fields for UI state
+The mobile app uses WatermelonDB with matching schema for offline support.
+See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete details.
 
 ---
 
@@ -260,21 +290,26 @@ The mobile app uses WatermelonDB with the same schema structure, adding:
 ## Security Architecture
 
 ### Authentication
-- JWT tokens with 15-minute access token expiry
-- Refresh tokens for session renewal
-- Passwords hashed with bcrypt
-- OTP verification for new accounts
+- JWT tokens with 30-minute access token expiry
+- 7-day refresh tokens for session renewal
+- Passwords hashed with bcrypt (12+ chars required)
+- 8-digit OTP verification for new accounts
+- Rate limiting on auth endpoints (5/minute)
 
 ### Data Protection
 - HTTPS/TLS for all API communication
 - SecureStore for token storage on mobile
+- sessionStorage for web (not localStorage)
 - MongoDB encryption at rest
-- Input validation on all endpoints
+- Input validation and sanitization on all endpoints
+- NoSQL injection prevention
 
 ### Access Control
-- Role-based access (Doctor, Admin)
-- Resource-level isolation (users can only access their own data)
-- Rate limiting on authentication endpoints
+- Role-based access (Admin, Doctor, Patient)
+- Resource-level isolation (users only access their own data)
+- Rate limiting on all API endpoints
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Stripe webhook signature verification
 
 ---
 

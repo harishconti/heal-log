@@ -9,11 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*No unreleased changes*
+
+---
+
+## [3.1.0] - 2025-12-31
+
 ### Added
+- Web dashboard for Pro users (React + Vite)
+  - Patient analytics and statistics
+  - Usage metrics visualization
+  - Subscription management
 - Frontend telemetry integration with backend endpoint
 - Dynamic user name for clinical note author
 
 ### Fixed
+- All 14 integration audit issues resolved:
+  - **Critical:** Token storage now uses sessionStorage consistently (security fix)
+  - **Critical:** Password validation aligned with backend (12 char minimum)
+  - **High:** Feedback API endpoint and import errors fixed
+  - **High:** Feedback type mapping for 'other' -> 'general'
+  - **High:** Clinical note schema fields aligned with backend
+  - **High:** User role field added to frontend interface
+  - **Medium:** Visit type enum validation added
+  - **Medium:** Profile screen Patient import corrected
+  - **Medium:** Duplicate feedback screens consolidated
+  - **Low:** Analytics screen theme colors applied
+  - **Low:** Unused BACKEND_URL variable removed
 - Telemetry API endpoint path corrected
 - Hardcoded note author replaced with authenticated user
 
@@ -93,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 3.1.0 | 2025-12-31 | Web dashboard, integration fixes |
 | 3.0.0 | 2025-12-30 | Security hardening, pagination, export |
 | 2.0.0 | 2025-12-24 | OTP verification, beta features |
 | 1.0.0 | 2025-12-01 | Initial release |

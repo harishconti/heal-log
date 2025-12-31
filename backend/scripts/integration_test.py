@@ -12,19 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 API_URL = "http://localhost:8000/api"
-MONGO_URL = os.environ.get("MONGO_URL")
-DB_NAME = os.environ.get("DB_NAME", "clinic_os_lite")
-
-if not MONGO_URL:
-    raise ValueError("MONGO_URL environment variable is not set")
 
 # Initialize Faker
 fake = Faker()
-
-# Database Connection
-client = pymongo.MongoClient(MONGO_URL)
-db = client[DB_NAME]
-users_collection = db["users"]
 
 # Report Data
 report_lines = ["# Integration Test Report", "", "## Summary", ""]
@@ -33,7 +23,23 @@ def log_report(line):
     report_lines.append(line)
     logger.info(line)
 
+
+def get_db_connection():
+    """Get database connection. Only called when running the test."""
+    mongo_url = os.environ.get("MONGO_URL")
+    db_name = os.environ.get("DB_NAME", "clinic_os_lite")
+
+    if not mongo_url:
+        raise ValueError("MONGO_URL environment variable is not set")
+
+    client = pymongo.MongoClient(mongo_url)
+    db = client[db_name]
+    return db["users"]
+
 def run_test():
+    # Get database connection (validates MONGO_URL is set)
+    users_collection = get_db_connection()
+
     session = requests.Session()
 
     # --- Step 1: Create New User ---

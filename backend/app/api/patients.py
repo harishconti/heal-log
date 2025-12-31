@@ -220,3 +220,22 @@ async def get_patient_notes(
     if notes is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
     return notes
+
+
+@router.delete("/{id}/notes/{note_id}", response_model=dict)
+@limiter.limit("20/minute")
+async def delete_patient_note(
+    request: Request,
+    id: str,
+    note_id: str,
+    current_user: User = Depends(require_role(UserRole.DOCTOR))
+):
+    """
+    Delete a specific note from a patient's record. (Doctor-only)
+    """
+    result = await patient_service.delete_patient_note(id, note_id, current_user.id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+    if result is False:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+    return {"success": True, "message": "Note deleted successfully"}

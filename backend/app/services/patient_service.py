@@ -65,6 +65,21 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         return f"{prefix}{max_seq + 1:03d}"
 
+    async def _clear_patient_caches(self) -> None:
+        """
+        Clears patient-related caches with graceful error handling.
+        Redis connection errors are logged but don't crash the operation.
+        """
+        try:
+            if FastAPICache.get_backend():
+                await FastAPICache.clear(namespace="get_patients_by_user_id")
+                await FastAPICache.clear(namespace="get_patient_groups")
+                await FastAPICache.clear(namespace="get_user_stats")
+                await FastAPICache.clear(namespace="get_patient_growth_analytics")
+        except Exception as e:
+            # Log the error but don't crash - cache invalidation is non-critical
+            logging.warning(f"Failed to clear cache: {e}")
+
     async def create(self, obj_in: PatientCreate, user_id: str) -> Patient:
         """
         Overrides the base create method to add user_id and a sequential patient_id.
@@ -87,11 +102,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await db_obj.insert()
 
         # Invalidate caches if a backend is available
-        if FastAPICache.get_backend():
-            await FastAPICache.clear(namespace="get_patients_by_user_id")
-            await FastAPICache.clear(namespace="get_patient_groups")
-            await FastAPICache.clear(namespace="get_user_stats")
-            await FastAPICache.clear(namespace="get_patient_growth_analytics")
+        await self._clear_patient_caches()
 
         return db_obj
 
@@ -173,10 +184,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         updated_patient = await super().update(patient, patient_data)
 
         # Invalidate caches if a backend is available
-        if FastAPICache.get_backend():
-            await FastAPICache.clear(namespace="get_patients_by_user_id")
-            await FastAPICache.clear(namespace="get_patient_groups")
-            await FastAPICache.clear(namespace="get_user_stats")
+        await self._clear_patient_caches()
 
         return updated_patient
 
@@ -191,11 +199,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         await super().delete(patient)
 
         # Invalidate caches if a backend is available
-        if FastAPICache.get_backend():
-            await FastAPICache.clear(namespace="get_patients_by_user_id")
-            await FastAPICache.clear(namespace="get_patient_groups")
-            await FastAPICache.clear(namespace="get_user_stats")
-            await FastAPICache.clear(namespace="get_patient_growth_analytics")
+        await self._clear_patient_caches()
 
         return True
 
@@ -229,6 +233,21 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
             return None
 
         return await clinical_note_service.get_notes_for_patient(patient_id, user_id, skip=skip, limit=limit)
+
+    async def delete_patient_note(self, patient_id: str, note_id: str, user_id: str) -> Optional[bool]:
+        """
+        Deletes a specific note from a patient's record.
+        Returns True if deleted, False if note not found, None if patient not found.
+        """
+        patient = await self.get(patient_id, user_id=user_id)
+        if not patient:
+            return None
+
+        deleted = await clinical_note_service.delete_note(note_id, patient_id, user_id)
+        if deleted:
+            patient.updated_at = datetime.now(timezone.utc)
+            await patient.save()
+        return deleted
 
     @cache(namespace="get_patient_groups", expire=60)
     async def get_patient_groups(self, user_id: str) -> List[str]:

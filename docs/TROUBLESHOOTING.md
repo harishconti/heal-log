@@ -88,6 +88,27 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,http://10.0.2.2:8081
 
 ---
 
+### Redis Cache Errors (Resolved in v3.1.1)
+
+**Error**: Patient create/delete returns 500 with Redis connection error
+
+**Note**: This issue has been fixed in version 3.1.1. Cache invalidation now gracefully handles Redis connection errors without crashing the operation.
+
+**If you're on an older version**:
+1. Update to the latest version
+2. Or ensure Redis is properly configured:
+   ```bash
+   # Check Redis connection
+   redis-cli ping
+
+   # Verify REDIS_URL in .env
+   REDIS_URL=redis://localhost:6379
+   ```
+
+3. For local development without Redis, the app will log warnings but continue working
+
+---
+
 ## Frontend Issues
 
 ### App Crashes on Startup

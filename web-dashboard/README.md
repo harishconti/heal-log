@@ -12,11 +12,20 @@ A React-based web dashboard for HealLog Pro users, providing analytics, patient 
 
 ## Tech Stack
 
-- **React 19** with TypeScript
-- **Vite** for fast development and building
-- **Zustand** for state management
-- **React Router** for navigation
-- **Chart.js** for data visualization
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.2.0 | UI framework |
+| Vite | 7.2.4 | Build tool |
+| TypeScript | - | Type safety |
+| Tailwind CSS | 4.1.18 | Styling |
+| Zustand | 5.0.9 | State management |
+| React Router DOM | 7.11.0 | Navigation |
+| Recharts | 3.6.0 | Data visualization |
+| React Hook Form | 7.69.0 | Form handling |
+| Zod | 4.2.1 | Validation |
+| Axios | 1.13.2 | HTTP client |
+| Lucide React | 0.562.0 | Icons |
+| date-fns | 4.1.0 | Date formatting |
 
 ## Project Structure
 

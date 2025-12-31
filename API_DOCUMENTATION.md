@@ -3,7 +3,7 @@
 Complete API reference for the HealLog backend.
 
 **Base URL:** `https://your-domain.com/api`
-**API Version:** 3.0
+**API Version:** 1.0.34
 **Authentication:** JWT Bearer Token
 
 ---
@@ -14,9 +14,13 @@ Complete API reference for the HealLog backend.
 - [Users](#users)
 - [Patients](#patients)
 - [Clinical Notes](#clinical-notes)
+- [Documents](#documents)
 - [Sync](#sync)
 - [Export](#export)
 - [Analytics](#analytics)
+- [Feedback & Beta](#feedback--beta)
+- [Payments](#payments)
+- [System](#system)
 - [Error Handling](#error-handling)
 
 ---
@@ -499,7 +503,7 @@ Authorization: Bearer <token>
 ### Export Clinical Notes (CSV)
 
 ```
-GET /export/clinical-notes
+GET /export/notes
 Authorization: Bearer <token>
 ```
 
@@ -549,6 +553,213 @@ GET /analytics/weekly-activity
 Authorization: Bearer <token>
 ```
 
+### Demographics
+
+```
+GET /analytics/demographics
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "total_patients": 150,
+  "groups": [
+    {"name": "cardiology", "count": 45},
+    {"name": "general", "count": 80}
+  ]
+}
+```
+
+### User Health Statistics
+
+```
+GET /analytics/health
+Authorization: Bearer <token>
+```
+
+---
+
+## Documents
+
+### Upload Document
+
+```
+POST /documents/
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "patient_id": "patient_uuid",
+  "file_name": "lab_results.pdf",
+  "content_type": "application/pdf",
+  "data": "base64_encoded_data"
+}
+```
+
+### Get Patient Documents
+
+```
+GET /documents/{patient_id}
+Authorization: Bearer <token>
+```
+
+---
+
+## Feedback & Beta
+
+### Submit Feedback
+
+```
+POST /feedback/submit
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "feedback_type": "bug",
+  "description": "App crashes when...",
+  "steps_to_reproduce": "1. Open app\n2. Click button",
+  "device_info": {
+    "os_version": "Android 13",
+    "app_version": "1.0.34",
+    "device_model": "Pixel 7"
+  }
+}
+```
+
+**Feedback Types:** `bug`, `suggestion`, `general`
+
+### Get Known Issues
+
+```
+GET /beta/known-issues
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+[
+  {
+    "id": "uuid",
+    "title": "Sync delay on large datasets",
+    "description": "Syncing may take longer with 500+ patients",
+    "severity": "low",
+    "status": "investigating"
+  }
+]
+```
+
+### Log Telemetry Event
+
+```
+POST /telemetry/
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "event_type": "screen_view",
+  "payload": {
+    "screen": "patient_list",
+    "duration_ms": 1500
+  }
+}
+```
+
+---
+
+## Payments
+
+*Stripe integration for subscription management*
+
+### Create Checkout Session
+
+```
+POST /payments/create-checkout-session
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "price_id": "price_xxx",
+  "success_url": "https://app.heallog.com/success",
+  "cancel_url": "https://app.heallog.com/cancel"
+}
+```
+
+**Response (200):**
+```json
+{
+  "session_id": "cs_xxx",
+  "url": "https://checkout.stripe.com/..."
+}
+```
+
+### Stripe Webhook
+
+```
+POST /payments/webhooks/stripe
+```
+
+*Handles Stripe webhook events for subscription updates*
+
+---
+
+## System
+
+### Health Check
+
+```
+GET /health
+```
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "details": {
+    "api": "ok",
+    "mongodb": "ok",
+    "cache": "ok"
+  }
+}
+```
+
+### Version Info
+
+```
+GET /version
+```
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "version": "1.0.34",
+  "build_date": "2025-12-22"
+}
+```
+
+### System Metrics (Admin Only)
+
+```
+GET /metrics
+Authorization: Bearer <admin_token>
+```
+
+### Clear Caches (Debug Only)
+
+```
+POST /debug/clear-all-caches
+Authorization: Bearer <admin_token>
+```
+
 ---
 
 ## Error Handling
@@ -591,40 +802,3 @@ Authorization: Bearer <token>
 | `/patients/` GET | 60/minute |
 | `/sync/*` | 30/minute |
 | `/export/*` | 5/minute |
-
----
-
-## Health Check
-
-```
-GET /health
-```
-
-**Response (200):**
-```json
-{
-  "status": "ok",
-  "details": {
-    "api": "ok",
-    "mongodb": "ok",
-    "cache": "ok"
-  }
-}
-```
-
----
-
-## Version
-
-```
-GET /version
-```
-
-**Response (200):**
-```json
-{
-  "status": "ok",
-  "version": "3.0.0",
-  "build_date": "2025-12-30"
-}
-```

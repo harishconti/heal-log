@@ -2,6 +2,8 @@
 
 HealLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
+**Current Version:** 1.0.34 | **Backend Tests:** 48 passing
+
 ## Features
 
 ### Core Features
@@ -11,14 +13,18 @@ HealLog is a patient management system with a FastAPI backend and a React Native
 - JWT authentication with OTP email verification
 - Data export (CSV format)
 - Web dashboard for Pro users (analytics and management)
+- Document management for patient files
+- Beta feedback and known issues system
 
 ### Technical Features
 - Cross-platform (iOS, Android, Web via Expo)
 - WatermelonDB for offline storage
 - MongoDB with Beanie ODM
 - Rate limiting and security headers
-- Analytics and telemetry
-- React + Vite web dashboard
+- Analytics and telemetry tracking
+- React + Vite web dashboard with Tailwind CSS
+- Stripe payment integration for subscriptions
+- Sentry error monitoring
 
 ---
 
@@ -30,11 +36,13 @@ The application uses a decoupled, three-tier architecture. The core is a **FastA
 
 The backend is a FastAPI application with a modular structure. The main entrypoint is `backend/main.py`.
 
--   **`api/`**: API endpoint definitions (routers)
--   **`core/`**: Core application logic, configuration, and security
+-   **`api/`**: API endpoint definitions (16 routers)
+-   **`core/`**: Configuration, security, exceptions, and logging
 -   **`db/`**: Database session management and initialization
--   **`schemas/`**: Beanie document models and Pydantic schemas
--   **`services/`**: Business logic, separated from the API layer
+-   **`models/`**: Beanie ODM document models
+-   **`schemas/`**: Pydantic request/response schemas
+-   **`services/`**: Business logic (13 services)
+-   **`middleware/`**: Request logging middleware
 
 ### Frontend
 
@@ -109,13 +117,16 @@ pytest
 | Document | Description |
 |----------|-------------|
 | [API Documentation](./API_DOCUMENTATION.md) | Complete API reference with examples |
+| [Architecture](./docs/ARCHITECTURE.md) | System architecture overview |
+| [Database Schema](./docs/DATABASE_SCHEMA.md) | MongoDB schema documentation |
+| [Setup Guide](./docs/SETUP_GUIDE.md) | Development environment setup |
 | [Contributing](./CONTRIBUTING.md) | Contribution guidelines |
 | [Changelog](./CHANGELOG.md) | Version history |
 | [Security](./SECURITY.md) | Security policy and reporting |
 | [Deployment Guide](./DEPLOYMENT_GUIDE.md) | Deployment instructions |
 | [Play Store Guide](./PLAY_STORE_GUIDE.md) | Google Play submission |
-| [Integration Audit](./INTEGRATION_AUDIT_ISSUES.md) | Frontend-backend integration audit (all resolved) |
-| [Database Schema](./docs/DATABASE_SCHEMA.md) | MongoDB schema documentation |
+| [Beta Testing Guide](./BETA_TESTING_GUIDE.md) | Beta tester instructions |
+| [Web Dashboard](./web-dashboard/README.md) | Web dashboard documentation |
 
 ---
 
@@ -135,6 +146,7 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 | `/api/auth/resend-otp` | POST | Resend OTP code |
 | `/api/auth/forgot-password` | POST | Request password reset |
 | `/api/auth/reset-password` | POST | Reset password with token |
+| `/api/auth/refresh` | POST | Refresh access token |
 | `/api/auth/me` | GET | Get current user info |
 
 ### Users
@@ -155,6 +167,7 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 | `/api/patients/{id}` | PUT | Update patient |
 | `/api/patients/{id}` | DELETE | Delete patient |
 | `/api/patients/groups/` | GET | Get patient groups |
+| `/api/patients/stats/` | GET | Get patient statistics |
 
 ### Clinical Notes
 
@@ -175,14 +188,29 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/export/patients` | GET | Export patients as CSV |
-| `/api/export/clinical-notes` | GET | Export notes as CSV |
+| `/api/export/notes` | GET | Export clinical notes as CSV |
+| `/api/export/all` | GET | Export all user data (GDPR) |
 
-### Analytics
+### Analytics (Pro)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/analytics/health` | GET | Get user statistics |
-| `/api/analytics/growth` | GET | Get patient growth data |
+| `/api/analytics/patient-growth` | GET | Patient growth over time |
+| `/api/analytics/notes-activity` | GET | Notes activity metrics |
+| `/api/analytics/weekly-activity` | GET | Weekly usage statistics |
+| `/api/analytics/demographics` | GET | Patient demographics |
+| `/api/analytics/health` | GET | User health statistics |
+
+### Other Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | API health check |
+| `/api/version` | GET | API version info |
+| `/api/documents/` | POST | Upload document |
+| `/api/feedback/submit` | POST | Submit beta feedback |
+| `/api/telemetry/` | POST | Log telemetry event |
+| `/api/beta/known-issues` | GET | Get known beta issues |
 
 ---
 
@@ -192,15 +220,34 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 
 ```
 EXPO_PUBLIC_BACKEND_URL=http://10.0.2.2:8000
+EXPO_PUBLIC_API_TIMEOUT=30000
+EXPO_PUBLIC_LOG_LEVEL=debug
+EXPO_PUBLIC_ENVIRONMENT=development
 ```
 
 ### Backend (.env)
 
 ```
+# Database
 MONGODB_URL=mongodb://localhost:27017
 DATABASE_NAME=heallog
+
+# Security
 JWT_SECRET_KEY=your-secret-key
-ALLOWED_ORIGINS=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,http://localhost:5173
+
+# Email (for OTP and password reset)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USER=your-email
+EMAIL_PASSWORD=your-password
+EMAIL_FROM=noreply@heallog.com
+
+# Optional
+SENTRY_DSN=your-sentry-dsn
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+REDIS_URL=redis://localhost:6379
 ```
 
 ---
@@ -215,13 +262,15 @@ ALLOWED_ORIGINS=http://localhost:3000
 
 ## Project Status
 
-- 48 backend tests passing
-- All critical endpoints operational
-- Offline-first sync working
-- OTP verification and password reset functional
-- Security hardening complete
-- All integration audit issues resolved
-- Web dashboard for Pro users available
+- **Version:** 1.0.34 (stable)
+- **Tests:** 48 backend tests passing
+- **Endpoints:** All 16 API endpoints operational
+- **Sync:** Offline-first with WatermelonDB working
+- **Auth:** OTP verification and password reset functional
+- **Security:** Rate limiting, security headers, input sanitization complete
+- **Audit:** All 14 integration issues resolved
+- **Dashboard:** Web dashboard for Pro users available
+- **Payments:** Stripe subscription integration ready
 
 ---
 

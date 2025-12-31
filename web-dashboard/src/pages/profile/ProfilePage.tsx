@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Mail, Phone, Stethoscope, Calendar, Crown, Shield } from 'lucide-react';
+import { Mail, Phone, Stethoscope, Calendar, Crown, Shield, Sparkles, Check } from 'lucide-react';
 import { Card, CardHeader, Button, Input, Badge, Modal } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { userApi } from '../../api/user';
@@ -102,58 +103,67 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings</p>
+        <h1 className="text-2xl font-semibold text-gray-900">Profile</h1>
+        <p className="text-gray-500 mt-1">Manage your account settings</p>
       </div>
 
       {/* Profile Overview */}
       <Card>
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
+        <div className="flex items-center gap-5 mb-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-50 rounded-2xl flex items-center justify-center">
             <span className="text-primary-700 font-bold text-2xl">
               {user?.full_name?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900">{user?.full_name}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{user?.full_name}</h2>
               <Badge variant={isPro ? 'primary' : 'default'}>{isPro ? 'Pro' : 'Basic'}</Badge>
             </div>
-            <p className="text-gray-600">{user?.email}</p>
+            <p className="text-gray-500">{user?.email}</p>
             {user?.medical_specialty && (
-              <p className="text-gray-500 text-sm">{user.medical_specialty}</p>
+              <p className="text-gray-400 text-sm mt-0.5">{user.medical_specialty}</p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-gray-50 rounded-xl">
           <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5 text-gray-400" />
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-gray-900">{user?.email}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+              <p className="text-gray-900 font-medium">{user?.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Phone className="h-5 w-5 text-gray-400" />
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <Phone className="h-5 w-5 text-gray-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="text-gray-900">{user?.phone || 'Not set'}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Phone</p>
+              <p className="text-gray-900 font-medium">{user?.phone || 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Stethoscope className="h-5 w-5 text-gray-400" />
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <Stethoscope className="h-5 w-5 text-gray-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Specialty</p>
-              <p className="text-gray-900">{user?.medical_specialty || 'Not set'}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Specialty</p>
+              <p className="text-gray-900 font-medium">{user?.medical_specialty || 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="h-5 w-5 text-gray-400" />
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+              <Calendar className="h-5 w-5 text-gray-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Member since</p>
-              <p className="text-gray-900">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Member since</p>
+              <p className="text-gray-900 font-medium">
                 {user?.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'N/A'}
               </p>
             </div>
@@ -165,11 +175,13 @@ export function ProfilePage() {
       <Card>
         <CardHeader title="Subscription" />
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Crown className={`h-6 w-6 ${isPro ? 'text-yellow-500' : 'text-gray-400'}`} />
+          <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isPro ? 'bg-amber-50' : 'bg-gray-100'}`}>
+                <Crown className={`h-6 w-6 ${isPro ? 'text-amber-500' : 'text-gray-400'}`} />
+              </div>
               <div>
-                <p className="font-medium text-gray-900">
+                <p className="font-semibold text-gray-900">
                   {isPro ? 'Pro Plan' : 'Basic Plan'}
                 </p>
                 <p className="text-sm text-gray-500">
@@ -185,19 +197,21 @@ export function ProfilePage() {
           </div>
 
           {user?.subscription_end_date && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-500">
               {isPro ? 'Renews' : 'Trial ends'} on{' '}
-              {format(new Date(user.subscription_end_date), 'MMMM d, yyyy')}
+              <span className="font-medium text-gray-700">
+                {format(new Date(user.subscription_end_date), 'MMMM d, yyyy')}
+              </span>
             </p>
           )}
 
           {!isPro && (
-            <a
-              href="/upgrade"
-              className="block w-full text-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Upgrade to Pro - $9.99/month
-            </a>
+            <Link to="/upgrade">
+              <Button className="w-full">
+                <Sparkles className="h-4 w-4" />
+                Upgrade to Pro - $9.99/month
+              </Button>
+            </Link>
           )}
         </div>
       </Card>
@@ -207,13 +221,14 @@ export function ProfilePage() {
         <CardHeader title="Edit Profile" />
 
         {profileSuccess && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+          <div className="mb-5 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-600 flex items-center gap-2">
+            <Check className="h-4 w-4" />
             Profile updated successfully!
           </div>
         )}
 
         {profileError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
             {profileError}
           </div>
         )}
@@ -238,7 +253,7 @@ export function ProfilePage() {
             error={profileErrors.medical_specialty?.message}
             {...registerProfile('medical_specialty')}
           />
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button type="submit" isLoading={isUpdatingProfile}>
               Save Changes
             </Button>
@@ -249,12 +264,14 @@ export function ProfilePage() {
       {/* Security */}
       <Card>
         <CardHeader title="Security" />
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-gray-400" />
+        <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+              <Shield className="h-6 w-6 text-gray-400" />
+            </div>
             <div>
-              <p className="font-medium text-gray-900">Password</p>
-              <p className="text-sm text-gray-500">Last changed: Unknown</p>
+              <p className="font-semibold text-gray-900">Password</p>
+              <p className="text-sm text-gray-500">Secure your account with a strong password</p>
             </div>
           </div>
           <Button variant="outline" onClick={() => setShowPasswordModal(true)}>
@@ -275,13 +292,14 @@ export function ProfilePage() {
         title="Change Password"
       >
         {passwordSuccess && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+          <div className="mb-5 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-600 flex items-center gap-2">
+            <Check className="h-4 w-4" />
             Password changed successfully!
           </div>
         )}
 
         {passwordError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
             {passwordError}
           </div>
         )}
@@ -296,7 +314,7 @@ export function ProfilePage() {
           <Input
             label="New Password"
             type="password"
-            helperText="At least 12 characters with uppercase, lowercase, number, and special character"
+            helperText="Min 12 chars with uppercase, lowercase, number & symbol"
             error={passwordErrors.new_password?.message}
             {...registerPassword('new_password')}
           />

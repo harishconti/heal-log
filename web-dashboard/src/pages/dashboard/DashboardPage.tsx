@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Star, FolderOpen, FileText, TrendingUp, ArrowRight } from 'lucide-react';
-import { Card, CardHeader, Spinner } from '../../components/ui';
+import { Users, Star, FolderOpen, FileText, TrendingUp, ArrowRight, Plus, User, Sparkles } from 'lucide-react';
+import { Card, CardHeader, Spinner, Button } from '../../components/ui';
 import { LineChart } from '../../components/charts';
 import { patientsApi } from '../../api/patients';
 import { analyticsApi } from '../../api/analytics';
@@ -13,18 +13,19 @@ interface StatCardProps {
   value: number | string;
   icon: React.ElementType;
   color: string;
+  bgColor: string;
 }
 
-function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, color, bgColor }: StatCardProps) {
   return (
-    <Card>
+    <Card hover>
       <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+        <div className={`p-3 rounded-xl ${bgColor}`}>
+          <Icon className={`h-5 w-5 ${color}`} />
         </div>
         <div>
-          <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm text-gray-500">{title}</p>
+          <p className="text-2xl font-semibold text-gray-900">{value}</p>
         </div>
       </div>
     </Card>
@@ -66,19 +67,29 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
         <Spinner size="lg" />
+        <p className="text-sm text-gray-500">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.full_name?.split(' ')[0] || 'Doctor'}
-        </h1>
-        <p className="text-gray-600 mt-1">Here's an overview of your practice</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Welcome back, {user?.full_name?.split(' ')[0] || 'Doctor'}
+          </h1>
+          <p className="text-gray-500 mt-1">Here's an overview of your practice</p>
+        </div>
+        <Link to="/patients/new">
+          <Button>
+            <Plus className="h-4 w-4" />
+            Add Patient
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -87,25 +98,29 @@ export function DashboardPage() {
           title="Total Patients"
           value={stats?.total_patients || 0}
           icon={Users}
-          color="bg-primary-600"
+          color="text-primary-600"
+          bgColor="bg-primary-50"
         />
         <StatCard
           title="Favorites"
           value={stats?.total_favorites || 0}
           icon={Star}
-          color="bg-yellow-500"
+          color="text-amber-600"
+          bgColor="bg-amber-50"
         />
         <StatCard
           title="Groups"
           value={stats?.total_groups || 0}
           icon={FolderOpen}
-          color="bg-green-500"
+          color="text-emerald-600"
+          bgColor="bg-emerald-50"
         />
         <StatCard
           title="Notes Today"
           value="-"
           icon={FileText}
-          color="bg-purple-500"
+          color="text-violet-600"
+          bgColor="bg-violet-50"
         />
       </div>
 
@@ -119,7 +134,7 @@ export function DashboardPage() {
               action={
                 <Link
                   to="/analytics"
-                  className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                  className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors"
                 >
                   View analytics <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -128,24 +143,26 @@ export function DashboardPage() {
             {growthData.length > 0 ? (
               <LineChart data={growthData} height={250} />
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-gray-500">
+              <div className="h-[250px] flex items-center justify-center text-gray-400">
                 No data available
               </div>
             )}
           </Card>
         ) : (
           <Card>
-            <div className="flex flex-col items-center justify-center h-[300px] text-center">
-              <TrendingUp className="h-12 w-12 text-gray-300 mb-4" />
+            <div className="flex flex-col items-center justify-center h-[320px] text-center px-6">
+              <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mb-5">
+                <TrendingUp className="h-8 w-8 text-primary-600" />
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Unlock Analytics</h3>
-              <p className="text-gray-600 mb-4 max-w-sm">
+              <p className="text-gray-500 mb-6 max-w-xs">
                 Upgrade to Pro to access detailed analytics and insights about your practice.
               </p>
-              <Link
-                to="/upgrade"
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                Upgrade to Pro
+              <Link to="/upgrade">
+                <Button>
+                  <Sparkles className="h-4 w-4" />
+                  Upgrade to Pro
+                </Button>
               </Link>
             </div>
           </Card>
@@ -158,21 +175,21 @@ export function DashboardPage() {
             action={
               <Link
                 to="/patients"
-                className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors"
               >
                 View all <ArrowRight className="h-4 w-4" />
               </Link>
             }
           />
           {recentPatients.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentPatients.map((patient) => (
                 <Link
                   key={patient.id}
                   to={`/patients/${patient.id}`}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors -mx-1"
                 >
-                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full flex items-center justify-center">
                     <span className="text-primary-700 font-medium">
                       {patient.name.charAt(0).toUpperCase()}
                     </span>
@@ -183,17 +200,19 @@ export function DashboardPage() {
                       {patient.group || 'No group'} • {patient.patient_id}
                     </p>
                   </div>
-                  {patient.is_favorite && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
+                  {patient.is_favorite && <Star className="h-4 w-4 text-amber-500 fill-current" />}
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>No patients yet</p>
+            <div className="text-center py-10">
+              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Users className="h-7 w-7 text-gray-400" />
+              </div>
+              <p className="text-gray-500 mb-3">No patients yet</p>
               <Link
                 to="/patients/new"
-                className="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block"
+                className="text-primary-600 hover:text-primary-700 text-sm font-medium"
               >
                 Add your first patient
               </Link>
@@ -208,32 +227,40 @@ export function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link
             to="/patients/new"
-            className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+            className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all duration-200"
           >
-            <Users className="h-6 w-6 text-primary-600" />
+            <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center">
+              <Plus className="h-5 w-5 text-primary-600" />
+            </div>
             <span className="text-sm font-medium text-gray-700">Add Patient</span>
           </Link>
           <Link
             to="/patients"
-            className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+            className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all duration-200"
           >
-            <FileText className="h-6 w-6 text-primary-600" />
+            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+              <FileText className="h-5 w-5 text-emerald-600" />
+            </div>
             <span className="text-sm font-medium text-gray-700">View Patients</span>
           </Link>
           {isPro && (
             <Link
               to="/analytics"
-              className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all duration-200"
             >
-              <TrendingUp className="h-6 w-6 text-primary-600" />
+              <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-violet-600" />
+              </div>
               <span className="text-sm font-medium text-gray-700">Analytics</span>
             </Link>
           )}
           <Link
             to="/profile"
-            className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+            className="flex flex-col items-center gap-3 p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all duration-200"
           >
-            <Users className="h-6 w-6 text-primary-600" />
+            <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+              <User className="h-5 w-5 text-amber-600" />
+            </div>
             <span className="text-sm font-medium text-gray-700">Profile</span>
           </Link>
         </div>

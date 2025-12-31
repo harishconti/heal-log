@@ -1,28 +1,58 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
-    const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseStyles = `
+      inline-flex items-center justify-center font-medium rounded-xl
+      transition-all duration-200 ease-out
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+      active:scale-[0.98]
+    `;
 
     const variants = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-      secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500',
-      outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-primary-500',
-      ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+      primary: `
+        bg-primary-600 text-white shadow-sm
+        hover:bg-primary-700 hover:shadow-md
+        focus-visible:ring-primary-500
+      `,
+      secondary: `
+        bg-gray-100 text-gray-700
+        hover:bg-gray-200
+        focus-visible:ring-gray-500
+      `,
+      outline: `
+        border border-gray-200 bg-white text-gray-700
+        hover:bg-gray-50 hover:border-gray-300
+        focus-visible:ring-primary-500
+      `,
+      ghost: `
+        text-gray-600
+        hover:bg-gray-100 hover:text-gray-900
+        focus-visible:ring-gray-500
+      `,
+      danger: `
+        bg-red-500 text-white shadow-sm
+        hover:bg-red-600 hover:shadow-md
+        focus-visible:ring-red-500
+      `,
+      success: `
+        bg-emerald-500 text-white shadow-sm
+        hover:bg-emerald-600 hover:shadow-md
+        focus-visible:ring-emerald-500
+      `,
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base',
+      sm: 'px-3 py-1.5 text-sm gap-1.5',
+      md: 'px-4 py-2.5 text-sm gap-2',
+      lg: 'px-6 py-3 text-base gap-2',
     };
 
     return (
@@ -34,12 +64,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && (
           <svg
-            className="animate-spin -ml-1 mr-2 h-4 w-4"
+            className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3"
+            />
             <path
               className="opacity-75"
               fill="currentColor"

@@ -49,21 +49,22 @@ export interface Theme {
   };
 }
 
+// Minimalistic indigo/slate color palette
 const lightTheme: Theme = {
   colors: {
-    primary: '#2ecc71',
-    secondary: '#3498db',
-    background: '#f8f9fa',
+    primary: '#5b7cf9',
+    secondary: '#6b7280',
+    background: '#f9fafb',
     surface: '#ffffff',
-    error: '#e74c3c',
-    warning: '#f39c12',
-    success: '#27ae60',
-    text: '#333333',
-    textSecondary: '#666666',
-    border: '#e9ecef',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    success: '#10b981',
+    text: '#1f2937',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb',
     shadow: '#000000',
     card: '#ffffff',
-    notification: '#2ecc71',
+    notification: '#5b7cf9',
   },
   spacing: {
     xs: 4,
@@ -89,29 +90,29 @@ const lightTheme: Theme = {
     },
   },
   borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
+    sm: 6,
+    md: 12,
+    lg: 16,
+    xl: 24,
   },
 };
 
 const darkTheme: Theme = {
   ...lightTheme,
   colors: {
-    primary: '#2ecc71',
-    secondary: '#3498db',
-    background: '#121212',
-    surface: '#1e1e1e',
-    error: '#ef5350',
-    warning: '#ff9800',
-    success: '#4caf50',
-    text: '#ffffff',
-    textSecondary: '#b0b0b0',
-    border: '#333333',
+    primary: '#7c9dff',
+    secondary: '#9ca3af',
+    background: '#0f1115',
+    surface: '#1a1d24',
+    error: '#f87171',
+    warning: '#fbbf24',
+    success: '#34d399',
+    text: '#f9fafb',
+    textSecondary: '#9ca3af',
+    border: '#2d3139',
     shadow: '#000000',
-    card: '#2d2d2d',
-    notification: '#2ecc71',
+    card: '#1a1d24',
+    notification: '#7c9dff',
   },
 };
 

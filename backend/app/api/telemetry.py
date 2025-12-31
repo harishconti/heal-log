@@ -20,7 +20,7 @@ async def create_telemetry_event(
     try:
         await telemetry_service.create_event(current_user.id, event)
         return {"status": "ok"}
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while creating the telemetry event."

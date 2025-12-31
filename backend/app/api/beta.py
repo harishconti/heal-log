@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 from app.schemas.user import User
 from app.core.security import get_current_user

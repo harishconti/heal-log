@@ -113,7 +113,8 @@ async def test_get_metrics_as_doctor(async_client, doctor_token):
 @pytest.mark.asyncio
 async def test_get_metrics_unauthenticated(async_client):
     response = await async_client.get("/api/metrics")
-    assert response.status_code == 401
+    # HTTPBearer returns 403 when no credentials are provided
+    assert response.status_code == 403
 
 @pytest.mark.asyncio
 @patch("app.api.health.FastAPICache")

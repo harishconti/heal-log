@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,12 +33,29 @@ const SPECIALTIES = [
   'pediatrics',
   'psychiatry',
   'endocrinology',
-  'pulmonology'
+  'pulmonology',
+  'acupuncture',
+  'nursing',
+  'gynecology',
+  'oncology',
+  'ophthalmology',
+  'radiology',
+  'urology',
+  'anesthesiology',
+  'pathology',
+  'emergency medicine',
+  'family medicine',
+  'internal medicine',
+  'surgery',
+  'dentistry',
+  'homeopathy',
+  'ayurveda',
 ];
 
 export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [medicalSpecialty, setMedicalSpecialty] = useState('general');
+  const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
 
   const { register } = useAuth();
   const router = useRouter();
@@ -165,22 +184,10 @@ export default function RegisterScreen() {
               <Ionicons name="medical" size={20} color="#666" style={styles.inputIcon} />
               <TouchableOpacity
                 style={styles.pickerContainer}
-                onPress={() => {
-                  Alert.alert(
-                    'Select Department',
-                    'Choose your medical specialty',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      ...SPECIALTIES.map(specialty => ({
-                        text: specialty.charAt(0).toUpperCase() + specialty.slice(1),
-                        onPress: () => setMedicalSpecialty(specialty)
-                      }))
-                    ]
-                  );
-                }}
+                onPress={() => setShowSpecialtyModal(true)}
               >
                 <Text style={styles.pickerText}>
-                  {medicalSpecialty.charAt(0).toUpperCase() + medicalSpecialty.slice(1)}
+                  {medicalSpecialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#666" />
               </TouchableOpacity>
@@ -257,24 +264,54 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Features Section */}
-          <View style={styles.featuresSection}>
-            <Text style={styles.featuresTitle}>Why Choose HealLog?</Text>
-            <View style={styles.featureItem}>
-              <Ionicons name="people" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureName}>Easy Patient Management</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="document-text" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureName}>Digital Records</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="shield-checkmark" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureName}>Secure & Private</Text>
-            </View>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Specialty Picker Modal */}
+      <Modal
+        visible={showSpecialtyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSpecialtyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Department</Text>
+              <TouchableOpacity onPress={() => setShowSpecialtyModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={SPECIALTIES}
+              keyExtractor={(item) => item}
+              style={styles.specialtyList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.specialtyItem,
+                    medicalSpecialty === item && styles.specialtyItemSelected
+                  ]}
+                  onPress={() => {
+                    setMedicalSpecialty(item);
+                    setShowSpecialtyModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.specialtyText,
+                    medicalSpecialty === item && styles.specialtyTextSelected
+                  ]}>
+                    {item.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </Text>
+                  {medicalSpecialty === item && (
+                    <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -408,25 +445,52 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '600',
   },
-  featuresSection: {
-    marginTop: 'auto',
-    alignItems: 'center',
-    paddingTop: 24,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
-  featuresTitle: {
+  modalContainer: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalTitle: {
     fontSize: 18 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 16,
   },
-  featureItem: {
+  specialtyList: {
+    paddingHorizontal: 16,
+  },
+  specialtyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginVertical: 2,
   },
-  featureName: {
-    fontSize: 14 * fontScale,
-    color: theme.colors.textSecondary,
+  specialtyItemSelected: {
+    backgroundColor: theme.colors.primaryMuted || `${theme.colors.primary}15`,
+  },
+  specialtyText: {
+    fontSize: 16 * fontScale,
+    color: theme.colors.text,
+  },
+  specialtyTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
 });

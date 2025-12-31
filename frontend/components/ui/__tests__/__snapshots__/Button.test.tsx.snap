@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Button Component Icons renders button with left icon 1`] = `null`;
+
+exports[`Button Component Icons renders button with right icon 1`] = `null`;
+
+exports[`Button Component Rendering renders correctly with default props 1`] = `null`;
+
+exports[`Button Component Sizes renders large size correctly 1`] = `null`;
+
+exports[`Button Component Sizes renders medium size correctly 1`] = `null`;
+
+exports[`Button Component Sizes renders small size correctly 1`] = `null`;
+
+exports[`Button Component States renders disabled state correctly 1`] = `null`;
+
+exports[`Button Component States renders loading state correctly 1`] = `null`;
+
+exports[`Button Component Variants renders danger variant correctly 1`] = `null`;
+
+exports[`Button Component Variants renders outline variant correctly 1`] = `null`;
+
+exports[`Button Component Variants renders primary variant correctly 1`] = `null`;
+
+exports[`Button Component Variants renders secondary variant correctly 1`] = `null`;
+
+exports[`Button Component Variants renders success variant correctly 1`] = `null`;

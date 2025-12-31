@@ -1,0 +1,652 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RegisterScreen Rendering renders correctly 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#f8f9fa",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    onLayout={[Function]}
+    style={
+      [
+        {
+          "flex": 1,
+        },
+        {
+          "paddingBottom": 0,
+        },
+      ]
+    }
+  >
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "flexGrow": 1,
+          "paddingHorizontal": 24,
+          "paddingVertical": 32,
+        }
+      }
+    >
+      <View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "marginBottom": 32,
+              "position": "relative",
+            }
+          }
+        >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "left": 0,
+                "opacity": 1,
+                "padding": 8,
+                "position": "absolute",
+                "top": 0,
+              }
+            }
+          >
+            <Ionicons
+              color="#2ecc71"
+              name="arrow-back"
+              size={24}
+            />
+          </View>
+          <Text
+            style={
+              {
+                "color": "#333333",
+                "fontSize": 28,
+                "fontWeight": "bold",
+                "marginBottom": 8,
+              }
+            }
+          >
+            Create Account
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#666666",
+                "fontSize": 16,
+                "textAlign": "center",
+              }
+            }
+          >
+            Join HealLog today
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "marginBottom": 32,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "marginBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f8f9fa",
+                  "borderColor": "#e9ecef",
+                  "borderRadius": 8,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                }
+              }
+            >
+              <Ionicons
+                color="#666666"
+                name="person"
+                size={20}
+                style={
+                  {
+                    "paddingLeft": 12,
+                  }
+                }
+              />
+              <TextInput
+                autoCapitalize="words"
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                placeholder="Full Name *"
+                placeholderTextColor="#999"
+                secureTextEntry={false}
+                style={
+                  {
+                    "color": "#333333",
+                    "flex": 1,
+                    "fontSize": 16,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                  }
+                }
+                value=""
+              />
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "marginBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f8f9fa",
+                  "borderColor": "#e9ecef",
+                  "borderRadius": 8,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                }
+              }
+            >
+              <Ionicons
+                color="#666666"
+                name="mail"
+                size={20}
+                style={
+                  {
+                    "paddingLeft": 12,
+                  }
+                }
+              />
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                placeholder="Email Address *"
+                placeholderTextColor="#999"
+                secureTextEntry={false}
+                style={
+                  {
+                    "color": "#333333",
+                    "flex": 1,
+                    "fontSize": 16,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                  }
+                }
+                value=""
+              />
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "marginBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f8f9fa",
+                  "borderColor": "#e9ecef",
+                  "borderRadius": 8,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                }
+              }
+            >
+              <Ionicons
+                color="#666666"
+                name="call"
+                size={20}
+                style={
+                  {
+                    "paddingLeft": 12,
+                  }
+                }
+              />
+              <TextInput
+                keyboardType="phone-pad"
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                placeholder="Phone Number"
+                placeholderTextColor="#999"
+                secureTextEntry={false}
+                style={
+                  {
+                    "color": "#333333",
+                    "flex": 1,
+                    "fontSize": 16,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                  }
+                }
+                value=""
+              />
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#ffffff",
+                "borderRadius": 12,
+                "elevation": 2,
+                "flexDirection": "row",
+                "marginBottom": 16,
+                "paddingHorizontal": 16,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 1,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.1,
+                "shadowRadius": 2,
+              }
+            }
+          >
+            <Ionicons
+              color="#666"
+              name="medical"
+              size={20}
+              style={
+                {
+                  "marginRight": 12,
+                }
+              }
+            />
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "flex": 1,
+                  "flexDirection": "row",
+                  "justifyContent": "space-between",
+                  "opacity": 1,
+                  "paddingVertical": 16,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#333333",
+                    "fontSize": 16,
+                  }
+                }
+              >
+                General
+              </Text>
+              <Ionicons
+                color="#666"
+                name="chevron-down"
+                size={20}
+              />
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "marginBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f8f9fa",
+                  "borderColor": "#e9ecef",
+                  "borderRadius": 8,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                }
+              }
+            >
+              <Ionicons
+                color="#666666"
+                name="lock-closed"
+                size={20}
+                style={
+                  {
+                    "paddingLeft": 12,
+                  }
+                }
+              />
+              <TextInput
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                placeholder="Password * (min 8 chars, upper/lower/number/special)"
+                placeholderTextColor="#999"
+                secureTextEntry={true}
+                style={
+                  {
+                    "color": "#333333",
+                    "flex": 1,
+                    "fontSize": 16,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                  }
+                }
+                value=""
+              />
+              <View
+                accessibilityState={
+                  {
+                    "busy": undefined,
+                    "checked": undefined,
+                    "disabled": undefined,
+                    "expanded": undefined,
+                    "selected": undefined,
+                  }
+                }
+                accessibilityValue={
+                  {
+                    "max": undefined,
+                    "min": undefined,
+                    "now": undefined,
+                    "text": undefined,
+                  }
+                }
+                accessible={true}
+                collapsable={false}
+                focusable={true}
+                onClick={[Function]}
+                onResponderGrant={[Function]}
+                onResponderMove={[Function]}
+                onResponderRelease={[Function]}
+                onResponderTerminate={[Function]}
+                onResponderTerminationRequest={[Function]}
+                onStartShouldSetResponder={[Function]}
+                style={
+                  {
+                    "opacity": 1,
+                    "padding": 12,
+                  }
+                }
+              >
+                <Ionicons
+                  color="#666666"
+                  name="eye"
+                  size={22}
+                />
+              </View>
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "marginBottom": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f8f9fa",
+                  "borderColor": "#e9ecef",
+                  "borderRadius": 8,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                }
+              }
+            >
+              <Ionicons
+                color="#666666"
+                name="lock-closed"
+                size={20}
+                style={
+                  {
+                    "paddingLeft": 12,
+                  }
+                }
+              />
+              <TextInput
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                placeholder="Confirm Password *"
+                placeholderTextColor="#999"
+                secureTextEntry={true}
+                style={
+                  {
+                    "color": "#333333",
+                    "flex": 1,
+                    "fontSize": 16,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 12,
+                  }
+                }
+                value=""
+              />
+              <View
+                accessibilityState={
+                  {
+                    "busy": undefined,
+                    "checked": undefined,
+                    "disabled": undefined,
+                    "expanded": undefined,
+                    "selected": undefined,
+                  }
+                }
+                accessibilityValue={
+                  {
+                    "max": undefined,
+                    "min": undefined,
+                    "now": undefined,
+                    "text": undefined,
+                  }
+                }
+                accessible={true}
+                collapsable={false}
+                focusable={true}
+                onClick={[Function]}
+                onResponderGrant={[Function]}
+                onResponderMove={[Function]}
+                onResponderRelease={[Function]}
+                onResponderTerminate={[Function]}
+                onResponderTerminationRequest={[Function]}
+                onStartShouldSetResponder={[Function]}
+                style={
+                  {
+                    "opacity": 1,
+                    "padding": 12,
+                  }
+                }
+              >
+                <Ionicons
+                  color="#666666"
+                  name="eye"
+                  size={22}
+                />
+              </View>
+            </View>
+          </View>
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": false,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#2ecc71",
+                "borderRadius": 12,
+                "elevation": 2,
+                "marginBottom": 16,
+                "opacity": 1,
+                "paddingVertical": 16,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 1,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.1,
+                "shadowRadius": 2,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#fff",
+                  "fontSize": 18,
+                  "fontWeight": "600",
+                }
+              }
+            >
+              Create Account
+            </Text>
+          </View>
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "opacity": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#666666",
+                  "fontSize": 16,
+                }
+              }
+            >
+              Already have an account? 
+              <Text
+                style={
+                  {
+                    "color": "#2ecc71",
+                    "fontWeight": "600",
+                  }
+                }
+              >
+                Sign In
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </View>
+    </RCTScrollView>
+  </View>
+</RCTSafeAreaView>
+`;

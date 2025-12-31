@@ -154,9 +154,18 @@ node scripts/generate-env.js production
 | `DB_NAME` | Database name | `heallog_dev` |
 | `SECRET_KEY` | Secret for JWT tokens | `your-random-secret` |
 | `ALLOWED_ORIGINS` | CORS allowed origins | `http://localhost:3000` |
-| `EMAIL_HOST` | SMTP server host | `smtp.sendgrid.net` |
+| `ENV` | Environment mode | `development` or `production` |
+| `EMAIL_HOST` | SMTP server host | `smtp.gmail.com` |
 | `EMAIL_PORT` | SMTP server port | `587` |
+| `EMAIL_USER` | SMTP username | `your-email@gmail.com` |
+| `EMAIL_PASSWORD` | SMTP password (use App Password for Gmail) | `xxxx xxxx xxxx xxxx` |
+| `EMAIL_FROM` | Sender email address | `HealLog <your-email@gmail.com>` |
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
+
+**Note on Email Configuration**:
+- In **development** mode, if email is not configured, OTPs are logged to console
+- In **production** mode, email must be properly configured or registration will fail
+- Gmail users must use an [App Password](https://myaccount.google.com/apppasswords), not their regular password
 
 ### Frontend Environment Variables
 

@@ -304,15 +304,51 @@ npm install
 
 ### OTP Not Received
 
-**Checklist**:
+**Production vs Development Behavior**:
+- **Development** (`ENV=development`): If SMTP fails, emails are logged to console only (registration still succeeds)
+- **Production** (`ENV=production`): If SMTP fails, registration fails with an error
+
+**Checklist for Production (Railway, etc.)**:
+
+1. **Check deployment logs** for these errors:
+   - `SMTP authentication failed` - Wrong password or need App Password
+   - `SMTP connection failed` - Wrong host/port
+   - `PRODUCTION ERROR: Failed to send email` - Email not configured
+
+2. **Gmail requires App Password** (most common issue):
+   - Regular Gmail passwords do NOT work with SMTP
+   - Enable 2-Step Verification: https://myaccount.google.com/security
+   - Generate App Password: https://myaccount.google.com/apppasswords
+   - Use the 16-character App Password as `EMAIL_PASSWORD`
+
+3. **Verify environment variables**:
+   ```
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASSWORD=xxxx xxxx xxxx xxxx  (App Password, not regular password)
+   ```
+
+4. **Check spam/junk folder** in recipient's email
+
+**Checklist for Development**:
+
 1. Check email configuration in `.env`
 2. Verify SMTP credentials
-3. Check spam folder
-4. For development, use MailHog:
+3. For local development without real SMTP, use MailHog:
    ```bash
    docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
    # View emails at http://localhost:8025
    ```
+   Then set:
+   ```
+   EMAIL_HOST=localhost
+   EMAIL_PORT=1025
+   EMAIL_USER=
+   EMAIL_PASSWORD=
+   ```
+
+4. Or check backend console logs for `[DEV MODE]` messages showing the OTP
 
 ---
 

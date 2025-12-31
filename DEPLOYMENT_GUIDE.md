@@ -229,6 +229,56 @@ Project → New → Database → Add MongoDB
 
 ---
 
+## Email Configuration (Required for OTP)
+
+Email is **required** in production for user registration (OTP verification) and password reset.
+
+### Gmail Setup (Recommended)
+
+**Important**: Gmail requires an **App Password** when using SMTP. Regular passwords won't work.
+
+#### Step 1: Enable 2-Step Verification
+1. Go to https://myaccount.google.com/security
+2. Enable **2-Step Verification** (required for App Passwords)
+
+#### Step 2: Generate App Password
+1. Go to https://myaccount.google.com/apppasswords
+2. Select **Mail** as the app
+3. Select **Other** and enter "HealLog Backend"
+4. Click **Generate**
+5. Copy the 16-character password (spaces don't matter)
+
+#### Step 3: Set Environment Variables
+
+| Variable | Value |
+|----------|-------|
+| `EMAIL_HOST` | `smtp.gmail.com` |
+| `EMAIL_PORT` | `587` |
+| `EMAIL_USER` | `your-email@gmail.com` |
+| `EMAIL_PASSWORD` | `xxxx xxxx xxxx xxxx` (App Password) |
+| `EMAIL_FROM` | `HealLog <your-email@gmail.com>` |
+
+### Other Email Providers
+
+| Provider | HOST | PORT |
+|----------|------|------|
+| Gmail | `smtp.gmail.com` | `587` |
+| Outlook | `smtp.office365.com` | `587` |
+| SendGrid | `smtp.sendgrid.net` | `587` |
+| Mailgun | `smtp.mailgun.org` | `587` |
+
+### Production vs Development Behavior
+
+- **Development** (`ENV=development`): If SMTP fails, emails are logged to console (doesn't block registration)
+- **Production** (`ENV=production`): If SMTP fails, registration/password reset will fail with an error
+
+Check Railway logs for email errors:
+- `SMTP authentication failed` - Wrong password or need App Password
+- `SMTP connection failed` - Wrong host/port
+- `PRODUCTION ERROR: Failed to send email` - Email config not loaded
+
+---
+
 ## Environment Variables Summary
 
 Create a file `backend/.env.production` with:
@@ -243,6 +293,13 @@ SECRET_KEY=your-super-secret-key-generated-randomly-32-chars-minimum
 
 # CORS (Allow your frontend)
 ALLOWED_ORIGINS=https://your-frontend-domain.com
+
+# Email (Required for OTP verification)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM=HealLog <your-email@gmail.com>
 
 # Optional: Redis cache
 # REDIS_URL=redis://localhost:6379

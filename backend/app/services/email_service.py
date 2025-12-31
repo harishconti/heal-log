@@ -84,15 +84,16 @@ class EmailService:
         # Fallback to basic SMTP
         if self.smtp_configured:
             try:
+                logger.info(f"[EMAIL_SERVICE] Attempting SMTP send to {to_email} via {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
                 message = MIMEMultipart("alternative")
                 message["From"] = settings.EMAIL_FROM
                 message["To"] = to_email
                 message["Subject"] = subject
-                
+
                 if text_content:
                     message.attach(MIMEText(text_content, "plain"))
                 message.attach(MIMEText(html_content, "html"))
-                
+
                 await aiosmtplib.send(
                     message,
                     hostname=settings.EMAIL_HOST,
@@ -101,16 +102,37 @@ class EmailService:
                     password=settings.EMAIL_PASSWORD,
                     start_tls=True
                 )
-                logger.info(f"[EMAIL_SERVICE] SMTP email sent to {to_email}")
+                logger.info(f"[EMAIL_SERVICE] SMTP email sent successfully to {to_email}")
                 return True
+            except aiosmtplib.SMTPAuthenticationError as e:
+                logger.error(
+                    f"[EMAIL_SERVICE] SMTP authentication failed: {str(e)}. "
+                    "If using Gmail, ensure you're using an App Password (not your regular password) "
+                    "and that 2-Step Verification is enabled. Generate App Password at: "
+                    "https://myaccount.google.com/apppasswords"
+                )
+            except aiosmtplib.SMTPConnectError as e:
+                logger.error(
+                    f"[EMAIL_SERVICE] SMTP connection failed to {settings.EMAIL_HOST}:{settings.EMAIL_PORT}: {str(e)}. "
+                    "Check that EMAIL_HOST and EMAIL_PORT are correct."
+                )
             except Exception as e:
-                logger.error(f"[EMAIL_SERVICE] SMTP failed: {str(e)}")
+                logger.error(f"[EMAIL_SERVICE] SMTP failed with unexpected error: {type(e).__name__}: {str(e)}")
         
-        # Final fallback: console logging (development mode)
-        logger.info(f"[EMAIL_SERVICE] [DEV MODE] Would send email to: {to_email}")
-        logger.info(f"[EMAIL_SERVICE] [DEV MODE] Subject: {subject}")
-        logger.info(f"[EMAIL_SERVICE] [DEV MODE] Content:\n{text_content or html_content[:500]}...")
-        return True  # Return True in dev mode to not break flow
+        # Final fallback: console logging (development mode only)
+        if settings.ENV == "development":
+            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Would send email to: {to_email}")
+            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Subject: {subject}")
+            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Content:\n{text_content or html_content[:500]}...")
+            return True  # Return True in dev mode to not break flow
+        else:
+            # In production, fail if no email method worked
+            logger.error(
+                f"[EMAIL_SERVICE] PRODUCTION ERROR: Failed to send email to {to_email}. "
+                f"OAuth configured: {self.oauth_configured}, SMTP configured: {self.smtp_configured}. "
+                "Check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD environment variables."
+            )
+            return False
     
     async def send_otp_email(self, email: str, otp_code: str, full_name: str) -> Tuple[bool, str]:
         """Send OTP verification email."""

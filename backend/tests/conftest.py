@@ -1,5 +1,12 @@
 import sys
 import os
+
+# Set test environment variables BEFORE importing any app modules
+# This prevents pydantic validation errors when loading settings
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
+os.environ.setdefault("DB_NAME", "test_heallog")
+os.environ.setdefault("ENV", "testing")
+
 import pytest_asyncio
 import asyncio
 from mongomock_motor import AsyncMongoMockClient

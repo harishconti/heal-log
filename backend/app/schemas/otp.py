@@ -27,7 +27,7 @@ def validate_password_strength(password: str) -> str:
 class OTPVerifyRequest(BaseModel):
     """Request schema for OTP verification."""
     email: EmailStr
-    otp_code: str = Field(..., min_length=8, max_length=8, description="8-digit OTP code")
+    otp_code: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
 
 
 class OTPResendRequest(BaseModel):

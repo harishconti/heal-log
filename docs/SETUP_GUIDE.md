@@ -6,7 +6,7 @@ This guide will help you set up the HealLog development environment on your loca
 
 ### Required Software
 - **Node.js** 18+ ([Download](https://nodejs.org/))
-- **Python** 3.11+ ([Download](https://python.org/))
+- **Python** 3.12+ ([Download](https://python.org/))
 - **MongoDB** 6+ (or MongoDB Atlas account)
 - **Git** ([Download](https://git-scm.com/))
 - **Docker** (optional, for containerized setup)

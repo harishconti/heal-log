@@ -30,3 +30,19 @@ async def get_notes_for_patient(
         ClinicalNote.patient_id == patient_id,
         ClinicalNote.user_id == user_id
     ).sort(-ClinicalNote.created_at).skip(skip).limit(limit).to_list()
+
+
+async def delete_note(note_id: str, patient_id: str, user_id: str) -> bool:
+    """
+    Deletes a clinical note by ID.
+    Returns True if the note was deleted, False if not found.
+    """
+    note = await ClinicalNote.find_one(
+        ClinicalNote.id == note_id,
+        ClinicalNote.patient_id == patient_id,
+        ClinicalNote.user_id == user_id
+    )
+    if not note:
+        return False
+    await note.delete()
+    return True

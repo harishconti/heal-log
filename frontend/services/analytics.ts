@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import api from './api';
 
 const LAST_SCREEN_VIEW_KEY = "last_screen_view";
@@ -8,8 +10,27 @@ const OFFLINE_ONLINE_TIME_KEY = "offline_online_time";
 // Telemetry is now enabled - backend endpoint is implemented at /api/telemetry
 const TELEMETRY_ENABLED = true;
 
+// Check if user is authenticated before sending telemetry
+const isAuthenticated = async (): Promise<boolean> => {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      return !!window.sessionStorage.getItem('token');
+    }
+    return false;
+  } else {
+    const token = await SecureStore.getItemAsync('token');
+    return !!token;
+  }
+};
+
 const sendTelemetry = async (eventType: string, payload: any) => {
   if (!TELEMETRY_ENABLED) {
+    return;
+  }
+
+  // Skip telemetry if user is not authenticated (endpoint requires auth)
+  const authenticated = await isAuthenticated();
+  if (!authenticated) {
     return;
   }
 
@@ -19,6 +40,8 @@ const sendTelemetry = async (eventType: string, payload: any) => {
     // Suppress errors to avoid impacting user experience
     if (error.response?.status === 404) {
       console.log('⚠️ [Analytics] Telemetry endpoint not available (404) - skipping');
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+      // Silently skip auth errors - user may have logged out
     } else {
       console.warn('⚠️ [Analytics] Telemetry failed:', error.message);
     }

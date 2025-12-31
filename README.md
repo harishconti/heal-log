@@ -62,7 +62,7 @@ The frontend is a React Native application built with Expo. The main entrypoint 
 ### Prerequisites
 
 - Node.js 18+
-- Python 3.11+
+- Python 3.12+
 - MongoDB
 - Android Studio (for Android development)
 - Xcode (for iOS development, macOS only)

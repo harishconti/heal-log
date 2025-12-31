@@ -29,7 +29,7 @@ Thank you for your interest in contributing to HealLog! This document provides g
 ### Prerequisites
 
 - Node.js 18+
-- Python 3.11+
+- Python 3.12+
 - MongoDB (local or Atlas)
 - Git
 

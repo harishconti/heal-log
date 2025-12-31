@@ -42,14 +42,14 @@ pip install -r requirements.txt
 
 2. Verify connection string in `.env`:
    ```bash
-   cat .env | grep MONGODB_URL
+   cat .env | grep MONGO_URL
    ```
 
 3. For MongoDB Atlas, check IP whitelist
 
 ---
 
-**Error**: `JWT_SECRET_KEY not set`
+**Error**: `SECRET_KEY not set`
 
 **Solution**:
 ```bash
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 python -c "import secrets; print(secrets.token_hex(32))"
 
 # Add to .env file
-echo "JWT_SECRET_KEY=your-generated-key" >> .env
+echo "SECRET_KEY=your-generated-key" >> .env
 ```
 
 ---
@@ -206,9 +206,9 @@ npm install
 **Solution**:
 1. Add connection pooling options:
    ```python
-   # In database.py
+   # In session.py
    client = AsyncIOMotorClient(
-       MONGODB_URL,
+       settings.MONGO_URL,
        maxPoolSize=50,
        minPoolSize=10,
        serverSelectionTimeoutMS=5000
@@ -223,9 +223,8 @@ npm install
 
 **Checklist**:
 1. Check user is authenticated
-2. Verify `doctor_id` matches in queries
-3. Check `is_deleted` field (soft deletes)
-4. Verify sync status
+2. Verify `user_id` matches in queries (data is scoped to the authenticated user)
+3. Verify sync status
 
 ---
 

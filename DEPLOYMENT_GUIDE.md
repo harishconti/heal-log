@@ -28,7 +28,7 @@ https://railway.app
 #### 2. Create New Project
 ```
 Dashboard → New Project → Deploy from GitHub repo
-→ Select: doctor-log repository
+→ Select: heal-log repository
 → Select: backend folder
 ```
 
@@ -47,12 +47,12 @@ Add these:
 
 | Variable | Value | Where to Get |
 |----------|-------|--------------|
-| `MONGODB_URL` | `mongodb://...` | Copy from Railway MongoDB service |
-| `JWT_SECRET_KEY` | Generate random string | Use: `openssl rand -hex 32` |
-| `FRONTEND_URL` | `*` | Allow all origins for now |
-| `PORT` | `8000` | Default FastAPI port |
+| `MONGO_URL` | `mongodb://...` | Copy from Railway MongoDB service |
+| `DB_NAME` | `heallog` | Your database name |
+| `SECRET_KEY` | Generate random string | Use: `openssl rand -hex 32` |
+| `ALLOWED_ORIGINS` | `*` | Allow all origins for now |
 
-**Generate JWT Secret:**
+**Generate SECRET_KEY:**
 ```bash
 # Run this in PowerShell:
 [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
@@ -95,7 +95,7 @@ EXPO_PUBLIC_BACKEND_URL=https://your-app.up.railway.app
 1. **Sign up:** https://render.com
 2. **New Web Service** → Connect GitHub → Select backend folder
 3. **Settings:**
-   - Name: `clinicoslite-api`
+   - Name: `heallog-api`
    - Environment: `Python 3`
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
@@ -130,15 +130,16 @@ cd backend
 fly auth login
 fly launch
 # Answer prompts:
-# - App name: clinicoslite-api
+# - App name: heallog-api
 # - Region: Choose closest to you
 # - Add PostgreSQL? No (we'll use MongoDB Atlas)
 ```
 
 3. Set environment variables:
 ```bash
-fly secrets set MONGODB_URL="mongodb+srv://..."
-fly secrets set JWT_SECRET_KEY="your-secret-key"
+fly secrets set MONGO_URL="mongodb+srv://..."
+fly secrets set DB_NAME="heallog"
+fly secrets set SECRET_KEY="your-secret-key"
 ```
 
 4. Deploy:
@@ -163,7 +164,7 @@ fly deploy
 ```bash
 cd backend
 heroku login
-heroku create clinicoslite-api
+heroku create heallog-api
 git push heroku main
 ```
 
@@ -175,8 +176,9 @@ git push heroku main
 
 4. Set environment variables:
 ```bash
-heroku config:set MONGODB_URL="mongodb+srv://..."
-heroku config:set JWT_SECRET_KEY="your-secret-key"
+heroku config:set MONGO_URL="mongodb+srv://..."
+heroku config:set DB_NAME="heallog"
+heroku config:set SECRET_KEY="your-secret-key"
 ```
 
 ---
@@ -195,11 +197,11 @@ Your backend needs MongoDB. Here are your options:
 2. **Create Free Cluster:**
    - Shared (M0) tier → FREE
    - Choose region (closest to you)
-   - Cluster name: `clinicoslite`
+   - Cluster name: `heallog`
 
 3. **Create Database User:**
    - Security → Database Access → Add New User
-   - Username: `clinicoslite`
+   - Username: `heallog`
    - Password: Generate strong password
    - Role: `Read and write to any database`
 
@@ -212,7 +214,7 @@ Your backend needs MongoDB. Here are your options:
    ```
    Clusters → Connect → Connect your application
    → Copy connection string:
-   mongodb+srv://clinicoslite:<password>@cluster.xxxxx.mongodb.net/
+   mongodb+srv://heallog:<password>@cluster.xxxxx.mongodb.net/
    ```
 
 6. **Replace `<password>` with your database user password**
@@ -233,16 +235,17 @@ Create a file `backend/.env.production` with:
 
 ```bash
 # Database
-MONGODB_URL=mongodb+srv://user:pass@cluster.mongodb.net/clinicoslite?retryWrites=true&w=majority
+MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net/heallog?retryWrites=true&w=majority
+DB_NAME=heallog
 
 # Security
-JWT_SECRET_KEY=your-super-secret-key-generated-randomly-32-chars-minimum
+SECRET_KEY=your-super-secret-key-generated-randomly-32-chars-minimum
 
 # CORS (Allow your frontend)
-FRONTEND_URL=*
+ALLOWED_ORIGINS=https://your-frontend-domain.com
 
-# Server
-PORT=8000
+# Optional: Redis cache
+# REDIS_URL=redis://localhost:6379
 
 # Optional: Sentry error tracking
 # SENTRY_DSN=https://your-sentry-dsn
@@ -349,7 +352,7 @@ fly logs
 - Port mismatch - ensure PORT is set to what platform expects
 
 ### CORS errors in frontend
-- Set `FRONTEND_URL=*` temporarily
+- Set `ALLOWED_ORIGINS=*` temporarily
 - Later restrict to your app URL
 
 ### Database connection timeout
@@ -364,7 +367,7 @@ fly logs
 1. ✅ Sign up for Railway.app
 2. ✅ Create new project from backend folder
 3. ✅ Add MongoDB database
-4. ✅ Set environment variables (MONGODB_URL, JWT_SECRET_KEY)
+4. ✅ Set environment variables (MONGO_URL, DB_NAME, SECRET_KEY)
 5. ✅ Deploy automatically happens
 6. ✅ Copy your URL: `https://xxx.up.railway.app`
 7. ✅ Update frontend/.env.beta with new URL

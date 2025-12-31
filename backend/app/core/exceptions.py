@@ -1,6 +1,5 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from typing import Optional
 from app.core.monitoring import capture_exception_with_boundary
 from app.schemas.error_event import ErrorEvent
 from app.core.security import get_optional_current_user

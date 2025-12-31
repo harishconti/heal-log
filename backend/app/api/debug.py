@@ -1,7 +1,4 @@
 from fastapi import APIRouter, status, Request, HTTPException, Depends
-from app.services.patient_service import patient_service
-from app.services.analytics_service import analytics_service
-from app.services.user_service import user_service
 from app.core.security import require_role
 from app.core.config import settings
 from app.schemas.role import UserRole

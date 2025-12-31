@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends
 from app.core.security import require_role, get_current_user
 from app.schemas.user import User
 from app.schemas.role import UserRole
-from app.services.user_service import user_service
-import time
 
 router = APIRouter()
 

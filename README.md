@@ -10,6 +10,7 @@ HealLog is a patient management system with a FastAPI backend and a React Native
 - Offline-first architecture with automatic sync
 - JWT authentication with OTP email verification
 - Data export (CSV format)
+- Web dashboard for Pro users (analytics and management)
 
 ### Technical Features
 - Cross-platform (iOS, Android, Web via Expo)
@@ -17,6 +18,7 @@ HealLog is a patient management system with a FastAPI backend and a React Native
 - MongoDB with Beanie ODM
 - Rate limiting and security headers
 - Analytics and telemetry
+- React + Vite web dashboard
 
 ---
 
@@ -112,6 +114,8 @@ pytest
 | [Security](./SECURITY.md) | Security policy and reporting |
 | [Deployment Guide](./DEPLOYMENT_GUIDE.md) | Deployment instructions |
 | [Play Store Guide](./PLAY_STORE_GUIDE.md) | Google Play submission |
+| [Integration Audit](./INTEGRATION_AUDIT_ISSUES.md) | Frontend-backend integration audit (all resolved) |
+| [Database Schema](./docs/DATABASE_SCHEMA.md) | MongoDB schema documentation |
 
 ---
 
@@ -216,6 +220,8 @@ ALLOWED_ORIGINS=http://localhost:3000
 - Offline-first sync working
 - OTP verification and password reset functional
 - Security hardening complete
+- All integration audit issues resolved
+- Web dashboard for Pro users available
 
 ---
 

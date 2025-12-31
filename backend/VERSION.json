@@ -1,8 +1,8 @@
 {
-    "version": "1.0.34",
-    "build_date": "2025-12-22T20:30:00+05:30",
-    "commit": "complete-frontend-fixes",
-    "release_notes": "Completed all frontend fixes: input sanitization, real-time password match indicator, improved patient form error handling.",
+    "version": "1.0.35",
+    "build_date": "2025-12-31T13:15:00+05:30",
+    "commit": "8-digit-otp-gmail-integration",
+    "release_notes": "Enhanced OTP security with 8-digit codes, Gmail App Password integration for reliable email delivery.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

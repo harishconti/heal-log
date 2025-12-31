@@ -189,8 +189,8 @@ You may not assign these Terms. We may assign to affiliates or successors.
 
 For questions about these Terms:
 
-**Email**: ngharish.develop@gmail.com  
-**Support**: ngharish.develop@gmail.com  
+**Email**: support@heallog.com
+**Support**: support@heallog.com
 **Address**: Available upon request
 
 ## 18. Beta Testing Agreement

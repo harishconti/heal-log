@@ -105,7 +105,7 @@ We may update this Privacy Policy periodically. We will notify you of material c
 
 For privacy-related questions or requests:
 
-**Email**: [ngharish.develop@gmail.com](mailto:ngharish.develop@gmail.com)  
+**Email**: [support@heallog.com](mailto:support@heallog.com)
 **Address**: Available upon request
 
 ## Compliance
@@ -117,8 +117,8 @@ This app complies with:
 
 ## Data Protection Officer
 
-For GDPR-related queries:  
-**Email**: ngharish.develop@gmail.com
+For GDPR-related queries:
+**Email**: dpo@heallog.com
 
 ---
 

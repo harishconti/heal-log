@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: heallog_mongodb
+    environment:
+      MONGO_INITDB_DATABASE: heallog_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - heallog_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: heallog_backend
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017
+      DATABASE_NAME: heallog_dev
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8081,http://localhost:5173
+      ENVIRONMENT: development
+      DEBUG: "true"
+    ports:
+      - "8000:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+    networks:
+      - heallog_network
+
+  web-dashboard:
+    build:
+      context: ./web-dashboard
+      dockerfile: Dockerfile
+    container_name: heallog_web_dashboard
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./web-dashboard:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000
+    command: npm run dev -- --host
+    networks:
+      - heallog_network
+
+  # Optional: MailHog for local email testing
+  mailhog:
+    image: mailhog/mailhog
+    container_name: heallog_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - heallog_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  heallog_network:
+    driver: bridge

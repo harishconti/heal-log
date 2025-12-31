@@ -6,7 +6,7 @@ If you discover a security vulnerability in HealLog, please report it responsibl
 
 ### How to Report
 
-**Email:** ngharish.develop@gmail.com
+**Email:** security@heallog.com
 
 **Please include:**
 - Description of the vulnerability

@@ -72,10 +72,11 @@ export function RegisterPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Create your account</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-1">Create your account</h2>
+      <p className="text-sm text-gray-500 mb-6">Start managing your patients today</p>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
           {error}
         </div>
       )}
@@ -99,21 +100,23 @@ export function RegisterPage() {
           {...register('email')}
         />
 
-        <Input
-          label="Phone number"
-          type="tel"
-          autoComplete="tel"
-          placeholder="+1 (555) 123-4567"
-          error={errors.phone?.message}
-          {...register('phone')}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Phone number"
+            type="tel"
+            autoComplete="tel"
+            placeholder="+1 (555) 123-4567"
+            error={errors.phone?.message}
+            {...register('phone')}
+          />
 
-        <Select
-          label="Medical specialty"
-          options={specialties}
-          error={errors.medical_specialty?.message}
-          {...register('medical_specialty')}
-        />
+          <Select
+            label="Specialty"
+            options={specialties}
+            error={errors.medical_specialty?.message}
+            {...register('medical_specialty')}
+          />
+        </div>
 
         <Input
           label="Password"
@@ -121,7 +124,7 @@ export function RegisterPage() {
           autoComplete="new-password"
           placeholder="Create a strong password"
           error={errors.password?.message}
-          helperText="At least 12 characters with uppercase, lowercase, number, and special character"
+          helperText="Min 12 chars with uppercase, lowercase, number & symbol"
           {...register('password')}
         />
 
@@ -134,12 +137,12 @@ export function RegisterPage() {
           {...register('confirmPassword')}
         />
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
           Create account
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-gray-500">
         Already have an account?{' '}
         <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
           Sign in

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { Mail, ArrowRight } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
 import { Button, Input } from '../../components/ui';
@@ -37,7 +38,6 @@ export function LoginPage() {
         password: data.password,
       });
 
-      // Check if user is Pro (for web dashboard access)
       if (response.user.plan !== 'pro') {
         setError('Web dashboard is only available for Pro users. Please upgrade your plan.');
         return;
@@ -58,17 +58,21 @@ export function LoginPage() {
 
   if (needsVerification) {
     return (
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Verify Your Email</h2>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="text-center py-4">
+        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail className="h-7 w-7 text-primary-600" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Verify Your Email</h2>
+        <p className="text-sm text-gray-500 mb-6">
           Please verify your email address to continue. A verification code has been sent to{' '}
-          <strong>{verificationEmail}</strong>.
+          <span className="font-medium text-gray-700">{verificationEmail}</span>
         </p>
         <Link
           to={`/verify-otp?email=${encodeURIComponent(verificationEmail)}`}
-          className="text-primary-600 hover:text-primary-700 font-medium"
+          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
         >
           Enter verification code
+          <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     );
@@ -76,15 +80,16 @@ export function LoginPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Sign in to your account</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h2>
+      <p className="text-sm text-gray-500 mb-6">Sign in to your account to continue</p>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input
           label="Email address"
           type="email"
@@ -106,30 +111,27 @@ export function LoginPage() {
         <div className="flex items-center justify-end">
           <Link
             to="/forgot-password"
-            className="text-sm text-primary-600 hover:text-primary-700"
+            className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
           >
             Forgot password?
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
           Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
+      <p className="mt-6 text-center text-sm text-gray-500">
         Don't have an account?{' '}
         <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-          Sign up
+          Create account
         </Link>
       </p>
 
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <p className="text-xs text-center text-gray-500">
-          Web dashboard requires a Pro subscription.{' '}
-          <a href="#" className="text-primary-600 hover:text-primary-700">
-            Learn more
-          </a>
+      <div className="mt-6 pt-6 border-t border-gray-100">
+        <p className="text-xs text-center text-gray-400">
+          Web dashboard requires a Pro subscription
         </p>
       </div>
     </div>

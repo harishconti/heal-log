@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, ArrowLeft } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
 import { Button, Input } from '../../components/ui';
@@ -59,12 +60,18 @@ export function VerifyOtpPage() {
 
   if (!email) {
     return (
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Missing Email</h2>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="text-center py-4">
+        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail className="h-7 w-7 text-gray-400" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Missing Email</h2>
+        <p className="text-sm text-gray-500 mb-6">
           Please start the registration process again.
         </p>
-        <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+        <Link
+          to="/register"
+          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
+        >
           Go to registration
         </Link>
       </div>
@@ -73,57 +80,67 @@ export function VerifyOtpPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">Verify your email</h2>
-      <p className="text-sm text-gray-600 mb-6">
-        We sent a verification code to <strong>{email}</strong>
-      </p>
+      <div className="text-center mb-6">
+        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail className="h-7 w-7 text-primary-600" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Verify your email</h2>
+        <p className="text-sm text-gray-500">
+          We sent a code to <span className="font-medium text-gray-700">{email}</span>
+        </p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
           {error}
         </div>
       )}
 
       {resendMessage && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+        <div className="mb-5 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-600">
           {resendMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input
           label="Verification code"
           type="text"
           inputMode="numeric"
           placeholder="Enter 6-digit code"
           maxLength={6}
+          className="text-center text-lg tracking-widest"
           error={errors.otp?.message}
           {...register('otp')}
         />
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
           Verify email
         </Button>
       </form>
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-500">
           Didn't receive the code?{' '}
           <button
             onClick={handleResend}
             disabled={isResending}
-            className="text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50"
+            className="text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 transition-colors"
           >
             {isResending ? 'Sending...' : 'Resend code'}
           </button>
         </p>
       </div>
 
-      <p className="mt-4 text-center text-sm text-gray-600">
-        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+      <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to login
         </Link>
-      </p>
+      </div>
     </div>
   );
 }

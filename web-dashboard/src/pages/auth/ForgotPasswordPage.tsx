@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { authApi } from '../../api';
 import { Button, Input } from '../../components/ui';
 
@@ -30,27 +31,25 @@ export function ForgotPasswordPage() {
       await authApi.forgotPassword(data.email);
       setIsSubmitted(true);
     } catch {
-      // Don't reveal if email exists or not for security
       setIsSubmitted(true);
     }
   };
 
   if (isSubmitted) {
     return (
-      <div className="text-center">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="text-center py-4">
+        <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-7 w-7 text-emerald-600" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Check your email</h2>
-        <p className="text-sm text-gray-600 mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Check your email</h2>
+        <p className="text-sm text-gray-500 mb-6">
           If an account exists with that email, we've sent password reset instructions.
         </p>
         <Link
           to="/login"
-          className="text-primary-600 hover:text-primary-700 font-medium"
+          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
         >
+          <ArrowLeft className="h-4 w-4" />
           Back to login
         </Link>
       </div>
@@ -59,18 +58,23 @@ export function ForgotPasswordPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">Reset your password</h2>
-      <p className="text-sm text-gray-600 mb-6">
-        Enter your email address and we'll send you instructions to reset your password.
-      </p>
+      <div className="text-center mb-6">
+        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail className="h-7 w-7 text-primary-600" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Reset your password</h2>
+        <p className="text-sm text-gray-500">
+          Enter your email and we'll send you reset instructions
+        </p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input
           label="Email address"
           type="email"
@@ -80,16 +84,20 @@ export function ForgotPasswordPage() {
           {...register('email')}
         />
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
           Send reset link
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
-        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+      <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to login
         </Link>
-      </p>
+      </div>
     </div>
   );
 }

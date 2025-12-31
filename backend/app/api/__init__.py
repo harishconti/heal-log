@@ -14,3 +14,22 @@ from . import health
 from . import metrics
 from . import version
 from . import export
+
+__all__ = [
+    "auth",
+    "users",
+    "patients",
+    "webhooks",
+    "documents",
+    "debug",
+    "analytics",
+    "payments",
+    "sync",
+    "feedback",
+    "telemetry",
+    "beta",
+    "health",
+    "metrics",
+    "version",
+    "export",
+]

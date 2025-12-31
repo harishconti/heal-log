@@ -2,7 +2,7 @@
 
 HealLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
-**Current Version:** 1.0.34 | **Backend Tests:** 48 passing
+**Current Version:** 3.1.0 | **Backend Tests:** 48 passing
 
 ## Features
 
@@ -230,11 +230,11 @@ EXPO_PUBLIC_ENVIRONMENT=development
 
 ```
 # Database
-MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=heallog
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=heallog
 
 # Security
-JWT_SECRET_KEY=your-secret-key
+SECRET_KEY=your-secret-key
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,http://localhost:5173
 
 # Email (for OTP and password reset)
@@ -246,8 +246,6 @@ EMAIL_FROM=noreply@heallog.com
 
 # Optional
 SENTRY_DSN=your-sentry-dsn
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
 REDIS_URL=redis://localhost:6379
 ```
 
@@ -263,9 +261,9 @@ REDIS_URL=redis://localhost:6379
 
 ## Project Status
 
-- **Version:** 1.0.34 (stable)
+- **Version:** 3.1.0 (stable)
 - **Tests:** 48 backend tests passing
-- **Endpoints:** All 16 API endpoints operational
+- **Endpoints:** All 16 API routers operational
 - **Sync:** Offline-first with WatermelonDB working
 - **Auth:** OTP verification and password reset functional
 - **Security:** Rate limiting, security headers, input sanitization complete

@@ -262,7 +262,7 @@ See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete details.
 | POST | `/api/patients` | Create patient |
 | GET | `/api/patients/{id}` | Get patient details |
 | PUT | `/api/patients/{id}` | Update patient |
-| DELETE | `/api/patients/{id}` | Soft delete patient |
+| DELETE | `/api/patients/{id}` | Delete patient |
 | GET | `/api/notes` | List clinical notes |
 | POST | `/api/notes` | Create note |
 | POST | `/api/sync/push` | Push local changes |

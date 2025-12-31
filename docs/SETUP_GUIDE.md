@@ -70,9 +70,9 @@ cp .env.example .env
 
 # Edit .env with your settings
 # Required variables:
-# - MONGODB_URL=mongodb://localhost:27017
-# - DATABASE_NAME=heallog_dev
-# - JWT_SECRET_KEY=your-secret-key
+# - MONGO_URL=mongodb://localhost:27017
+# - DB_NAME=heallog_dev
+# - SECRET_KEY=your-secret-key
 # - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
 
 # Start the server
@@ -150,13 +150,13 @@ node scripts/generate-env.js production
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `MONGODB_URL` | MongoDB connection string | `mongodb://localhost:27017` |
-| `DATABASE_NAME` | Database name | `heallog_dev` |
-| `JWT_SECRET_KEY` | Secret for JWT tokens | `your-random-secret` |
+| `MONGO_URL` | MongoDB connection string | `mongodb://localhost:27017` |
+| `DB_NAME` | Database name | `heallog_dev` |
+| `SECRET_KEY` | Secret for JWT tokens | `your-random-secret` |
 | `ALLOWED_ORIGINS` | CORS allowed origins | `http://localhost:3000` |
 | `EMAIL_HOST` | SMTP server host | `smtp.sendgrid.net` |
 | `EMAIL_PORT` | SMTP server port | `587` |
-| `STRIPE_SECRET_KEY` | Stripe API key | `sk_test_...` |
+| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 
 ### Frontend Environment Variables
 

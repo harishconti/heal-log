@@ -87,8 +87,8 @@ async def test_metrics_endpoint_unauthorized(app):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get("/api/metrics")
 
-    # Expect 401 Unauthorized because no token is provided
-    assert response.status_code == 401
+    # HTTPBearer returns 403 when no credentials are provided
+    assert response.status_code == 403
 
 @pytest.mark.asyncio
 async def test_documents_endpoints(db, app):

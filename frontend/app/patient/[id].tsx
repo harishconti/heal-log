@@ -29,6 +29,7 @@ import Patient from '@/models/Patient';
 import PatientNote from '@/models/PatientNote';
 import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
+import { NoteService } from '@/services/note_service';
 
 function PatientDetailsScreen({ patient, notes }) {
   const { theme } = useTheme();
@@ -92,6 +93,32 @@ function PatientDetailsScreen({ patient, notes }) {
       console.error('Failed to add note:', error);
       Alert.alert('Error', 'Failed to add note');
     }
+  };
+
+  const deleteNote = (noteId: string) => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      'Delete Note',
+      'Are you sure you want to delete this note? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await NoteService.deleteNote(noteId);
+              if (settings.hapticEnabled) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+            } catch (error) {
+              console.error('Failed to delete note:', error);
+              Alert.alert('Error', 'Failed to delete note');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const formatDate = (date: Date) => {
@@ -236,8 +263,17 @@ function PatientDetailsScreen({ patient, notes }) {
             notes.map((note, index) => (
               <View key={note.id || index} style={styles.noteItem}>
                 <View style={styles.noteHeader}>
-                  <Text style={styles.noteType}>{note.visitType}</Text>
-                  <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+                  <View style={styles.noteHeaderLeft}>
+                    <Text style={styles.noteType}>{note.visitType}</Text>
+                    <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.deleteNoteButton}
+                    onPress={() => deleteNote(note.id)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#e74c3c" />
+                  </TouchableOpacity>
                 </View>
                 <Text style={styles.noteContent}>{note.content}</Text>
               </View>
@@ -547,6 +583,15 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  noteHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  deleteNoteButton: {
+    padding: 4,
   },
   noteType: {
     fontSize: 12,

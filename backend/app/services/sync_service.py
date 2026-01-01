@@ -82,12 +82,22 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 data['email'] = None
             return data
 
+        # Helper function to convert milliseconds timestamps to datetime
+        def convert_timestamps(data: dict) -> dict:
+            """Convert milliseconds timestamps from WatermelonDB to datetime objects"""
+            if 'created_at' in data and isinstance(data['created_at'], (int, float)):
+                data['created_at'] = datetime.fromtimestamp(data['created_at'] / 1000.0, tz=timezone.utc)
+            if 'updated_at' in data and isinstance(data['updated_at'], (int, float)):
+                data['updated_at'] = datetime.fromtimestamp(data['updated_at'] / 1000.0, tz=timezone.utc)
+            return data
+
         # Process created records (bulk insert)
         if 'patients' in changes and 'created' in changes['patients']:
             patients_to_create = []
             for patient_data in changes['patients']['created']:
                 patient_data['user_id'] = user_id
                 patient_data = sanitize_patient_data(patient_data)
+                patient_data = convert_timestamps(patient_data)
                 patients_to_create.append(Patient(**patient_data))
             if patients_to_create:
                 await Patient.insert_many(patients_to_create)
@@ -96,6 +106,7 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
             notes_to_create = []
             for note_data in changes['clinical_notes']['created']:
                 note_data['user_id'] = user_id
+                note_data = convert_timestamps(note_data)
                 notes_to_create.append(ClinicalNote(**note_data))
             if notes_to_create:
                 await ClinicalNote.insert_many(notes_to_create)

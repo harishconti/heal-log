@@ -11,15 +11,16 @@ export const NoteService = {
         try {
             // Get current user from Zustand store (accessible outside React components)
             const currentUser = useAppStore.getState().user;
-            const createdByName = currentUser?.full_name || 'Unknown';
+            const userId = currentUser?.id || 'unknown';
 
             return await database.write(async () => {
                 return await database.collections.get<PatientNote>('clinical_notes').create(note => {
-                    note.patientId = data.patient_id;  // Use patientId field directly
+                    note.patientId = data.patient_id;
                     note.content = data.content;
                     note.visitType = data.visit_type;
-                    note.timestamp = new Date();
-                    note.createdBy = createdByName;
+                    note.userId = userId;
+                    note.createdAt = new Date();
+                    note.updatedAt = new Date();
                 });
             });
         } catch (error) {
@@ -35,6 +36,7 @@ export const NoteService = {
                 const note = await database.collections.get<PatientNote>('clinical_notes').find(noteId);
                 await note.update(n => {
                     n.content = content;
+                    n.updatedAt = new Date();
                 });
                 return note;
             });
@@ -62,7 +64,7 @@ export const NoteService = {
             return await database.collections.get<PatientNote>('clinical_notes')
                 .query(
                     Q.where('patient_id', patientId),
-                    Q.sortBy('timestamp', Q.desc)
+                    Q.sortBy('created_at', Q.desc)
                 ).fetch();
         } catch (error) {
             console.error('Error fetching notes:', error);

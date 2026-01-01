@@ -75,11 +75,12 @@ function PatientDetailsScreen({ patient, notes }) {
     try {
       await database.write(async () => {
         await database.collections.get<PatientNote>('clinical_notes').create(note => {
-          note.patientId = patient.id;  // Use patientId field directly
+          note.patientId = patient.id;
           note.content = newNote.trim();
           note.visitType = newNoteType;
-          note.createdBy = user?.id || 'unknown';
-          note.timestamp = new Date();
+          note.userId = user?.id || 'unknown';
+          note.createdAt = new Date();
+          note.updatedAt = new Date();
         });
       });
       setNewNote('');
@@ -236,10 +237,10 @@ function PatientDetailsScreen({ patient, notes }) {
               <View key={note.id || index} style={styles.noteItem}>
                 <View style={styles.noteHeader}>
                   <Text style={styles.noteType}>{note.visitType}</Text>
-                  <Text style={styles.noteDate}>{formatDate(note.timestamp)}</Text>
+                  <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
                 </View>
                 <Text style={styles.noteContent}>{note.content}</Text>
-                <Text style={styles.noteAuthor}>By: {note.createdBy}</Text>
+                <Text style={styles.noteAuthor}>By: {note.userId}</Text>
               </View>
             ))
           ) : (

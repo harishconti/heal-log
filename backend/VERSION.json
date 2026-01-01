@@ -1,8 +1,8 @@
 {
-    "version": "1.0.46",
-    "build_date": "2026-01-01T22:00:00+05:30",
-    "commit": "fix-note-timestamp-display",
-    "release_notes": "Fixed note timestamp display showing Jan 1, 1970 for synced notes. Added defensive date formatting.",
+    "version": "1.0.47",
+    "build_date": "2026-01-01T22:25:00+05:30",
+    "commit": "fix-timestamp-sync-root-cause",
+    "release_notes": "Fixed root cause of timestamp loss during sync. Backend now properly handles missing/null/zero timestamps by setting current time.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

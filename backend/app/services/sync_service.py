@@ -105,11 +105,29 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
 
         # Helper function to convert milliseconds timestamps to datetime
         def convert_timestamps(data: dict) -> dict:
-            """Convert milliseconds timestamps from WatermelonDB to datetime objects"""
-            if 'created_at' in data and isinstance(data['created_at'], (int, float)):
-                data['created_at'] = datetime.fromtimestamp(data['created_at'] / 1000.0, tz=timezone.utc)
-            if 'updated_at' in data and isinstance(data['updated_at'], (int, float)):
-                data['updated_at'] = datetime.fromtimestamp(data['updated_at'] / 1000.0, tz=timezone.utc)
+            """Convert milliseconds timestamps from WatermelonDB to datetime objects.
+            Handles missing, null, and zero values by setting current time."""
+            current_time = datetime.now(timezone.utc)
+            
+            for field in ['created_at', 'updated_at']:
+                value = data.get(field)
+                
+                if value is None or value == 0 or value == '':
+                    # Missing or invalid - set to current time
+                    data[field] = current_time
+                elif isinstance(value, (int, float)):
+                    # Valid milliseconds timestamp
+                    if value < 1000000000000:  # Less than year ~2001 in ms (likely seconds or corrupt)
+                        data[field] = current_time
+                    else:
+                        data[field] = datetime.fromtimestamp(value / 1000.0, tz=timezone.utc)
+                elif isinstance(value, datetime):
+                    # Already a datetime, keep as is
+                    pass
+                else:
+                    # Unknown format - set to current time
+                    data[field] = current_time
+                    
             return data
 
         # Process created records (bulk insert)

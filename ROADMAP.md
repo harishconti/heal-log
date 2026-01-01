@@ -4,7 +4,7 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Current Version: 1.0.34
+## Current Version: 3.1.0
 
 ### Released Features
 - User registration and authentication with JWT
@@ -28,7 +28,7 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ## Phase 1: Beta Release (Current)
 
-**Status:** Complete (v1.0.34)
+**Status:** Complete (v3.1.0)
 
 ### Critical (Must Have)
 - [x] Core authentication flow
@@ -214,8 +214,7 @@ Have a feature idea? Here's how to submit it:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.34 | Dec 2025 | Current stable release |
-| 3.1.0 | Dec 2025 | Web dashboard, integration fixes |
+| 3.1.0 | Dec 2025 | Current stable release - Web dashboard, integration fixes |
 | 3.0.0 | Dec 2025 | Security hardening, pagination, export |
 | 2.0.0 | Dec 2025 | OTP verification, beta features |
 | 1.0.0 | Dec 2025 | Initial release |

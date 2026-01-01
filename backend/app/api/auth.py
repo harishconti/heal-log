@@ -165,15 +165,49 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     }
 
 @router.post("/forgot-password", response_model=dict)
-@limiter.limit("3/minute")
+@limiter.limit("5/10minutes")
+@limiter.limit("10/day")
 async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     """
     Initiate password reset. Sends reset token via email.
+    Rate limited to 5 requests per 10 minutes, max 10 per day per IP.
+    Also limits per email: max 3 per hour, 5 per day.
+    After daily limit, user must wait 24 hours.
     """
+    # Log the request for abuse tracking
+    client_ip = request.client.host if request.client else "unknown"
+    email_lower = reset_data.email.lower().strip()
+    logger.info(f"[FORGOT_PASSWORD] Request from IP: {client_ip} for email: {email_lower[:3]}***")
+    
+    # Per-email rate limiting using Redis/cache (if available)
+    # Check if this email has exceeded limits
+    email_key = f"forgot_password_email:{email_lower}"
+    try:
+        from fastapi_cache import FastAPICache
+        backend = FastAPICache.get_backend()
+        if backend:
+            # Get current count for this email
+            count_str = await backend.get(email_key)
+            email_count = int(count_str) if count_str else 0
+            
+            # Max 5 requests per day per email
+            if email_count >= 5:
+                logger.warning(f"[FORGOT_PASSWORD] Email rate limit exceeded for {email_lower[:3]}*** (IP: {client_ip})")
+                return {
+                    "success": True,
+                    "message": "If an account exists with this email, a password reset link has been sent."
+                }
+            
+            # Increment count (expires in 24 hours)
+            await backend.set(email_key, str(email_count + 1), expire=86400)
+    except Exception as e:
+        logger.debug(f"[FORGOT_PASSWORD] Cache not available for email rate limit: {e}")
+    
     user = await user_service.get_user_by_email(reset_data.email)
     
     # Always return success to prevent email enumeration
     if not user:
+        logger.info(f"[FORGOT_PASSWORD] No user found for email (IP: {client_ip})")
         return {
             "success": True,
             "message": "If an account exists with this email, a password reset link has been sent."
@@ -181,20 +215,33 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     
     success, message = await password_reset_service.create_and_send_reset_token(user)
     
+    if success:
+        logger.info(f"[FORGOT_PASSWORD] Reset token sent successfully for user (IP: {client_ip})")
+    else:
+        logger.warning(f"[FORGOT_PASSWORD] Failed to send reset token (IP: {client_ip}): {message}")
+    
     return {
         "success": True,
         "message": "If an account exists with this email, a password reset link has been sent."
     }
 
 @router.post("/reset-password", response_model=dict)
-@limiter.limit("5/minute")
+@limiter.limit("5/10minutes")
+@limiter.limit("15/day")
 async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     """
     Reset password using the token from email.
+    Rate limited to 5 attempts per 10 minutes, max 15 per day per IP.
     """
+    # Log for abuse tracking
+    client_ip = request.client.host if request.client else "unknown"
+    token_preview = reset_data.token[:8] + "..." if len(reset_data.token) > 8 else reset_data.token
+    logger.info(f"[RESET_PASSWORD] Attempt from IP: {client_ip}, token: {token_preview}")
+    
     user, message = await password_reset_service.verify_reset_token(reset_data.token)
     
     if not user:
+        logger.warning(f"[RESET_PASSWORD] Invalid token attempt from IP: {client_ip}")
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message
@@ -203,11 +250,13 @@ async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     success, result_message = await password_reset_service.reset_password(user, reset_data.new_password)
     
     if not success:
+        logger.error(f"[RESET_PASSWORD] Password reset failed for user (IP: {client_ip}): {result_message}")
         raise APIException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result_message
         )
     
+    logger.info(f"[RESET_PASSWORD] Password reset successful (IP: {client_ip})")
     return {
         "success": True,
         "message": "Password reset successfully. You can now login with your new password."

@@ -26,8 +26,13 @@ class PasswordResetService:
     """Handles password reset token generation and verification."""
     
     def generate_reset_token(self) -> str:
-        """Generate a secure random token for password reset."""
-        return secrets.token_urlsafe(32)
+        """Generate a secure random token for password reset.
+        
+        Uses 18 bytes (144 bits of entropy) which produces a 24-character token.
+        This is still cryptographically secure (2^144 combinations) but more
+        mobile-friendly for copying.
+        """
+        return secrets.token_urlsafe(18)  # 24 chars, 144 bits entropy
     
     async def create_and_send_reset_token(self, user: User) -> Tuple[bool, str]:
         """

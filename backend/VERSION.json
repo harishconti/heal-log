@@ -1,8 +1,8 @@
 {
-    "version": "1.0.40",
-    "build_date": "2026-01-01T12:05:00+05:30",
-    "commit": "mobile-friendly-reset-email",
-    "release_notes": "Improved password reset email with mobile-friendly token display for easier copying.",
+    "version": "1.0.42",
+    "build_date": "2026-01-01T12:25:00+05:30",
+    "commit": "email-rate-limiting",
+    "release_notes": "Added dual rate limiting for password reset: by IP (5/10min, 10/day) AND by email (5/day) to prevent targeted abuse.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

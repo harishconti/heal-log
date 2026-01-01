@@ -23,7 +23,7 @@ export default function VerifyOTPScreen() {
     const router = useRouter();
     const { email } = useLocalSearchParams<{ email: string }>();
     const { theme, fontScale } = useTheme();
-    const { setUser, setIsAuthenticated } = useAuth();
+    const { setUser, setToken } = useAuth();
 
     const [otp, setOtp] = useState(['', '', '', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +108,7 @@ export default function VerifyOTPScreen() {
 
             // Update auth context
             setUser(response.user);
-            setIsAuthenticated(true);
+            setToken(response.access_token);
 
             Alert.alert('Success', 'Email verified successfully!', [
                 { text: 'OK', onPress: () => router.replace('/') }

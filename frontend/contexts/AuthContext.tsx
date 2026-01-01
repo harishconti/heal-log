@@ -61,6 +61,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setToken: (token: string | null) => void;
   setIsAuthenticated: (isAuth: boolean) => void;
 }
 
@@ -332,6 +333,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     refreshUser,
     setUser: handleSetUser,
+    setToken,
     setIsAuthenticated: handleSetIsAuthenticated,
   };
 

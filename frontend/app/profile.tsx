@@ -149,7 +149,7 @@ export default function ProfileScreen() {
 
   const pickProfilePhoto = async () => {
     try {
-      const { default: ImagePicker } = await import('expo-image-picker');
+      const ImagePicker = await import('expo-image-picker');
 
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -177,7 +177,7 @@ export default function ProfileScreen() {
 
   const takeProfilePhoto = async () => {
     try {
-      const { default: ImagePicker } = await import('expo-image-picker');
+      const ImagePicker = await import('expo-image-picker');
 
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {

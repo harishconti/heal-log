@@ -84,7 +84,17 @@ heal-log/
 │   ├── models/               # WatermelonDB models
 │   ├── services/             # API services (11 services)
 │   ├── store/                # Zustand global store
-│   └── constants/            # App constants
+│   ├── constants/            # App constants
+│   └── web-dashboard/        # React web dashboard
+│       ├── src/
+│       │   ├── components/   # React components
+│       │   │   ├── ui/       # UI primitives
+│       │   │   └── charts/   # Chart components
+│       │   ├── pages/        # Page components (11 pages)
+│       │   ├── api/          # API clients
+│       │   ├── store/        # Zustand stores
+│       │   └── types/        # TypeScript types
+│       └── index.html        # Entry HTML
 │
 ├── backend/                  # FastAPI backend
 │   ├── app/                  # Application modules
@@ -98,17 +108,6 @@ heal-log/
 │   ├── tests/                # Test files (48 tests)
 │   ├── scripts/              # Database scripts
 │   └── main.py               # Application entry point
-│
-├── web-dashboard/            # React web dashboard
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   │   ├── ui/           # UI primitives
-│   │   │   └── charts/       # Chart components
-│   │   ├── pages/            # Page components (11 pages)
-│   │   ├── api/              # API clients
-│   │   ├── store/            # Zustand stores
-│   │   └── types/            # TypeScript types
-│   └── index.html            # Entry HTML
 │
 ├── scripts/                  # Utility scripts
 │   ├── bump-version.js       # Version management
@@ -338,7 +337,7 @@ docker-compose up
 # Or run individually
 cd backend && uvicorn main:app --reload
 cd frontend && npx expo start
-cd web-dashboard && npm run dev
+cd frontend/web-dashboard && npm run dev
 ```
 
 ### Testing

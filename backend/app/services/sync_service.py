@@ -44,6 +44,11 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         def serialize_document(doc):
             doc_dict = doc.model_dump()
             doc_dict["id"] = str(doc.id)
+            # Convert datetime fields to milliseconds for WatermelonDB compatibility
+            if 'created_at' in doc_dict and isinstance(doc_dict['created_at'], datetime):
+                doc_dict['created_at'] = int(doc_dict['created_at'].timestamp() * 1000)
+            if 'updated_at' in doc_dict and isinstance(doc_dict['updated_at'], datetime):
+                doc_dict['updated_at'] = int(doc_dict['updated_at'].timestamp() * 1000)
             return doc_dict
 
         await SyncEvent(user_id=user_id, success=True).insert()

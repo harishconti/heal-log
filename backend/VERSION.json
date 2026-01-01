@@ -1,8 +1,8 @@
 {
-    "version": "1.0.42",
-    "build_date": "2026-01-01T12:25:00+05:30",
-    "commit": "email-rate-limiting",
-    "release_notes": "Added dual rate limiting for password reset: by IP (5/10min, 10/day) AND by email (5/day) to prevent targeted abuse.",
+    "version": "1.0.43",
+    "build_date": "2026-01-01T17:05:00+05:30",
+    "commit": "apk-release-1.0.43",
+    "release_notes": "Mobile app release v1.0.43. Includes sync service updates and all previous security fixes.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

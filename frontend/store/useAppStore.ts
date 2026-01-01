@@ -33,6 +33,7 @@ export interface User {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  profile_photo?: string;
 }
 
 export interface AppSettings {

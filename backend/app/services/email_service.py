@@ -1,8 +1,7 @@
 """
 Email Service - Async email sending for OTP and password reset.
 
-Uses OAuth 2.0 (XOAUTH2) for Gmail when configured, falls back to basic SMTP,
-and logs to console in development mode.
+Priority: Resend API > OAuth 2.0 > Basic SMTP > Console logging (dev only)
 """
 import logging
 import os
@@ -14,11 +13,26 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Try to import resend
+try:
+    import resend
+    RESEND_AVAILABLE = True
+except ImportError:
+    RESEND_AVAILABLE = False
+    logger.warning("[EMAIL_SERVICE] Resend package not installed. Install with: pip install resend")
+
 
 class EmailService:
     """Handles sending emails for OTP verification and password reset."""
     
     def __init__(self):
+        # Check Resend configuration (preferred for cloud deployments)
+        self.resend_api_key = os.getenv("RESEND_API_KEY")
+        self.resend_configured = RESEND_AVAILABLE and bool(self.resend_api_key)
+        
+        if self.resend_configured:
+            resend.api_key = self.resend_api_key
+        
         # Check OAuth configuration
         self.oauth_configured = all([
             os.getenv("GOOGLE_CLIENT_ID"),
@@ -34,7 +48,9 @@ class EmailService:
             settings.EMAIL_PASSWORD
         ])
         
-        if self.oauth_configured:
+        if self.resend_configured:
+            logger.info("[EMAIL_SERVICE] Resend API configured - using HTTP API")
+        elif self.oauth_configured:
             logger.info("[EMAIL_SERVICE] OAuth 2.0 configured - using XOAUTH2")
         elif self.smtp_configured:
             logger.info("[EMAIL_SERVICE] Basic SMTP configured")
@@ -58,11 +74,34 @@ class EmailService:
         text_content: Optional[str] = None
     ) -> bool:
         """
-        Send an email. Priority: OAuth > Basic SMTP > Console logging
+        Send an email. Priority: Resend API > OAuth > Basic SMTP > Console logging
         
         Returns True if email sent successfully, False otherwise.
         """
-        # Try OAuth first
+        # Try Resend API first (works on cloud platforms like Railway)
+        if self.resend_configured:
+            try:
+                logger.info(f"[EMAIL_SERVICE] Attempting Resend API send to {to_email}")
+                # Use the from address from settings or default to onboarding@resend.dev
+                from_email = settings.EMAIL_FROM if settings.EMAIL_FROM else "HealLog <onboarding@resend.dev>"
+                
+                result = resend.Emails.send({
+                    "from": from_email,
+                    "to": to_email,
+                    "subject": subject,
+                    "html": html_content,
+                    "text": text_content or ""
+                })
+                
+                if result and result.get("id"):
+                    logger.info(f"[EMAIL_SERVICE] Resend email sent successfully to {to_email}, id: {result.get('id')}")
+                    return True
+                else:
+                    logger.warning(f"[EMAIL_SERVICE] Resend returned unexpected result: {result}. Trying fallback...")
+            except Exception as e:
+                logger.warning(f"[EMAIL_SERVICE] Resend error: {e}. Trying fallback...")
+        
+        # Try OAuth second
         if self.oauth_configured:
             oauth_service = self._get_oauth_service()
             if oauth_service and oauth_service.is_configured():

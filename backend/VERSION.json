@@ -1,8 +1,8 @@
 {
-    "version": "1.0.37",
-    "build_date": "2026-01-01T10:53:00+05:30",
-    "commit": "email-ssl-port-465-fix",
-    "release_notes": "Fixed email sending on Railway - now supports port 465 SSL in addition to port 587 STARTTLS.",
+    "version": "1.0.38",
+    "build_date": "2026-01-01T11:06:00+05:30",
+    "commit": "resend-email-integration",
+    "release_notes": "Added Resend email API integration for cloud deployments where SMTP is blocked.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

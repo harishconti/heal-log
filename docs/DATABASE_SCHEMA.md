@@ -99,7 +99,7 @@ Stores medical notes for patient visits.
 | `patient_id` | string | Yes | Reference to patients._id, indexed |
 | `user_id` | string | Yes | Reference to users._id, indexed |
 | `content` | string | Yes | 1-5000 chars |
-| `visit_type` | enum | Yes | `regular` \| `follow-up` \| `emergency` |
+| `visit_type` | enum | Yes | `initial` \| `regular` \| `follow-up` \| `emergency` |
 | `created_at` | datetime | Yes | UTC timestamp |
 | `updated_at` | datetime | Yes | UTC timestamp |
 
@@ -297,7 +297,7 @@ type BetaFeedbackType = 'bug' | 'suggestion' | 'general';
 
 ### VisitType
 ```typescript
-type VisitType = 'regular' | 'follow-up' | 'emergency';
+type VisitType = 'initial' | 'regular' | 'follow-up' | 'emergency';
 ```
 
 ---

@@ -1,8 +1,8 @@
 {
-    "version": "1.0.38",
-    "build_date": "2026-01-01T11:06:00+05:30",
-    "commit": "resend-email-integration",
-    "release_notes": "Added Resend email API integration for cloud deployments where SMTP is blocked.",
+    "version": "1.0.40",
+    "build_date": "2026-01-01T12:05:00+05:30",
+    "commit": "mobile-friendly-reset-email",
+    "release_notes": "Improved password reset email with mobile-friendly token display for easier copying.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

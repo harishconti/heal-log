@@ -324,16 +324,16 @@ https://heallog.com
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #f4f7fa; -webkit-font-smoothing: antialiased;">
     <!-- Preheader text (hidden but shows in email preview) -->
     <div style="display: none; max-height: 0; overflow: hidden;">
-        Use this token to reset your HealLog password. Valid for {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
+        Your password reset token: {reset_token[:8]}... Valid for {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
     </div>
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f7fa;">
         <tr>
-            <td style="padding: 40px 20px;">
+            <td style="padding: 40px 16px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 40px 40px 20px 40px; text-align: center;">
+                        <td style="padding: 32px 24px 16px 24px; text-align: center;">
                             <div style="font-size: 32px; margin-bottom: 8px;">🏥</div>
                             <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #10b981;">HealLog</h1>
                         </td>
@@ -341,29 +341,38 @@ https://heallog.com
 
                     <!-- Content -->
                     <tr>
-                        <td style="padding: 0 40px;">
-                            <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #dc2626; text-align: center;">Password Reset Request</h2>
-                            <p style="margin: 0 0 8px 0; font-size: 15px; color: #6b7280; line-height: 1.6;">Hello <strong style="color: #1f2937;">{full_name}</strong>,</p>
-                            <p style="margin: 0 0 24px 0; font-size: 15px; color: #6b7280; line-height: 1.6;">We received a request to reset your password. Enter the following token in the app to create a new password:</p>
+                        <td style="padding: 0 24px;">
+                            <h2 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 600; color: #dc2626; text-align: center;">Password Reset Request</h2>
+                            <p style="margin: 0 0 6px 0; font-size: 15px; color: #6b7280; line-height: 1.5;">Hello <strong style="color: #1f2937;">{full_name}</strong>,</p>
+                            <p style="margin: 0 0 20px 0; font-size: 15px; color: #6b7280; line-height: 1.5;">Copy the token below and paste it in the HealLog app to reset your password:</p>
                         </td>
                     </tr>
 
-                    <!-- Reset Token Box -->
+                    <!-- Reset Token Box - Mobile Friendly -->
                     <tr>
-                        <td style="padding: 0 40px;">
-                            <div style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;">
-                                <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Your Reset Token</p>
-                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1e293b; font-family: 'Courier New', monospace; word-break: break-all; line-height: 1.5;">{reset_token}</p>
+                        <td style="padding: 0 24px;">
+                            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 20px 16px; text-align: center;">
+                                <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">📋 TAP & HOLD TO COPY</p>
+                                <p style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Courier New', monospace; word-break: break-all; line-height: 1.6; letter-spacing: 0.5px; -webkit-user-select: all; user-select: all;">{reset_token}</p>
                             </div>
+                        </td>
+                    </tr>
+
+                    <!-- Copy Hint -->
+                    <tr>
+                        <td style="padding: 12px 24px 0 24px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                                💡 <strong>Tip:</strong> Long-press the token above to select and copy it
+                            </p>
                         </td>
                     </tr>
 
                     <!-- Timer Warning -->
                     <tr>
-                        <td style="padding: 20px 40px 0 40px;">
-                            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 14px 16px;">
-                                <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.5;">
-                                    <strong>⏰ Time-sensitive:</strong> This token expires in <strong>{settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes</strong>.
+                        <td style="padding: 16px 24px 0 24px;">
+                            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 12px 14px;">
+                                <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.4;">
+                                    ⏰ <strong>Expires in {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes</strong>
                                 </p>
                             </div>
                         </td>
@@ -371,10 +380,10 @@ https://heallog.com
 
                     <!-- Security Notice -->
                     <tr>
-                        <td style="padding: 16px 40px 0 40px;">
-                            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 14px 16px;">
-                                <p style="margin: 0; font-size: 13px; color: #991b1b; line-height: 1.5;">
-                                    <strong>Didn't request this?</strong> If you didn't request a password reset, please ignore this email. Your password will remain unchanged. Consider changing your password if you suspect unauthorized access.
+                        <td style="padding: 12px 24px 0 24px;">
+                            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 12px 14px;">
+                                <p style="margin: 0; font-size: 12px; color: #991b1b; line-height: 1.4;">
+                                    <strong>Didn't request this?</strong> Ignore this email. Your password won't change.
                                 </p>
                             </div>
                         </td>
@@ -382,10 +391,10 @@ https://heallog.com
 
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 32px 40px 40px 40px;">
-                            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 0 20px 0;">
-                            <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-                                &copy; 2025 HealLog. All rights reserved.<br>
+                        <td style="padding: 24px 24px 28px 24px;">
+                            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 0 16px 0;">
+                            <p style="margin: 0; font-size: 11px; color: #9ca3af; text-align: center;">
+                                &copy; 2026 HealLog. All rights reserved.<br>
                                 <a href="https://heallog.com" style="color: #10b981; text-decoration: none;">heallog.com</a>
                             </p>
                         </td>
@@ -406,21 +415,23 @@ Hello {full_name},
 
 We received a request to reset your password.
 
-YOUR RESET TOKEN:
+YOUR RESET TOKEN (copy this):
+-----------------------------
 {reset_token}
+-----------------------------
 
-This token is valid for {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
+This token expires in {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
 
-Enter this token in the HealLog app to create a new password.
+Open the HealLog app, go to "Forgot Password", and paste this token to create a new password.
 
 DIDN'T REQUEST THIS?
-If you didn't request a password reset, please ignore this email. Your password will remain unchanged. Consider changing your password if you suspect unauthorized access.
+If you didn't request a password reset, ignore this email. Your password won't change.
 
 ---
 HealLog - Patient Management Made Simple
 https://heallog.com
 
-(c) 2025 HealLog. All rights reserved.
+(c) 2026 HealLog. All rights reserved.
         """
         
         success = await self.send_email(email, subject, html_content, text_content)
@@ -431,3 +442,4 @@ https://heallog.com
 
 # Singleton instance
 email_service = EmailService()
+

@@ -240,7 +240,7 @@ function PatientDetailsScreen({ patient, notes }) {
                   <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
                 </View>
                 <Text style={styles.noteContent}>{note.content}</Text>
-                <Text style={styles.noteAuthor}>By: {note.userId}</Text>
+                <Text style={styles.noteAuthor}>By: {note.userId === user?.id ? user?.full_name : 'Doctor'}</Text>
               </View>
             ))
           ) : (

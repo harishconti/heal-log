@@ -148,21 +148,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Features */}
-          <View style={styles.features}>
-            <View style={styles.feature}>
-              <Ionicons name="people" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureText}>Patient Management</Text>
-            </View>
-            <View style={styles.feature}>
-              <Ionicons name="document-text" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureText}>Medical Notes</Text>
-            </View>
-            <View style={styles.feature}>
-              <Ionicons name="cloud" size={24} color={theme.colors.primary} />
-              <Text style={styles.featureText}>Cloud Sync</Text>
-            </View>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -257,19 +242,5 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 16 * fontScale,
     fontWeight: '600',
-  },
-  features: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 'auto',
-  },
-  feature: {
-    alignItems: 'center',
-  },
-  featureText: {
-    fontSize: 12 * fontScale,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
   },
 });

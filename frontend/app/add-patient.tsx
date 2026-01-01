@@ -54,6 +54,9 @@ export default function AddPatientScreen() {
   const [newGroupName, setNewGroupName] = useState('');
   const [allGroups, setAllGroups] = useState<string[]>(MEDICAL_GROUPS);
   const [showGroupSelector, setShowGroupSelector] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+
+  const LOCATION_OPTIONS = ['Clinic', 'Home Visit', 'Hospital', 'Emergency'];
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -271,14 +274,7 @@ export default function AddPatientScreen() {
                 <Text style={styles.inputLabel}>Location</Text>
                 <TouchableOpacity
                   style={styles.pickerButton}
-                  onPress={() => {
-                    Alert.alert('Visit Location', 'Select visit location', [
-                      { text: 'Clinic', onPress: () => setValue('location', 'Clinic') },
-                      { text: 'Home Visit', onPress: () => setValue('location', 'Home Visit') },
-                      { text: 'Hospital', onPress: () => setValue('location', 'Hospital') },
-                      { text: 'Emergency', onPress: () => setValue('location', 'Emergency') },
-                    ]);
-                  }}
+                  onPress={() => setShowLocationSelector(true)}
                 >
                   <Text style={styles.pickerText}>{location}</Text>
                   <Ionicons name="chevron-down" size={20} color="#666" />
@@ -441,6 +437,51 @@ export default function AddPatientScreen() {
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setShowGroupSelector(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Location Selector Modal */}
+      <Modal
+        visible={showLocationSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLocationSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Location</Text>
+            <View style={styles.locationList}>
+              {LOCATION_OPTIONS.map((loc) => (
+                <TouchableOpacity
+                  key={loc}
+                  style={[
+                    styles.groupOption,
+                    location === loc && styles.groupOptionSelected
+                  ]}
+                  onPress={() => {
+                    setValue('location', loc);
+                    setShowLocationSelector(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.groupOptionText,
+                    location === loc && styles.groupOptionTextSelected
+                  ]}>
+                    {loc}
+                  </Text>
+                  {location === loc && (
+                    <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setShowLocationSelector(false)}
             >
               <Text style={styles.modalCancelText}>Cancel</Text>
             </TouchableOpacity>
@@ -659,6 +700,9 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   groupList: {
     maxHeight: 400,
+    width: '100%',
+  },
+  locationList: {
     width: '100%',
   },
   createGroupOption: {

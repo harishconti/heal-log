@@ -122,6 +122,14 @@ function PatientDetailsScreen({ patient, notes }) {
   };
 
   const formatDate = (date: Date) => {
+    // Defensive check: if date is invalid or epoch (Jan 1, 1970), show fallback
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return 'Unknown Date';
+    }
+    // Check if date is before year 2000 (likely corrupt/epoch data)
+    if (date.getFullYear() < 2000) {
+      return 'Unknown Date';
+    }
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',

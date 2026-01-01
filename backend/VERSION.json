@@ -1,8 +1,8 @@
 {
-    "version": "1.0.44",
-    "build_date": "2026-01-01T20:35:00+05:30",
-    "commit": "apk-release-1.0.44",
-    "release_notes": "Mobile app release v1.0.44. Includes latest frontend fixes for patient details and sync service updates.",
+    "version": "1.0.46",
+    "build_date": "2026-01-01T22:00:00+05:30",
+    "commit": "fix-note-timestamp-display",
+    "release_notes": "Fixed note timestamp display showing Jan 1, 1970 for synced notes. Added defensive date formatting.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

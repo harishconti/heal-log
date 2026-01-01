@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "expo": "^54.0.25"
+    "expo": "^54.0.25",
+    "mongodb": "^7.0.0"
   }
 }

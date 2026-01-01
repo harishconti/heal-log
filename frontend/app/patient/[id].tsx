@@ -240,7 +240,6 @@ function PatientDetailsScreen({ patient, notes }) {
                   <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
                 </View>
                 <Text style={styles.noteContent}>{note.content}</Text>
-                <Text style={styles.noteAuthor}>By: {note.userId}</Text>
               </View>
             ))
           ) : (
@@ -562,12 +561,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   noteContent: {
     fontSize: 16,
     color: theme.colors.text,
-    marginBottom: 8,
-  },
-  noteAuthor: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontStyle: 'italic',
   },
   emptyNotes: {
     alignItems: 'center',

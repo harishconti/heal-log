@@ -390,7 +390,7 @@ Authorization: Bearer <token>
 }
 ```
 
-**Visit Types:** `regular`, `follow-up`, `emergency`
+**Visit Types:** `initial`, `regular`, `follow-up`, `emergency`
 
 **Response (201):**
 ```json

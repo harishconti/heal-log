@@ -15,10 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Returns appropriate 404 errors for missing patient or note
 
 ### Fixed
+- **Critical:** Notes sync validation error - added `initial` visit type to backend schema
+  - Frontend was creating notes with `visit_type: "initial"` but backend only accepted `regular`, `follow-up`, `emergency`
+  - This caused sync push failures, preventing notes from persisting after app reinstall
 - **Critical:** Redis cache errors no longer crash patient create/delete operations
   - Cache invalidation now wrapped in try/except with graceful fallback
   - Errors logged as warnings instead of raising exceptions
 - OTP schema updated to accept 8-digit codes (was incorrectly validating 6-digit)
+
+### Removed
+- Redundant "By:" author field from notes display (single-user context makes it unnecessary)
+- Non-functional feature icons from login screen bottom
 
 ---
 

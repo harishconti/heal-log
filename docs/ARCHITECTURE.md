@@ -226,7 +226,7 @@ heal-log/
   patient_id: UUID (indexed),
   user_id: UUID (indexed),
   content: String,
-  visit_type: "regular" | "follow-up" | "emergency",
+  visit_type: "initial" | "regular" | "follow-up" | "emergency",
   created_at: DateTime,
   updated_at: DateTime
 }

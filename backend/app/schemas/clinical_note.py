@@ -9,7 +9,7 @@ class ClinicalNote(Document):
     patient_id: Indexed(str)
     user_id: Indexed(str)
     content: str = Field(..., min_length=1, max_length=5000)
-    visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
+    visit_type: Literal["initial", "regular", "follow-up", "emergency"] = "regular"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -21,11 +21,11 @@ class ClinicalNote(Document):
 
 class NoteCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=5000)
-    visit_type: Literal["regular", "follow-up", "emergency"] = "regular"
+    visit_type: Literal["initial", "regular", "follow-up", "emergency"] = "regular"
 
 class ClinicalNoteUpdate(BaseModel):
     content: str | None = None
-    visit_type: Literal["regular", "follow-up", "emergency"] | None = None
+    visit_type: Literal["initial", "regular", "follow-up", "emergency"] | None = None
 
 class ClinicalNoteResponse(BaseModel):
     id: str

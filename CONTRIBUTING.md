@@ -120,15 +120,14 @@ heal-log/
 │   ├── models/           # WatermelonDB models
 │   ├── services/         # API services (11 services)
 │   ├── store/            # Zustand store
-│   └── constants/        # App constants
-│
-├── web-dashboard/        # React + Vite web dashboard
-│   ├── src/
-│   │   ├── pages/        # Dashboard pages
-│   │   ├── components/   # React components
-│   │   ├── api/          # API clients
-│   │   └── store/        # Zustand stores
-│   └── package.json
+│   ├── constants/        # App constants
+│   └── web-dashboard/    # React + Vite web dashboard
+│       ├── src/
+│       │   ├── pages/        # Dashboard pages
+│       │   ├── components/   # React components
+│       │   ├── api/          # API clients
+│       │   └── store/        # Zustand stores
+│       └── package.json
 │
 ├── scripts/              # Utility scripts (version bump, env generation)
 └── docs/                 # Documentation

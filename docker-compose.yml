@@ -43,13 +43,13 @@ services:
 
   web-dashboard:
     build:
-      context: ./web-dashboard
+      context: ./frontend/web-dashboard
       dockerfile: Dockerfile
     container_name: heallog_web_dashboard
     ports:
       - "3000:5173"
     volumes:
-      - ./web-dashboard:/app
+      - ./frontend/web-dashboard:/app
       - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:8000

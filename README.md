@@ -126,7 +126,7 @@ pytest
 | [Deployment Guide](./DEPLOYMENT_GUIDE.md) | Deployment instructions |
 | [Play Store Guide](./PLAY_STORE_GUIDE.md) | Google Play submission |
 | [Beta Testing Guide](./BETA_TESTING_GUIDE.md) | Beta tester instructions |
-| [Web Dashboard](./web-dashboard/README.md) | Web dashboard documentation |
+| [Web Dashboard](./frontend/web-dashboard/README.md) | Web dashboard documentation |
 
 ---
 

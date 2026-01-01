@@ -82,8 +82,9 @@ class EmailService:
         if self.resend_configured:
             try:
                 logger.info(f"[EMAIL_SERVICE] Attempting Resend API send to {to_email}")
-                # Use the from address from settings or default to onboarding@resend.dev
-                from_email = settings.EMAIL_FROM if settings.EMAIL_FROM else "HealLog <onboarding@resend.dev>"
+                # Use Resend's default domain (always works) or a verified custom domain
+                # Note: Cannot use Gmail - must be onboarding@resend.dev or verified domain
+                from_email = "HealLog <onboarding@resend.dev>"
                 
                 result = resend.Emails.send({
                     "from": from_email,

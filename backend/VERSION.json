@@ -1,8 +1,8 @@
 {
-    "version": "1.0.43",
-    "build_date": "2026-01-01T17:05:00+05:30",
-    "commit": "apk-release-1.0.43",
-    "release_notes": "Mobile app release v1.0.43. Includes sync service updates and all previous security fixes.",
+    "version": "1.0.44",
+    "build_date": "2026-01-01T20:35:00+05:30",
+    "commit": "apk-release-1.0.44",
+    "release_notes": "Mobile app release v1.0.44. Includes latest frontend fixes for patient details and sync service updates.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

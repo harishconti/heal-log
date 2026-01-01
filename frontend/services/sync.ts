@@ -51,6 +51,14 @@ export async function sync() {
           const response = await retrySyncOperation(pullOperation, 'Sync Pull');
 
           const { changes, timestamp } = response.data;
+
+          // Debug: Log full changes to see timestamp format
+          console.log('🔍 [Sync Debug] Raw changes received:', JSON.stringify(changes, null, 2));
+          if (changes.clinical_notes?.created?.length > 0) {
+            console.log('🔍 [Sync Debug] First note created_at:', changes.clinical_notes.created[0].created_at);
+            console.log('🔍 [Sync Debug] First note updated_at:', changes.clinical_notes.created[0].updated_at);
+          }
+
           console.log('✅ [Sync] Successfully pulled changes:', Object.keys(changes).length);
           addBreadcrumb('sync', `Successfully pulled ${Object.keys(changes).length} changes`);
           return { changes, timestamp };

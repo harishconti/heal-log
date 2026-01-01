@@ -180,3 +180,44 @@ async def repair_timestamps(current_user=Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to repair timestamps: {str(e)}"
         )
+
+
+@router.get("/sync-preview")
+async def sync_preview(current_user=Depends(get_current_user)):
+    """
+    Debug endpoint to preview what the sync pull would return.
+    This helps diagnose timestamp format issues.
+    """
+    logging.info(f"User {current_user.email} requested sync preview")
+    
+    try:
+        from app.services.sync_service import pull_changes
+        
+        # Get all changes (last_pulled_at = 0 means get everything)
+        changes = await pull_changes(0, str(current_user.id))
+        
+        # Extract sample data for debugging
+        sample_note = None
+        sample_patient = None
+        
+        if changes.get('clinical_notes', {}).get('created'):
+            sample_note = changes['clinical_notes']['created'][0]
+        
+        if changes.get('patients', {}).get('created'):
+            sample_patient = changes['patients']['created'][0]
+        
+        return {
+            "success": True,
+            "notes_count": len(changes.get('clinical_notes', {}).get('created', [])),
+            "patients_count": len(changes.get('patients', {}).get('created', [])),
+            "sample_note": sample_note,
+            "sample_patient": sample_patient,
+            "message": "Check sample_note.created_at - should be milliseconds timestamp like 1767288299392"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in sync preview: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to preview sync: {str(e)}"
+        )

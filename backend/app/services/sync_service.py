@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.sync_event import SyncEvent
@@ -45,11 +46,15 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
             doc_dict = doc.model_dump()
             doc_dict["id"] = str(doc.id)
             # Convert datetime fields to milliseconds for WatermelonDB compatibility
-            # Handle both datetime objects and potentially corrupted numeric values
+            # Handle datetime objects, ISO strings, and potentially corrupted numeric values
             current_time_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
             for field in ['created_at', 'updated_at']:
                 if field in doc_dict:
                     value = doc_dict[field]
+                    
+                    # Debug logging
+                    logging.info(f"[SYNC DEBUG] {field} raw value: {value}, type: {type(value)}")
+                    
                     if isinstance(value, datetime):
                         # Check if datetime is near epoch (before year 2000 = corrupt)
                         if value.year < 2000:
@@ -57,6 +62,18 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                         else:
                             # Normal case: convert datetime to milliseconds
                             doc_dict[field] = int(value.timestamp() * 1000)
+                    elif isinstance(value, str):
+                        # ISO string format from model_dump() - parse and convert
+                        try:
+                            # Handle ISO format with 'Z' suffix (replace Z with +00:00)
+                            iso_str = value.replace('Z', '+00:00')
+                            parsed_dt = datetime.fromisoformat(iso_str)
+                            if parsed_dt.tzinfo is None:
+                                parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                            doc_dict[field] = int(parsed_dt.timestamp() * 1000)
+                        except Exception as e:
+                            logging.warning(f"[SYNC DEBUG] Failed to parse {field}: {value}, error: {e}")
+                            doc_dict[field] = current_time_ms
                     elif isinstance(value, (int, float)):
                         # Corrupted data: already a number, check if it's valid
                         if value < 1000000000000:  # Less than year 2001 in milliseconds
@@ -70,6 +87,8 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                     else:
                         # Unknown format - set to current time
                         doc_dict[field] = current_time_ms
+                    
+                    logging.info(f"[SYNC DEBUG] {field} final value: {doc_dict[field]}")
             return doc_dict
 
         await SyncEvent(user_id=user_id, success=True).insert()

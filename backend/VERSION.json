@@ -1,8 +1,8 @@
 {
-    "version": "1.0.47",
-    "build_date": "2026-01-01T22:25:00+05:30",
-    "commit": "fix-timestamp-sync-root-cause",
-    "release_notes": "Fixed root cause of timestamp loss during sync. Backend now properly handles missing/null/zero timestamps by setting current time.",
+    "version": "1.0.48",
+    "build_date": "2026-01-01T22:50:00+05:30",
+    "commit": "fix-iso-timestamp-serialization",
+    "release_notes": "Fixed timestamp serialization: backend now handles ISO string format from Pydantic model_dump() in addition to datetime objects.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

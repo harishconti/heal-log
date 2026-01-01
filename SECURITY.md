@@ -35,7 +35,7 @@ If you discover a security vulnerability in HealLog, please report it responsibl
 
 ### Authentication
 
-- **JWT tokens** with short expiration (15 minutes)
+- **JWT tokens** with short expiration (30 minutes)
 - **Refresh tokens** for session renewal
 - **Password requirements:** 12+ characters, mixed case, numbers, special characters
 - **OTP verification** for new accounts (8-digit codes)

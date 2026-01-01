@@ -45,10 +45,31 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
             doc_dict = doc.model_dump()
             doc_dict["id"] = str(doc.id)
             # Convert datetime fields to milliseconds for WatermelonDB compatibility
-            if 'created_at' in doc_dict and isinstance(doc_dict['created_at'], datetime):
-                doc_dict['created_at'] = int(doc_dict['created_at'].timestamp() * 1000)
-            if 'updated_at' in doc_dict and isinstance(doc_dict['updated_at'], datetime):
-                doc_dict['updated_at'] = int(doc_dict['updated_at'].timestamp() * 1000)
+            # Handle both datetime objects and potentially corrupted numeric values
+            current_time_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+            for field in ['created_at', 'updated_at']:
+                if field in doc_dict:
+                    value = doc_dict[field]
+                    if isinstance(value, datetime):
+                        # Check if datetime is near epoch (before year 2000 = corrupt)
+                        if value.year < 2000:
+                            doc_dict[field] = current_time_ms
+                        else:
+                            # Normal case: convert datetime to milliseconds
+                            doc_dict[field] = int(value.timestamp() * 1000)
+                    elif isinstance(value, (int, float)):
+                        # Corrupted data: already a number, check if it's valid
+                        if value < 1000000000000:  # Less than year 2001 in milliseconds
+                            # Likely stored as seconds or is corrupt (e.g., 0)
+                            # Set to current time as fallback
+                            doc_dict[field] = current_time_ms
+                        # else: already in milliseconds, keep as is
+                    elif value is None or value == 0:
+                        # Null or zero - set to current time
+                        doc_dict[field] = current_time_ms
+                    else:
+                        # Unknown format - set to current time
+                        doc_dict[field] = current_time_ms
             return doc_dict
 
         await SyncEvent(user_id=user_id, success=True).insert()
@@ -121,6 +142,8 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                     raise ValueError("Missing 'id' field in patient update data")
                 if 'updated_at' not in patient_data:
                     raise ValueError(f"Missing 'updated_at' field in patient update data for {patient_id}")
+                # Convert timestamps from milliseconds to datetime for updated records
+                patient_data = convert_timestamps(patient_data)
                 patient_updates.append((patient_id, sanitize_patient_data(patient_data)))
 
             if patient_updates:
@@ -135,7 +158,11 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 for patient_id, patient_data in patient_updates:
                     patient = patients_by_id.get(patient_id)
                     if patient:
-                        client_updated_at = datetime.fromtimestamp(patient_data['updated_at'] / 1000.0, tz=timezone.utc)
+                        # client_updated_at is already converted to datetime by convert_timestamps
+                        client_updated_at = patient_data['updated_at']
+                        if not isinstance(client_updated_at, datetime):
+                            # Fallback if somehow not converted
+                            client_updated_at = datetime.fromtimestamp(client_updated_at / 1000.0, tz=timezone.utc)
                         server_updated_at = patient.updated_at.astimezone(timezone.utc) if patient.updated_at.tzinfo else patient.updated_at.replace(tzinfo=timezone.utc)
                         if client_updated_at < server_updated_at:
                             raise SyncConflictException(f"Conflict detected for patient {patient_id}")
@@ -149,6 +176,8 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 note_id = note_data.pop('id', None)
                 if not note_id:
                     raise ValueError("Missing 'id' field in clinical note update data")
+                # Convert timestamps from milliseconds to datetime for updated records
+                note_data = convert_timestamps(note_data)
                 note_updates.append((note_id, note_data))
 
             if note_updates:

@@ -44,6 +44,9 @@ class User(Document):
     password_reset_token: Optional[str] = None
     password_reset_expires_at: Optional[datetime] = None
 
+    # Profile photo (base64 encoded)
+    profile_photo: Optional[str] = None
+
     class Settings:
         name = "users"
 
@@ -58,6 +61,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=25)
     full_name: Optional[str] = Field(default=None, min_length=2, max_length=100)
     medical_specialty: Optional[str] = Field(default=None, max_length=100)
+    profile_photo: Optional[str] = Field(default=None)  # Base64 encoded image
 
 class UserResponse(BaseModel):
     id: str
@@ -70,6 +74,7 @@ class UserResponse(BaseModel):
     subscription_status: SubscriptionStatus
     subscription_end_date: datetime
     is_verified: bool = False
+    profile_photo: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

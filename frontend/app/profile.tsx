@@ -21,6 +21,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
+import api from '@/services/api';
 
 interface SubscriptionInfo {
   plan: string;
@@ -50,7 +51,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadProfileData();
     loadUserPhoto();
-  }, []);
+  }, [user?.profile_photo]); // Re-run when user's profile_photo changes
 
   const loadProfileData = async () => {
     try {
@@ -205,16 +206,27 @@ export default function ProfileScreen() {
   const saveProfilePhoto = async (photo: string) => {
     try {
       setUpdatingPhoto(true);
+      const previousPhoto = userPhoto;
       setUserPhoto(photo);
 
-      // Note: You would implement a backend endpoint to save user profile photo
-      // For now, we'll just save it locally
+      // Save profile photo to server
+      const response = await api.put('/api/users/me', {
+        profile_photo: photo
+      });
+
+      // Update local user state with the response
+      if (response.data) {
+        refreshUser();
+      }
+
+      // Also save locally for faster loading
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
 
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
-      Alert.alert('Error', 'Failed to save profile photo');
-      setUserPhoto(''); // Revert on error
+      console.error('Error saving profile photo:', error);
+      Alert.alert('Error', 'Failed to save profile photo. Please try again.');
+      setUserPhoto(userPhoto); // Revert to previous on error
     } finally {
       setUpdatingPhoto(false);
     }
@@ -225,10 +237,20 @@ export default function ProfileScreen() {
       setUpdatingPhoto(true);
       setUserPhoto('');
 
+      // Remove profile photo from server (set to null)
+      await api.put('/api/users/me', {
+        profile_photo: null
+      });
+
+      // Update local user state
+      refreshUser();
+
+      // Also remove from local storage
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
 
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
+      console.error('Error removing profile photo:', error);
       Alert.alert('Error', 'Failed to remove profile photo');
     } finally {
       setUpdatingPhoto(false);
@@ -238,6 +260,15 @@ export default function ProfileScreen() {
   const loadUserPhoto = async () => {
     try {
       if (user?.id) {
+        // First, check if user has a profile photo from the server
+        if (user.profile_photo) {
+          setUserPhoto(user.profile_photo);
+          // Also cache it locally for faster loading next time
+          await AsyncStorage.setItem(`user_photo_${user.id}`, user.profile_photo);
+          return;
+        }
+
+        // Fallback to locally cached photo (for faster loading before server sync)
         const savedPhoto = await AsyncStorage.getItem(`user_photo_${user.id}`);
         if (savedPhoto) {
           setUserPhoto(savedPhoto);

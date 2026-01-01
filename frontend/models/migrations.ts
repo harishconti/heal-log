@@ -1,4 +1,4 @@
-import { schemaMigrations, createTable } from '@nozbe/watermelondb/Schema/migrations';
+import { schemaMigrations, createTable, addColumns, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
 
 export default schemaMigrations({
   migrations: [
@@ -17,6 +17,26 @@ export default schemaMigrations({
             { name: 'timestamp', type: 'number' },
             { name: 'visit_type', type: 'string' },
             { name: 'created_by', type: 'string' },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 3,
+      steps: [
+        // Fix schema mismatch: align column names with backend (created_at, updated_at, user_id)
+        // Drop the old table and recreate with correct columns.
+        // Data will be restored from backend on next sync.
+        unsafeExecuteSql('DROP TABLE IF EXISTS clinical_notes'),
+        createTable({
+          name: 'clinical_notes',
+          columns: [
+            { name: 'patient_id', type: 'string', isIndexed: true },
+            { name: 'content', type: 'string' },
+            { name: 'visit_type', type: 'string' },
+            { name: 'user_id', type: 'string', isIndexed: true },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
           ],
         }),
       ],

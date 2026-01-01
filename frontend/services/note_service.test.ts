@@ -23,7 +23,7 @@ describe('NoteService', () => {
     it('createNote creates a new note', async () => {
         const mockCollection = {
             create: jest.fn((callback) => {
-                const note = { patient: {} };
+                const note = { patientId: 'patient-123' };
                 callback(note);
                 return note;
             }),
@@ -39,14 +39,14 @@ describe('NoteService', () => {
         const result = await NoteService.createNote(data);
 
         expect(database.write).toHaveBeenCalled();
-        expect(database.collections.get).toHaveBeenCalledWith('patient_notes');
+        expect(database.collections.get).toHaveBeenCalledWith('clinical_notes');
         expect(mockCollection.create).toHaveBeenCalled();
         expect(result).toEqual(expect.objectContaining({
             content: 'Test note content',
             visitType: 'Follow-up',
-            createdBy: 'Dr. Sarah',
+            userId: 'unknown',
         }));
-        expect(result.patient.id).toBe('patient-123');
+        expect(result.patientId).toBe('patient-123');
     });
 
     it('updateNote updates content', async () => {
@@ -85,8 +85,8 @@ describe('NoteService', () => {
         expect(mockNote.markAsDeleted).toHaveBeenCalled();
     });
 
-    it('getNotesByPatient fetches notes sorted by timestamp', async () => {
-        const mockNotes = [{ id: '1', timestamp: 2000 }, { id: '2', timestamp: 1000 }];
+    it('getNotesByPatient fetches notes sorted by created_at', async () => {
+        const mockNotes = [{ id: '1', created_at: 2000 }, { id: '2', created_at: 1000 }];
         const mockCollection = {
             query: jest.fn().mockReturnValue({
                 fetch: jest.fn().mockResolvedValue(mockNotes),
@@ -96,7 +96,7 @@ describe('NoteService', () => {
 
         const result = await NoteService.getNotesByPatient('patient-123');
 
-        expect(database.collections.get).toHaveBeenCalledWith('patient_notes');
+        expect(database.collections.get).toHaveBeenCalledWith('clinical_notes');
         expect(mockCollection.query).toHaveBeenCalled();
         expect(result).toEqual(mockNotes);
     });

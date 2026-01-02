@@ -163,3 +163,42 @@ yarn-error.log
 **/ios/build
 **/ios/*.xcworkspace
 **/ios/*.derivedData
+
+# Build artifacts - APK/AAB files
+*.apk
+*.aab
+
+# Large binary/patch files
+*.patch
+model.patch
+
+# Backup archives
+*.tar.gz
+*.tar
+*.zip
+*_backup.*
+frontend_backup*
+
+# System packages
+*.deb
+*.rpm
+
+# Temporary directories and files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Test output files
+*_test_output*.txt
+*_test_results.json
+
+# Environment files (all variants)
+.env.*
+!.env.example
+
+# Log file archives
+*.log.*
+
+# Personal config files
+.gitconfig

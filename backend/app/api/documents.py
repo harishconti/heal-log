@@ -3,6 +3,7 @@ from typing import List
 from app.core.security import require_pro_user
 from app.services import document_service
 from app.schemas.document import DocumentCreate, Document
+from app.schemas.user import User
 from app.core.limiter import limiter
 import logging
 
@@ -13,18 +14,18 @@ router = APIRouter()
 async def upload_document(
     request: Request,
     doc_data: DocumentCreate,
-    current_user_id: str = Depends(require_pro_user)
+    current_user: User = Depends(require_pro_user)
 ):
     """
     Create a new document record. This is a PRO feature.
     """
     try:
-        document = await document_service.create_document(doc_data, current_user_id)
+        document = await document_service.create_document(doc_data, current_user.id)
         return document
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logging.error(f"Error creating document for user {current_user_id}: {e}", exc_info=True)
+        logging.error(f"Error creating document for user {current_user.id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while creating the document record."
@@ -37,7 +38,7 @@ async def get_patient_documents(
     patient_id: str,
     skip: int = Query(0, ge=0, description="Number of documents to skip"),
     limit: int = Query(50, ge=1, le=100, description="Maximum documents to return"),
-    current_user_id: str = Depends(require_pro_user)
+    current_user: User = Depends(require_pro_user)
 ):
     """
     Get all documents for a specific patient. This is a PRO feature.
@@ -45,7 +46,7 @@ async def get_patient_documents(
     """
     try:
         documents = await document_service.get_documents_for_patient(
-            patient_id, current_user_id, skip=skip, limit=limit
+            patient_id, current_user.id, skip=skip, limit=limit
         )
         return documents
     except ValueError as e:

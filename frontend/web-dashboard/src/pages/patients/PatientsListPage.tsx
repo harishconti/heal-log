@@ -9,6 +9,7 @@ export function PatientsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [groups, setGroups] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [groupsError, setGroupsError] = useState<string | null>(null);
 
   const { patients, pagination, isLoading, filters, updateFilters, setPage } = usePatients({
     search: searchParams.get('search') || undefined,
@@ -18,7 +19,12 @@ export function PatientsListPage() {
   });
 
   useEffect(() => {
-    patientsApi.getGroups().then(setGroups).catch(() => {});
+    patientsApi.getGroups()
+      .then(setGroups)
+      .catch((err) => {
+        console.error('Failed to load groups:', err);
+        setGroupsError('Failed to load groups');
+      });
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {

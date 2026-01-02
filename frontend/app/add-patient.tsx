@@ -81,7 +81,7 @@ export default function AddPatientScreen() {
       // Fetch all unique groups from database
       fetchAllGroups();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const fetchAllGroups = async () => {
     try {

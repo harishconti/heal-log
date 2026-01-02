@@ -42,7 +42,12 @@ export function PatientFormPage() {
   });
 
   useEffect(() => {
-    patientsApi.getGroups().then(setGroups).catch(() => {});
+    patientsApi.getGroups()
+      .then(setGroups)
+      .catch((err) => {
+        console.error('Failed to load groups:', err);
+        // Groups are optional, so we just log the error
+      });
 
     if (isEditing && id) {
       patientsApi
@@ -60,8 +65,9 @@ export function PatientFormPage() {
             is_favorite: patient.is_favorite,
           });
         })
-        .catch(() => {
-          setError('Failed to load patient');
+        .catch((err) => {
+          console.error('Failed to load patient:', err);
+          setError('Failed to load patient. Please try again.');
         })
         .finally(() => {
           setIsLoading(false);

@@ -24,19 +24,25 @@ export function PatientDetailPage() {
   const { patient, isLoading, error } = usePatient(id!);
   const [notes, setNotes] = useState<ClinicalNote[]>([]);
   const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  const [notesError, setNotesError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState('');
   const [noteVisitType, setNoteVisitType] = useState<'regular' | 'follow-up' | 'emergency'>('regular');
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [addNoteError, setAddNoteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
       patientsApi
         .getNotes(id)
         .then((response) => setNotes(response.items))
-        .catch(() => {})
+        .catch((err) => {
+          console.error('Failed to load notes:', err);
+          setNotesError('Failed to load clinical notes');
+        })
         .finally(() => setIsLoadingNotes(false));
     }
   }, [id]);
@@ -44,11 +50,13 @@ export function PatientDetailPage() {
   const handleDelete = async () => {
     if (!id) return;
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await patientsApi.deletePatient(id);
       navigate('/patients');
-    } catch {
-      // Handle error
+    } catch (err) {
+      console.error('Failed to delete patient:', err);
+      setDeleteError('Failed to delete patient. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -57,6 +65,7 @@ export function PatientDetailPage() {
   const handleAddNote = async () => {
     if (!id || !noteContent.trim()) return;
     setIsAddingNote(true);
+    setAddNoteError(null);
     try {
       const noteData: CreateNoteData = {
         content: noteContent,
@@ -67,8 +76,9 @@ export function PatientDetailPage() {
       setNoteContent('');
       setNoteVisitType('regular');
       setShowNoteModal(false);
-    } catch {
-      // Handle error
+    } catch (err) {
+      console.error('Failed to add note:', err);
+      setAddNoteError('Failed to add note. Please try again.');
     } finally {
       setIsAddingNote(false);
     }
@@ -217,6 +227,27 @@ export function PatientDetailPage() {
               <div className="flex items-center justify-center h-32">
                 <Spinner />
               </div>
+            ) : notesError ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-red-300 mx-auto mb-3" />
+                <p className="text-red-500">{notesError}</p>
+                <button
+                  onClick={() => {
+                    setNotesError(null);
+                    setIsLoadingNotes(true);
+                    patientsApi.getNotes(id!)
+                      .then((response) => setNotes(response.items))
+                      .catch((err) => {
+                        console.error('Failed to load notes:', err);
+                        setNotesError('Failed to load clinical notes');
+                      })
+                      .finally(() => setIsLoadingNotes(false));
+                  }}
+                  className="text-primary-600 hover:text-primary-700 text-sm mt-2"
+                >
+                  Try again
+                </button>
+              </div>
             ) : notes.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
@@ -270,6 +301,11 @@ export function PatientDetailPage() {
           Are you sure you want to delete <strong>{patient.name}</strong>? This action cannot be
           undone and will also delete all associated clinical notes.
         </p>
+        {deleteError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            {deleteError}
+          </div>
+        )}
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
             Cancel
@@ -305,6 +341,11 @@ export function PatientDetailPage() {
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
           />
+          {addNoteError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              {addNoteError}
+            </div>
+          )}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowNoteModal(false)}>
               Cancel

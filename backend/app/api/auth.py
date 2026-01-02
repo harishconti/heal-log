@@ -13,6 +13,8 @@ import jwt
 import logging
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)

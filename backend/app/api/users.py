@@ -81,5 +81,11 @@ async def change_password(
     """
     Change current user's password.
     """
-    await user_service.change_password(current_user, password_in.current_password, password_in.new_password)
-    return {"message": "Password updated successfully"}
+    try:
+        await user_service.change_password(current_user, password_in.current_password, password_in.new_password)
+        return {"message": "Password updated successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

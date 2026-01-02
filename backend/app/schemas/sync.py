@@ -1,15 +1,18 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-from app.schemas.patient import PatientResponse
-from app.schemas.clinical_note import ClinicalNoteResponse
 
 class SyncRequest(BaseModel):
     last_pulled_at: Optional[int] = None
     changes: Optional[Dict[str, Dict[str, List[Any]]]] = None
 
 class PullChanges(BaseModel):
-    patients: Dict[str, List[PatientResponse]]
-    clinical_notes: Dict[str, List[ClinicalNoteResponse]]
+    """
+    Using Dict[str, List[Any]] instead of specific response models to prevent 
+    Pydantic from re-serializing integer timestamps (milliseconds) back to datetime strings.
+    WatermelonDB expects timestamps as milliseconds integers, not ISO date strings.
+    """
+    patients: Dict[str, List[Any]]
+    clinical_notes: Dict[str, List[Any]]
 
 class PullChangesResponse(BaseModel):
     changes: PullChanges

@@ -1,8 +1,8 @@
 {
-    "version": "1.0.48",
-    "build_date": "2026-01-01T22:50:00+05:30",
-    "commit": "fix-iso-timestamp-serialization",
-    "release_notes": "Fixed timestamp serialization: backend now handles ISO string format from Pydantic model_dump() in addition to datetime objects.",
+    "version": "1.0.49",
+    "build_date": "2026-01-01T23:37:00+05:30",
+    "commit": "fix-sync-timestamp-format",
+    "release_notes": "Fixed critical sync issue where dates appeared as 'Unknown Date' on client due to incorrect serialization format.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",
@@ -21,6 +21,7 @@
         "Version tracking API"
     ],
     "fixes": [
+        "CRITICAL: Fixed 'Unknown Date' issue - backend now correctly serializes datetimes to milliseconds for WatermelonDB sync",
         "Fixed OTP schema validation mismatch - changed from 6-digit to 8-digit to match OTP service",
         "Real-time password confirmation match indicator",
         "Patient form now uses context-aware error messages",

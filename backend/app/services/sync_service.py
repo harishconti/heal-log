@@ -43,7 +43,9 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         updated_notes = await updated_notes_cursor.to_list()
 
         def serialize_document(doc):
-            doc_dict = doc.model_dump()
+            # Use mode='python' to keep datetime objects as Python datetime, not ISO strings
+            # This is critical for WatermelonDB which expects milliseconds timestamps
+            doc_dict = doc.model_dump(mode='python')
             doc_dict["id"] = str(doc.id)
             # Convert datetime fields to milliseconds for WatermelonDB compatibility
             # Handle datetime objects, ISO strings, and potentially corrupted numeric values

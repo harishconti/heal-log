@@ -6,6 +6,7 @@ import { LineChart } from '../../components/charts';
 import { patientsApi } from '../../api/patients';
 import { analyticsApi } from '../../api/analytics';
 import { useAuthStore } from '../../store';
+import { logger } from '../../utils';
 import type { PatientStats, Patient } from '../../types';
 
 interface StatCardProps {
@@ -59,7 +60,7 @@ export function DashboardPage() {
           setGrowthData(growth);
         }
       } catch (err) {
-        console.error('Dashboard data fetch error:', err);
+        logger.error('Dashboard data fetch error', err);
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);

@@ -43,6 +43,10 @@ export function DashboardLayout() {
         <div
           className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          role="button"
+          aria-label="Close sidebar"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Escape' && setSidebarOpen(false)}
         />
       )}
 
@@ -63,8 +67,9 @@ export function DashboardLayout() {
           <button
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -133,8 +138,9 @@ export function DashboardLayout() {
             <button
               className="lg:hidden p-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar menu"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
 
             <div className="flex-1" />
@@ -144,6 +150,9 @@ export function DashboardLayout() {
               <button
                 className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                aria-label="User menu"
               >
                 <div className="w-9 h-9 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full flex items-center justify-center">
                   <span className="text-primary-700 font-medium text-sm">

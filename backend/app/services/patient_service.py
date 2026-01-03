@@ -281,7 +281,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         return await self.model.distinct(self.model.group, {"user_id": user_id})
 
     @cache(namespace="get_user_stats", expire=60)
-    async def get_user_stats(self, user_id: str) -> Dict[str, any]:
+    async def get_user_stats(self, user_id: str) -> Dict[str, Any]:
         """
         Retrieve statistics for a user.
         """

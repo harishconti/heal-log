@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
-import { Control, Controller } from 'react-hook-form';
+import React, { useState, useMemo } from 'react';
+import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
+import { Control, Controller, FieldValues } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, Theme } from '@/contexts/ThemeContext';
 
-interface ControlledInputProps extends TextInputProps {
-  control: Control<any>;
+interface ControlledInputProps<T extends FieldValues = FieldValues> extends TextInputProps {
+  control: Control<T>;
   name: string;
   label?: string;
   error?: string;
@@ -13,7 +13,58 @@ interface ControlledInputProps extends TextInputProps {
   iconName?: keyof typeof Ionicons.glyphMap;
 }
 
-export const ControlledInput: React.FC<ControlledInputProps> = ({
+// Base styles that don't depend on theme
+const baseStyles = StyleSheet.create({
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  leftIcon: {
+    paddingLeft: 12,
+  },
+  input: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  eyeButton: {
+    padding: 12,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+});
+
+// Dynamic style creator for theme-dependent styles
+const createDynamicStyles = (theme: Theme, hasError: boolean) => ({
+  label: {
+    color: theme.colors.text,
+  } as TextStyle,
+  inputWrapper: {
+    backgroundColor: theme.colors.background,
+    borderColor: hasError ? theme.colors.error : theme.colors.border,
+  } as ViewStyle,
+  input: {
+    color: theme.colors.text,
+  } as TextStyle,
+  errorText: {
+    color: theme.colors.error,
+  } as TextStyle,
+});
+
+export const ControlledInput = <T extends FieldValues = FieldValues>({
   control,
   name,
   label,
@@ -21,66 +72,34 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
   isPassword = false,
   iconName,
   ...textInputProps
-}) => {
+}: ControlledInputProps<T>) => {
   const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 16,
-    },
-    label: {
-      fontSize: 14,
-      fontWeight: '500',
-      marginBottom: 8,
-      color: theme.colors.text,
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 8,
-      borderWidth: 1,
-      backgroundColor: theme.colors.background,
-      borderColor: error ? theme.colors.error : theme.colors.border,
-    },
-    leftIcon: {
-      paddingLeft: 12,
-    },
-    input: {
-      flex: 1,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      fontSize: 16,
-      color: theme.colors.text,
-    },
-    eyeButton: {
-      padding: 12,
-    },
-    errorText: {
-      color: theme.colors.error,
-      fontSize: 12,
-      marginTop: 4,
-    },
-  });
+  // Memoize dynamic styles to avoid unnecessary recalculations
+  const dynamicStyles = useMemo(
+    () => createDynamicStyles(theme, !!error),
+    [theme, !!error]
+  );
 
   return (
     <Controller
       control={control}
       name={name}
       render={({ field: { onChange, onBlur, value } }) => (
-        <View style={styles.container}>
-          {label && <Text style={styles.label}>{label}</Text>}
-          <View style={styles.inputWrapper}>
+        <View style={baseStyles.container}>
+          {label && <Text style={[baseStyles.label, dynamicStyles.label]}>{label}</Text>}
+          <View style={[baseStyles.inputWrapper, dynamicStyles.inputWrapper]}>
             {iconName && (
               <Ionicons
                 name={iconName}
                 size={20}
                 color={theme.colors.textSecondary}
-                style={styles.leftIcon}
+                style={baseStyles.leftIcon}
               />
             )}
             <TextInput
-              style={styles.input}
+              style={[baseStyles.input, dynamicStyles.input]}
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
@@ -91,7 +110,7 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
             />
             {isPassword && (
               <TouchableOpacity
-                style={styles.eyeButton}
+                style={baseStyles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
               >
                 <Ionicons
@@ -102,7 +121,7 @@ export const ControlledInput: React.FC<ControlledInputProps> = ({
               </TouchableOpacity>
             )}
           </View>
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          {error && <Text style={[baseStyles.errorText, dynamicStyles.errorText]}>{error}</Text>}
         </View>
       )}
     />

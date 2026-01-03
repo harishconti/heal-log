@@ -9,6 +9,9 @@ router = APIRouter()
 # Stripe webhook secret - must be set in environment for production
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
+# Maximum payload size for webhooks (1MB - matches Stripe's typical max)
+MAX_WEBHOOK_PAYLOAD_SIZE = 1 * 1024 * 1024  # 1MB
+
 
 def verify_stripe_signature(payload: bytes, signature: str, secret: str) -> bool:
     """
@@ -46,7 +49,28 @@ async def stripe_webhook(
     """
     Webhook endpoint for Stripe with signature verification.
     """
+    # Check Content-Length header before reading body to prevent large payload attacks
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > MAX_WEBHOOK_PAYLOAD_SIZE:
+                logging.warning(f"Webhook payload too large: {content_length} bytes")
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="Payload too large"
+                )
+        except ValueError:
+            pass  # Invalid content-length header, let body reading handle it
+
     payload = await request.body()
+
+    # Validate actual payload size
+    if len(payload) > MAX_WEBHOOK_PAYLOAD_SIZE:
+        logging.warning(f"Webhook payload exceeded size limit: {len(payload)} bytes")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Payload too large"
+        )
 
     # Verify webhook signature (CRITICAL: prevents forged webhook attacks)
     if not STRIPE_WEBHOOK_SECRET:

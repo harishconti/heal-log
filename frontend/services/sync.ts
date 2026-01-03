@@ -25,9 +25,6 @@ export async function sync() {
         console.log('⬇️ [Sync] Starting pull...', { last_pulled_at: lastPulledAt });
 
         try {
-          console.warn('Syncing with token:', token ? 'Token exists' : 'No token');
-          console.warn('Sync pull timestamp:', lastPulledAt);
-
           // Wrap API call in retry logic
           const pullOperation = async () => {
             // Send as JSON body to match backend SyncRequest schema
@@ -50,14 +47,17 @@ export async function sync() {
 
           const { changes, timestamp } = response.data;
 
-          // Debug: Log full changes to see timestamp format
-          console.log('🔍 [Sync Debug] Raw changes received:', JSON.stringify(changes, null, 2));
-          if (changes.clinical_notes?.created?.length > 0) {
-            console.log('🔍 [Sync Debug] First note created_at:', changes.clinical_notes.created[0].created_at);
-            console.log('🔍 [Sync Debug] First note updated_at:', changes.clinical_notes.created[0].updated_at);
-          }
+          // Log sync summary without sensitive data
+          const changeSummary = Object.entries(changes).reduce((acc, [key, value]: [string, any]) => {
+            acc[key] = {
+              created: value?.created?.length || 0,
+              updated: value?.updated?.length || 0,
+              deleted: value?.deleted?.length || 0,
+            };
+            return acc;
+          }, {} as Record<string, { created: number; updated: number; deleted: number }>);
 
-          console.log('✅ [Sync] Successfully pulled changes:', Object.keys(changes).length);
+          console.log('✅ [Sync] Successfully pulled changes:', changeSummary);
           addBreadcrumb('sync', `Successfully pulled ${Object.keys(changes).length} changes`);
           return { changes, timestamp };
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Star, FolderOpen, FileText, TrendingUp, ArrowRight, Plus, User, Sparkles } from 'lucide-react';
+import { Users, Star, FolderOpen, FileText, TrendingUp, ArrowRight, Plus, User, Sparkles, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, Spinner, Button } from '../../components/ui';
 import { LineChart } from '../../components/charts';
 import { patientsApi } from '../../api/patients';
@@ -38,12 +38,14 @@ export function DashboardPage() {
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
   const [growthData, setGrowthData] = useState<{ date: string; count: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const isPro = user?.plan === 'pro';
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        setError(null);
         const [statsData, patientsData] = await Promise.all([
           patientsApi.getStats(),
           patientsApi.getPatients({ page_size: 5, sort_by: 'created_at', sort_order: 'desc' }),
@@ -55,8 +57,9 @@ export function DashboardPage() {
           const growth = await analyticsApi.getPatientGrowth(30);
           setGrowthData(growth);
         }
-      } catch {
-        // Handle error silently
+      } catch (err) {
+        console.error('Dashboard data fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);
       }
@@ -70,6 +73,23 @@ export function DashboardPage() {
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <Spinner size="lg" />
         <p className="text-sm text-gray-500">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-lg font-medium text-gray-900 mb-1">Failed to load dashboard</h2>
+          <p className="text-sm text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }

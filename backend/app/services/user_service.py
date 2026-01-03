@@ -50,7 +50,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         Overrides the base create method to handle password hashing.
         """
         password_hash = get_password_hash(obj_in.password)
-        user_data = obj_in.dict(exclude={"password"})
+        user_data = obj_in.model_dump(exclude={"password"})
         user_data["password_hash"] = password_hash
         user_data["id"] = str(uuid.uuid4())
         db_user = User(**user_data)
@@ -102,6 +102,39 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         except Exception as e:
             logger.error(f"[USER_SERVICE] Error updating user {user_id}: {str(e)}", exc_info=True)
             raise
+
+    async def change_password(self, user: User, current_password: str, new_password: str) -> bool:
+        """
+        Changes a user's password after verifying the current password.
+
+        Args:
+            user: The user object
+            current_password: The current password to verify
+            new_password: The new password to set
+
+        Returns:
+            True if password was changed successfully
+
+        Raises:
+            ValueError: If current password is incorrect or new password is invalid
+        """
+        logger.info(f"[USER_SERVICE] Attempting password change for user: {user.id}")
+
+        # Verify current password
+        if not user.password_hash or not verify_password(current_password, user.password_hash):
+            logger.warning(f"[USER_SERVICE] Invalid current password for user: {user.id}")
+            raise ValueError("Current password is incorrect")
+
+        # Validate new password length
+        if len(new_password) < 12:
+            raise ValueError("New password must be at least 12 characters long")
+
+        # Hash and save new password
+        user.password_hash = get_password_hash(new_password)
+        await user.save()
+
+        logger.info(f"[USER_SERVICE] Password changed successfully for user: {user.id}")
+        return True
 
 # Create a singleton instance of the service
 user_service = UserService(User)

@@ -6,6 +6,41 @@ from app.schemas.sync_event import SyncEvent
 from typing import Dict, Any, List
 from app.core.exceptions import SyncConflictException
 
+
+async def get_deleted_records(user_id: str, last_pulled_at_dt: datetime) -> Dict[str, List[str]]:
+    """
+    Fetches IDs of records that were soft-deleted since the last pull.
+    Returns a dict with 'patients' and 'clinical_notes' arrays of deleted IDs.
+    """
+    deleted_patients = []
+    deleted_notes = []
+
+    try:
+        # Find soft-deleted patients (deleted_at is set and after last pull)
+        deleted_patients_cursor = Patient.find(
+            Patient.user_id == user_id,
+            {"deleted_at": {"$exists": True, "$ne": None, "$gt": last_pulled_at_dt}}
+        )
+        async for patient in deleted_patients_cursor:
+            deleted_patients.append(str(patient.id))
+
+        # Find soft-deleted clinical notes
+        deleted_notes_cursor = ClinicalNote.find(
+            ClinicalNote.user_id == user_id,
+            {"deleted_at": {"$exists": True, "$ne": None, "$gt": last_pulled_at_dt}}
+        )
+        async for note in deleted_notes_cursor:
+            deleted_notes.append(str(note.id))
+
+    except Exception as e:
+        logging.warning(f"[SYNC] Error fetching deleted records: {e}")
+
+    return {
+        "patients": deleted_patients,
+        "clinical_notes": deleted_notes
+    }
+
+
 async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
     """
     Fetches changes from the database since the last pull time.
@@ -15,26 +50,30 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         # Convert last_pulled_at from milliseconds timestamp to a timezone-aware datetime object
         last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0, tz=timezone.utc) if last_pulled_at else datetime.min.replace(tzinfo=timezone.utc)
 
-        # Fetch created records (created AFTER last pull)
+        # Fetch created records (created AFTER last pull, excluding soft-deleted)
         created_patients_cursor = Patient.find(
             Patient.user_id == user_id,
-            Patient.created_at > last_pulled_at_dt
+            Patient.created_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
-        # Fetch updated records (created BEFORE last pull, but updated AFTER)
+        # Fetch updated records (created BEFORE last pull, but updated AFTER, excluding soft-deleted)
         updated_patients_cursor = Patient.find(
             Patient.user_id == user_id,
             Patient.created_at <= last_pulled_at_dt,
             Patient.updated_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
 
         created_notes_cursor = ClinicalNote.find(
             ClinicalNote.user_id == user_id,
-            ClinicalNote.created_at > last_pulled_at_dt
+            ClinicalNote.created_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
         updated_notes_cursor = ClinicalNote.find(
             ClinicalNote.user_id == user_id,
             ClinicalNote.created_at <= last_pulled_at_dt,
             ClinicalNote.updated_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
 
         created_patients = await created_patients_cursor.to_list()
@@ -93,18 +132,21 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                     logging.info(f"[SYNC DEBUG] {field} final value: {doc_dict[field]}")
             return doc_dict
 
+        # Fetch deleted record IDs since last pull
+        deleted_records = await get_deleted_records(user_id, last_pulled_at_dt)
+
         await SyncEvent(user_id=user_id, success=True).insert()
 
         return {
             "patients": {
                 "created": [serialize_document(p) for p in created_patients],
                 "updated": [serialize_document(p) for p in updated_patients],
-                "deleted": []
+                "deleted": deleted_records["patients"]
             },
             "clinical_notes": {
                 "created": [serialize_document(n) for n in created_notes],
                 "updated": [serialize_document(n) for n in updated_notes],
-                "deleted": []
+                "deleted": deleted_records["clinical_notes"]
             }
         }
     except Exception as e:
@@ -234,22 +276,25 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                         note_data['updated_at'] = datetime.now(timezone.utc)
                         await note.update({"$set": note_data})
 
-        # Process deleted records with batch operations
+        # Process deleted records with soft delete (mark as deleted instead of removing)
+        # This allows deleted records to be synced to other clients
         if 'patients' in changes and 'deleted' in changes['patients']:
             patient_ids_to_delete = changes['patients']['deleted']
             if patient_ids_to_delete:
-                # Batch delete all patients that belong to this user
+                # Soft delete: set deleted_at timestamp instead of removing
+                current_time = datetime.now(timezone.utc)
                 await Patient.find(
                     {"_id": {"$in": patient_ids_to_delete}, "user_id": user_id}
-                ).delete()
+                ).update_many({"$set": {"deleted_at": current_time}})
 
         if 'clinical_notes' in changes and 'deleted' in changes['clinical_notes']:
             note_ids_to_delete = changes['clinical_notes']['deleted']
             if note_ids_to_delete:
-                # Batch delete all notes that belong to this user
+                # Soft delete: set deleted_at timestamp instead of removing
+                current_time = datetime.now(timezone.utc)
                 await ClinicalNote.find(
                     {"_id": {"$in": note_ids_to_delete}, "user_id": user_id}
-                ).delete()
+                ).update_many({"$set": {"deleted_at": current_time}})
 
         await SyncEvent(user_id=user_id, success=True).insert()
     except Exception as e:

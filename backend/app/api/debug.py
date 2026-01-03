@@ -67,7 +67,7 @@ async def sentry_test(current_user=Depends(require_role(UserRole.ADMIN))):
     raise Exception("Sentry test exception from debug endpoint.")
 
 
-@router.post("/repair-timestamps")
+@router.post("/repair-timestamps", dependencies=[Depends(check_debug_enabled)])
 async def repair_timestamps(current_user=Depends(get_current_user)):
     """
     Repairs corrupted timestamps in clinical_notes and patients collections.

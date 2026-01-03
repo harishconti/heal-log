@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { addBreadcrumb } from '@/utils/monitoring';
 
@@ -23,6 +23,9 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         type: null,
     });
 
+    // Use ref to track previous state for comparison without causing re-renders
+    const prevStateRef = useRef<NetworkContextType>(networkState);
+
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
             const newState = {
@@ -33,9 +36,10 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
             // Only update if state actually changed to avoid re-renders
             if (
-                newState.isConnected !== networkState.isConnected ||
-                newState.isInternetReachable !== networkState.isInternetReachable
+                newState.isConnected !== prevStateRef.current.isConnected ||
+                newState.isInternetReachable !== prevStateRef.current.isInternetReachable
             ) {
+                prevStateRef.current = newState;
                 setNetworkState(newState);
                 addBreadcrumb('network', `Network state changed: ${newState.isConnected ? 'Online' : 'Offline'}`);
             }
@@ -44,7 +48,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return () => {
             unsubscribe();
         };
-    }, [networkState]);
+    }, []); // Empty dependency array - effect runs once on mount
 
     return (
         <NetworkContext.Provider value={networkState}>

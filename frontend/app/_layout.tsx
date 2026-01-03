@@ -35,7 +35,7 @@ const AppLayout = () => {
     };
 
     checkFirstLaunch();
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {

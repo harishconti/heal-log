@@ -71,7 +71,7 @@ function Index({ patients, groups, totalPatientCount }) {
     } else if (isAuthenticated) {
       trackScreenView('index');
     }
-  }, [authLoading, isAuthenticated]);
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSync = useCallback(async (showRefresh = false) => {
     if (!isAuthenticated) return;

@@ -74,16 +74,7 @@ export default function AddPatientScreen() {
   const location = watch('location', 'Clinic');
   const medicalGroup = watch('group', 'general');
 
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login');
-    } else {
-      // Fetch all unique groups from database
-      fetchAllGroups();
-    }
-  }, [isAuthenticated, router]);
-
-  const fetchAllGroups = async () => {
+  const fetchAllGroups = React.useCallback(async () => {
     try {
       const patients = await database.collections.get<Patient>('patients').query().fetch();
       const uniqueGroups = [...new Set(patients.map(p => p.group).filter(Boolean))];
@@ -94,7 +85,16 @@ export default function AddPatientScreen() {
       console.error('Error fetching groups:', error);
       setAllGroups(MEDICAL_GROUPS);
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/login');
+    } else {
+      // Fetch all unique groups from database
+      fetchAllGroups();
+    }
+  }, [isAuthenticated, router, fetchAllGroups]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

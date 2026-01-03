@@ -1,8 +1,11 @@
 import os
+import logging
 from pydantic import validator, Field
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 # --- Environment Loading ---
 # Determine the root directory and load the appropriate .env file
@@ -14,10 +17,10 @@ if ENV == "development":
     env_file = ROOT_DIR / ".env"
     if env_file.exists():
         from dotenv import load_dotenv
-        print(f"Loading environment variables from {env_file}")
+        logger.info(f"Loading environment variables from {env_file}")
         load_dotenv(env_file)
     else:
-        print("Running in development, but .env file not found.")
+        logger.warning("Running in development, but .env file not found.")
 
 class Settings(BaseSettings):
     # --- Core Settings ---

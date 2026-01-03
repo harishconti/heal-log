@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../../api';
 import { Button, Input, Select } from '../../components/ui';
+import { SPECIALTY_OPTIONS } from '../../constants';
 
 const registerSchema = z
   .object({
@@ -27,19 +28,6 @@ const registerSchema = z
   });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
-
-const specialties = [
-  { value: '', label: 'Select specialty (optional)' },
-  { value: 'General Practice', label: 'General Practice' },
-  { value: 'Cardiology', label: 'Cardiology' },
-  { value: 'Dermatology', label: 'Dermatology' },
-  { value: 'Neurology', label: 'Neurology' },
-  { value: 'Orthopedics', label: 'Orthopedics' },
-  { value: 'Pediatrics', label: 'Pediatrics' },
-  { value: 'Psychiatry', label: 'Psychiatry' },
-  { value: 'Surgery', label: 'Surgery' },
-  { value: 'Other', label: 'Other' },
-];
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -112,7 +100,7 @@ export function RegisterPage() {
 
           <Select
             label="Specialty"
-            options={specialties}
+            options={SPECIALTY_OPTIONS}
             error={errors.medical_specialty?.message}
             {...register('medical_specialty')}
           />

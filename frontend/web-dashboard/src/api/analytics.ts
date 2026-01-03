@@ -18,12 +18,14 @@ export interface Demographics {
 
 export const analyticsApi = {
   getPatientGrowth: async (days = 30): Promise<GrowthData[]> => {
-    const response = await apiClient.get<GrowthData[]>(`/analytics/patient-growth?days=${days}`);
+    const params = new URLSearchParams({ days: String(days) });
+    const response = await apiClient.get<GrowthData[]>(`/analytics/patient-growth?${params}`);
     return response.data;
   },
 
   getNotesActivity: async (days = 30): Promise<GrowthData[]> => {
-    const response = await apiClient.get<GrowthData[]>(`/analytics/notes-activity?days=${days}`);
+    const params = new URLSearchParams({ days: String(days) });
+    const response = await apiClient.get<GrowthData[]>(`/analytics/notes-activity?${params}`);
     return response.data;
   },
 

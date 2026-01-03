@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../types';
+import { tokenManager } from '../api/client';
 
 interface AuthState {
   user: User | null;
@@ -22,14 +23,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
 
   login: (user, accessToken, refreshToken) => {
-    sessionStorage.setItem('access_token', accessToken);
-    sessionStorage.setItem('refresh_token', refreshToken);
+    // Use centralized token manager for consistent token handling
+    tokenManager.setTokens(accessToken, refreshToken);
     set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: () => {
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
+    // Use centralized token manager for consistent token handling
+    tokenManager.clearTokens();
     set({ user: null, isAuthenticated: false, isLoading: false });
   },
 

@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { logger } from '../utils/logger';
 
 /**
  * API Client Configuration
@@ -33,8 +34,8 @@ export const tokenManager = {
   getAccessToken: (): string | null => {
     try {
       return sessionStorage.getItem(TOKEN_KEYS.ACCESS);
-    } catch {
-      console.error('Failed to access sessionStorage');
+    } catch (error) {
+      logger.error('Failed to access sessionStorage', error);
       return null;
     }
   },
@@ -42,8 +43,8 @@ export const tokenManager = {
   getRefreshToken: (): string | null => {
     try {
       return sessionStorage.getItem(TOKEN_KEYS.REFRESH);
-    } catch {
-      console.error('Failed to access sessionStorage');
+    } catch (error) {
+      logger.error('Failed to access sessionStorage', error);
       return null;
     }
   },
@@ -53,7 +54,7 @@ export const tokenManager = {
       sessionStorage.setItem(TOKEN_KEYS.ACCESS, accessToken);
       sessionStorage.setItem(TOKEN_KEYS.REFRESH, refreshToken);
     } catch (error) {
-      console.error('Failed to store tokens:', error);
+      logger.error('Failed to store tokens', error);
     }
   },
 
@@ -64,7 +65,7 @@ export const tokenManager = {
       // Clear any other session data
       sessionStorage.removeItem('user');
     } catch (error) {
-      console.error('Failed to clear tokens:', error);
+      logger.error('Failed to clear tokens', error);
     }
   },
 
@@ -135,7 +136,7 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch (refreshError) {
           // Clear tokens and redirect to login
-          console.error('Token refresh failed:', refreshError);
+          logger.error('Token refresh failed', refreshError);
           tokenManager.clearTokens();
           window.location.href = '/login';
           return Promise.reject(refreshError);

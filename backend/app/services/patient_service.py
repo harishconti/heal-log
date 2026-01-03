@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from .base_service import BaseService
 from fastapi_cache import FastAPICache
+from app.db.session import get_database
 
 
 def sanitize_regex_input(user_input: str, max_length: int = 100) -> str:
@@ -32,7 +33,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
     async def get_next_patient_id(self, user_id: str, max_retries: int = 5) -> str:
         """
-        Generates the next patient ID for a given user with retry logic to handle race conditions.
+        Generates the next patient ID for a given user using atomic MongoDB operations.
         Format: PTYYYYMM001 (e.g., PT202501001 for first patient in Jan 2025)
 
         The ID includes:
@@ -41,55 +42,50 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         - MM: 2-digit month
         - 001: 3-digit sequential number (resets each month)
 
-        Uses retry logic to handle TOCTOU race conditions - if a duplicate key error occurs,
-        the function will retry with a higher sequence number.
+        Uses MongoDB's findOneAndUpdate with upsert for atomic counter increment,
+        eliminating race conditions entirely.
         """
         now = datetime.now(timezone.utc)
         year_month = now.strftime("%Y%m")  # e.g., "202501"
         prefix = f"PT{year_month}"  # e.g., "PT202501"
+        counter_key = f"{user_id}_{year_month}"
+
+        db = await get_database()
+        counters_collection = db.get_collection("patient_id_counters")
 
         for attempt in range(max_retries):
-            # Find max sequence number using aggregation for atomic read
-            pipeline = [
-                {"$match": {
-                    "user_id": user_id,
-                    "patient_id": {"$regex": f"^{prefix}"}
-                }},
-                {"$project": {
-                    "seq": {"$toInt": {"$substr": ["$patient_id", 8, 3]}}
-                }},
-                {"$group": {
-                    "_id": None,
-                    "max_seq": {"$max": "$seq"}
-                }}
-            ]
+            try:
+                # Atomically increment and return the new counter value
+                result = await counters_collection.find_one_and_update(
+                    {"_id": counter_key},
+                    {"$inc": {"sequence": 1}},
+                    upsert=True,
+                    return_document=True  # Return the document after update
+                )
 
-            result = await self.model.aggregate(pipeline).to_list()
+                next_seq = result["sequence"]
+                candidate_id = f"{prefix}{next_seq:03d}"
 
-            if not result or result[0].get("max_seq") is None:
-                next_seq = 1
-            else:
-                next_seq = result[0]["max_seq"] + 1
+                # Verify the ID doesn't already exist (belt and suspenders check for edge cases)
+                existing = await self.model.find_one(
+                    self.model.user_id == user_id,
+                    self.model.patient_id == candidate_id
+                )
 
-            # Add attempt offset to handle retries after duplicate key errors
-            next_seq += attempt
+                if not existing:
+                    return candidate_id
 
-            candidate_id = f"{prefix}{next_seq:03d}"
+                # ID exists (shouldn't happen with atomic counter, but handle edge cases)
+                logging.warning(f"[PATIENT_SERVICE] Patient ID collision detected for {candidate_id}, retrying...")
 
-            # Verify the ID doesn't already exist (belt and suspenders check)
-            existing = await self.model.find_one(
-                self.model.user_id == user_id,
-                self.model.patient_id == candidate_id
-            )
+            except Exception as e:
+                logging.error(f"[PATIENT_SERVICE] Error generating patient ID: {e}")
+                if attempt == max_retries - 1:
+                    raise
 
-            if not existing:
-                return candidate_id
-
-            # ID exists, try next sequence on next iteration
-            logging.warning(f"[PATIENT_SERVICE] Patient ID collision detected for {candidate_id}, retrying...")
-
-        # If all retries exhausted, use timestamp-based fallback
-        fallback_id = f"{prefix}{int(datetime.now().timestamp()) % 1000:03d}"
+        # If all retries exhausted, use timestamp-based fallback with microseconds for uniqueness
+        fallback_seq = int(datetime.now().timestamp() * 1000) % 100000
+        fallback_id = f"{prefix}{fallback_seq:05d}"
         logging.warning(f"[PATIENT_SERVICE] Using fallback patient ID: {fallback_id}")
         return fallback_id
 
@@ -285,7 +281,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         return await self.model.distinct(self.model.group, {"user_id": user_id})
 
     @cache(namespace="get_user_stats", expire=60)
-    async def get_user_stats(self, user_id: str) -> Dict[str, any]:
+    async def get_user_stats(self, user_id: str) -> Dict[str, Any]:
         """
         Retrieve statistics for a user.
         """

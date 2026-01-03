@@ -6,6 +6,7 @@ import { LineChart } from '../../components/charts';
 import { patientsApi } from '../../api/patients';
 import { analyticsApi } from '../../api/analytics';
 import { useAuthStore } from '../../store';
+import { logger } from '../../utils';
 import type { PatientStats, Patient } from '../../types';
 
 interface StatCardProps {
@@ -53,12 +54,13 @@ export function DashboardPage() {
         setStats(statsData);
         setRecentPatients(patientsData.items);
 
-        if (isPro) {
+        // Check isPro inside the effect to avoid stale closure
+        if (user?.plan === 'pro') {
           const growth = await analyticsApi.getPatientGrowth(30);
           setGrowthData(growth);
         }
       } catch (err) {
-        console.error('Dashboard data fetch error:', err);
+        logger.error('Dashboard data fetch error', err);
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);
@@ -66,7 +68,7 @@ export function DashboardPage() {
     };
 
     fetchDashboardData();
-  }, [isPro]);
+  }, [user?.plan]);
 
   if (isLoading) {
     return (

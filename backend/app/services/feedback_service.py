@@ -1,5 +1,7 @@
 import os
 import base64
+import logging
+import re
 from uuid import uuid4
 from fastapi import BackgroundTasks
 from app.services.base_service import BaseService
@@ -7,15 +9,76 @@ from app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
 from app.core.config import settings
 from app.db.session import get_database
 
+logger = logging.getLogger(__name__)
+
+# Maximum file size for screenshots (5MB)
+MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024
+# Allowed image magic bytes (PNG, JPEG, GIF, WebP)
+ALLOWED_IMAGE_SIGNATURES = [
+    b'\x89PNG\r\n\x1a\n',  # PNG
+    b'\xff\xd8\xff',       # JPEG
+    b'GIF87a',             # GIF87a
+    b'GIF89a',             # GIF89a
+    b'RIFF',               # WebP (starts with RIFF, followed by size, then WEBP)
+]
+
 async def get_feedback_collection():
     db = await get_database()
     return db.get_collection("beta_feedback")
+
+
+def _validate_base64_image(base64_string: str) -> bytes:
+    """
+    Validates and decodes a base64-encoded image.
+
+    Raises:
+        ValueError: If the base64 string is invalid or the image exceeds size limits
+    """
+    # Remove data URL prefix if present (e.g., "data:image/png;base64,")
+    if ',' in base64_string:
+        base64_string = base64_string.split(',', 1)[1]
+
+    # Validate base64 format
+    if not re.match(r'^[A-Za-z0-9+/]*={0,2}$', base64_string):
+        raise ValueError("Invalid base64 format")
+
+    try:
+        decoded_data = base64.b64decode(base64_string)
+    except Exception as e:
+        raise ValueError(f"Failed to decode base64 data: {e}")
+
+    # Check file size
+    if len(decoded_data) > MAX_SCREENSHOT_SIZE:
+        raise ValueError(f"Screenshot exceeds maximum size of {MAX_SCREENSHOT_SIZE // (1024 * 1024)}MB")
+
+    # Validate image signature (magic bytes)
+    is_valid_image = False
+    for sig in ALLOWED_IMAGE_SIGNATURES:
+        if decoded_data.startswith(sig):
+            is_valid_image = True
+            break
+
+    # Special check for WebP (RIFF....WEBP)
+    if decoded_data.startswith(b'RIFF') and len(decoded_data) > 12:
+        if decoded_data[8:12] == b'WEBP':
+            is_valid_image = True
+
+    if not is_valid_image:
+        raise ValueError("Invalid image format. Only PNG, JPEG, GIF, and WebP are allowed")
+
+    return decoded_data
+
 
 class FeedbackService(BaseService):
     async def create_feedback(self, feedback_data: BetaFeedbackIn, background_tasks: BackgroundTasks) -> BetaFeedback:
         screenshot_url = None
         if feedback_data.screenshot:
-            screenshot_data = base64.b64decode(feedback_data.screenshot)
+            try:
+                screenshot_data = _validate_base64_image(feedback_data.screenshot)
+            except ValueError as e:
+                logger.warning(f"[FEEDBACK_SERVICE] Invalid screenshot upload: {e}")
+                raise ValueError(f"Screenshot validation failed: {e}")
+
             screenshot_filename = f"{uuid4()}.png"
             screenshot_path = os.path.join(settings.STATIC_DIR, screenshot_filename)
 
@@ -40,7 +103,7 @@ class FeedbackService(BaseService):
         from email.mime.multipart import MIMEMultipart
 
         if not all([settings.EMAIL_HOST, settings.EMAIL_PORT, settings.EMAIL_USER, settings.EMAIL_PASSWORD, settings.EMAIL_TO]):
-            print("Email settings are not configured. Skipping email notification.")
+            logger.info("[FEEDBACK_SERVICE] Email settings are not configured. Skipping email notification.")
             return
 
         message = MIMEMultipart()
@@ -65,8 +128,8 @@ class FeedbackService(BaseService):
             server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
             server.sendmail(settings.EMAIL_USER, settings.EMAIL_TO, message.as_string())
             server.quit()
-            print("Feedback email sent successfully.")
+            logger.info("[FEEDBACK_SERVICE] Feedback email sent successfully.")
         except Exception as e:
-            print(f"Failed to send feedback email: {e}")
+            logger.error(f"[FEEDBACK_SERVICE] Failed to send feedback email: {e}")
 
 feedback_service = FeedbackService(get_feedback_collection)

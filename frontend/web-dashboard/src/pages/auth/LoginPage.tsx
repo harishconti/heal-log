@@ -7,6 +7,7 @@ import { Mail, ArrowRight } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
 import { Button, Input } from '../../components/ui';
+import { getErrorMessage, getErrorStatus, isAxiosError } from '../../utils/errorUtils';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -46,12 +47,14 @@ export function LoginPage() {
       login(response.user, response.access_token, response.refresh_token);
       navigate('/dashboard');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string }; status?: number } };
-      if (error.response?.status === 403 && error.response?.data?.detail?.includes('verify')) {
+      const status = getErrorStatus(err);
+      const message = getErrorMessage(err, 'Invalid email or password');
+
+      if (status === 403 && isAxiosError(err) && err.response?.data?.detail?.includes('verify')) {
         setNeedsVerification(true);
         setVerificationEmail(data.email);
       } else {
-        setError(error.response?.data?.detail || 'Invalid email or password');
+        setError(message);
       }
     }
   };

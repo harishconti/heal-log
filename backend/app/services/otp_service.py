@@ -81,8 +81,8 @@ class OTPService:
         if now > expires_at:
             return False, "OTP has expired. Please request a new one."
         
-        # Verify code
-        if user.otp_code != otp_code:
+        # Verify code using constant-time comparison to prevent timing attacks
+        if not secrets.compare_digest(user.otp_code, otp_code):
             remaining = settings.OTP_MAX_ATTEMPTS - user.otp_attempts
             return False, f"Invalid OTP. {remaining} attempts remaining."
         

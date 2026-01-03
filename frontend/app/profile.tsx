@@ -204,9 +204,9 @@ export default function ProfileScreen() {
   };
 
   const saveProfilePhoto = async (photo: string) => {
+    const previousPhoto = userPhoto;
     try {
       setUpdatingPhoto(true);
-      const previousPhoto = userPhoto;
       setUserPhoto(photo);
 
       // Save profile photo to server
@@ -226,13 +226,14 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('Error saving profile photo:', error);
       Alert.alert('Error', 'Failed to save profile photo. Please try again.');
-      setUserPhoto(userPhoto); // Revert to previous on error
+      setUserPhoto(previousPhoto); // Revert to previous photo on error
     } finally {
       setUpdatingPhoto(false);
     }
   };
 
   const removeProfilePhoto = async () => {
+    const previousPhoto = userPhoto;
     try {
       setUpdatingPhoto(true);
       setUserPhoto('');
@@ -252,6 +253,7 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('Error removing profile photo:', error);
       Alert.alert('Error', 'Failed to remove profile photo');
+      setUserPhoto(previousPhoto); // Revert to previous photo on error
     } finally {
       setUpdatingPhoto(false);
     }

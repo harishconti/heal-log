@@ -17,6 +17,7 @@ import { Card, CardHeader, Button, Badge, Spinner, Modal, Textarea, Select } fro
 import { usePatient } from '../../hooks';
 import { patientsApi, type CreateNoteData } from '../../api/patients';
 import type { ClinicalNote } from '../../types';
+import { sanitizeContent } from '../../utils/sanitize';
 
 export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -282,7 +283,7 @@ export function PatientDetailPage() {
                         {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     </div>
-                    <p className="text-gray-900 whitespace-pre-wrap">{note.content}</p>
+                    <p className="text-gray-900 whitespace-pre-wrap">{sanitizeContent(note.content)}</p>
                   </div>
                 ))}
               </div>

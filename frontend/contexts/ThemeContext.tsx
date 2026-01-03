@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore';
 export interface Theme {
   colors: {
     primary: string;
+    primaryMuted: string;
     secondary: string;
     background: string;
     surface: string;
@@ -53,6 +54,7 @@ export interface Theme {
 const lightTheme: Theme = {
   colors: {
     primary: '#5b7cf9',
+    primaryMuted: '#a3b8fc',
     secondary: '#6b7280',
     background: '#f9fafb',
     surface: '#ffffff',
@@ -101,6 +103,7 @@ const darkTheme: Theme = {
   ...lightTheme,
   colors: {
     primary: '#7c9dff',
+    primaryMuted: '#4a6bcc',
     secondary: '#9ca3af',
     background: '#0f1115',
     surface: '#1a1d24',

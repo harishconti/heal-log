@@ -50,7 +50,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         Overrides the base create method to handle password hashing.
         """
         password_hash = get_password_hash(obj_in.password)
-        user_data = obj_in.dict(exclude={"password"})
+        user_data = obj_in.model_dump(exclude={"password"})
         user_data["password_hash"] = password_hash
         user_data["id"] = str(uuid.uuid4())
         db_user = User(**user_data)

@@ -60,14 +60,17 @@ export function usePatients(initialFilters: PatientFilters = {}) {
 export function usePatientStats() {
   const [stats, setStats] = useState<PatientStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await patientsApi.getStats();
         setStats(data);
-      } catch {
-        // Silently fail
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch patient stats:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch stats');
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +79,7 @@ export function usePatientStats() {
     fetchStats();
   }, []);
 
-  return { stats, isLoading };
+  return { stats, isLoading, error };
 }
 
 export function usePatient(id: string) {

@@ -30,9 +30,9 @@ def sanitize_regex_input(user_input: str, max_length: int = 100) -> str:
 
 class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
-    async def get_next_patient_id(self, user_id: str) -> str:
+    async def get_next_patient_id(self, user_id: str, max_retries: int = 5) -> str:
         """
-        Generates the next patient ID for a given user.
+        Generates the next patient ID for a given user with retry logic to handle race conditions.
         Format: PTYYYYMM001 (e.g., PT202501001 for first patient in Jan 2025)
 
         The ID includes:
@@ -40,30 +40,58 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         - YYYY: 4-digit year
         - MM: 2-digit month
         - 001: 3-digit sequential number (resets each month)
+
+        Uses retry logic to handle TOCTOU race conditions - if a duplicate key error occurs,
+        the function will retry with a higher sequence number.
         """
         now = datetime.now(timezone.utc)
         year_month = now.strftime("%Y%m")  # e.g., "202501"
         prefix = f"PT{year_month}"  # e.g., "PT202501"
 
-        # Find all patients for this user with current month's prefix
-        patients_this_month = await self.model.find(
-            self.model.user_id == user_id,
-            {"patient_id": {"$regex": f"^{prefix}"}}
-        ).to_list()
+        for attempt in range(max_retries):
+            # Find max sequence number using aggregation for atomic read
+            pipeline = [
+                {"$match": {
+                    "user_id": user_id,
+                    "patient_id": {"$regex": f"^{prefix}"}
+                }},
+                {"$project": {
+                    "seq": {"$toInt": {"$substr": ["$patient_id", 8, 3]}}
+                }},
+                {"$group": {
+                    "_id": None,
+                    "max_seq": {"$max": "$seq"}
+                }}
+            ]
 
-        if not patients_this_month:
-            return f"{prefix}001"
+            result = await self.model.aggregate(pipeline).to_list()
 
-        # Extract sequence numbers and find the max
-        max_seq = 0
-        for patient in patients_this_month:
-            try:
-                seq = int(patient.patient_id[8:])  # Extract last 3 digits
-                max_seq = max(max_seq, seq)
-            except (ValueError, IndexError):
-                continue
+            if not result or result[0].get("max_seq") is None:
+                next_seq = 1
+            else:
+                next_seq = result[0]["max_seq"] + 1
 
-        return f"{prefix}{max_seq + 1:03d}"
+            # Add attempt offset to handle retries after duplicate key errors
+            next_seq += attempt
+
+            candidate_id = f"{prefix}{next_seq:03d}"
+
+            # Verify the ID doesn't already exist (belt and suspenders check)
+            existing = await self.model.find_one(
+                self.model.user_id == user_id,
+                self.model.patient_id == candidate_id
+            )
+
+            if not existing:
+                return candidate_id
+
+            # ID exists, try next sequence on next iteration
+            logging.warning(f"[PATIENT_SERVICE] Patient ID collision detected for {candidate_id}, retrying...")
+
+        # If all retries exhausted, use timestamp-based fallback
+        fallback_id = f"{prefix}{int(datetime.now().timestamp()) % 1000:03d}"
+        logging.warning(f"[PATIENT_SERVICE] Using fallback patient ID: {fallback_id}")
+        return fallback_id
 
     async def _clear_patient_caches(self) -> None:
         """

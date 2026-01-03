@@ -3,6 +3,7 @@ import { database } from '@/models/database';
 import { addBreadcrumb } from '@/utils/monitoring';
 import * as SecureStore from 'expo-secure-store';
 import api from './api';
+import { retrySyncOperation } from '@/utils/retry';
 
 export async function sync() {
   try {
@@ -26,9 +27,6 @@ export async function sync() {
         try {
           console.warn('Syncing with token:', token ? 'Token exists' : 'No token');
           console.warn('Sync pull timestamp:', lastPulledAt);
-
-          // Import retry utility
-          const { retrySyncOperation } = require('@/utils/retry');
 
           // Wrap API call in retry logic
           const pullOperation = async () => {

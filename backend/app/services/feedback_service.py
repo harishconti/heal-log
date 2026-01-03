@@ -25,7 +25,7 @@ class FeedbackService(BaseService):
             screenshot_url = f"/static/{screenshot_filename}"
 
         feedback = BetaFeedback(
-            **feedback_data.dict(exclude={"screenshot"}),
+            **feedback_data.model_dump(exclude={"screenshot"}),
             screenshot_url=screenshot_url
         )
         await feedback.insert()
@@ -54,7 +54,7 @@ class FeedbackService(BaseService):
         Type: {feedback.feedback_type}
         Description: {feedback.description}
         Steps to Reproduce: {feedback.steps_to_reproduce or 'N/A'}
-        Device Info: {feedback.device_info.dict()}
+        Device Info: {feedback.device_info.model_dump()}
         Screenshot: {settings.BASE_URL}{feedback.screenshot_url if feedback.screenshot_url else 'N/A'}
         """
         message.attach(MIMEText(body, "plain"))

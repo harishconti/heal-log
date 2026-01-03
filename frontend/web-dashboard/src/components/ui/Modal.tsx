@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,22 +9,38 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+// Track number of open modals for proper body overflow handling
+let openModalCount = 0;
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  // Use ref to avoid stale closure issues with onClose callback
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onCloseRef.current();
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Increment open modal count and set overflow
+    openModalCount++;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      // Decrement open modal count
+      openModalCount--;
+      // Only restore overflow when all modals are closed
+      if (openModalCount === 0) {
+        document.body.style.overflow = 'unset';
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, handleEscape]);
 
   if (!isOpen) return null;
 

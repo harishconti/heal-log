@@ -53,7 +53,8 @@ export function DashboardPage() {
         setStats(statsData);
         setRecentPatients(patientsData.items);
 
-        if (isPro) {
+        // Check isPro inside the effect to avoid stale closure
+        if (user?.plan === 'pro') {
           const growth = await analyticsApi.getPatientGrowth(30);
           setGrowthData(growth);
         }
@@ -66,7 +67,7 @@ export function DashboardPage() {
     };
 
     fetchDashboardData();
-  }, [isPro]);
+  }, [user?.plan]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi.responses import StreamingResponse
 from app.core.security import get_current_user
 from app.schemas.user import User
@@ -11,6 +11,9 @@ import io
 import logging
 
 router = APIRouter()
+
+# Maximum records to export at once to prevent memory exhaustion
+MAX_EXPORT_RECORDS = 10000
 
 
 def generate_patients_csv(patients: list) -> str:
@@ -77,14 +80,18 @@ def generate_notes_csv(notes: list, patients_by_id: dict) -> str:
 @limiter.limit("5/minute")
 async def export_patients(
     request: Request,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(default=MAX_EXPORT_RECORDS, le=MAX_EXPORT_RECORDS, ge=1, description="Maximum records to export")
 ):
     """
-    Export all patient records as CSV.
+    Export patient records as CSV with configurable limit.
     This endpoint supports GDPR data portability requirements.
+    Maximum export size is 10,000 records per request.
     """
     try:
-        patients = await Patient.find(Patient.user_id == current_user.id).to_list()
+        patients = await Patient.find(
+            Patient.user_id == current_user.id
+        ).limit(limit).to_list()
 
         csv_content = generate_patients_csv(patients)
 
@@ -110,15 +117,19 @@ async def export_patients(
 @limiter.limit("5/minute")
 async def export_notes(
     request: Request,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(default=MAX_EXPORT_RECORDS, le=MAX_EXPORT_RECORDS, ge=1, description="Maximum records to export")
 ):
     """
-    Export all clinical notes as CSV.
+    Export clinical notes as CSV with configurable limit.
     This endpoint supports GDPR data portability requirements.
+    Maximum export size is 10,000 records per request.
     """
     try:
-        # Fetch all notes and patients for the user
-        notes = await ClinicalNote.find(ClinicalNote.user_id == current_user.id).to_list()
+        # Fetch notes with limit and patients for the user
+        notes = await ClinicalNote.find(
+            ClinicalNote.user_id == current_user.id
+        ).limit(limit).to_list()
         patients = await Patient.find(Patient.user_id == current_user.id).to_list()
 
         # Create a lookup dict for patient names
@@ -148,16 +159,22 @@ async def export_notes(
 @limiter.limit("2/minute")
 async def export_all_data(
     request: Request,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(default=MAX_EXPORT_RECORDS, le=MAX_EXPORT_RECORDS, ge=1, description="Maximum records per type to export")
 ):
     """
     Export all user data as a combined CSV (GDPR "Download my data").
     Returns a single CSV with patients followed by notes.
+    Maximum export size is 10,000 records per type.
     """
     try:
-        # Fetch all data
-        patients = await Patient.find(Patient.user_id == current_user.id).to_list()
-        notes = await ClinicalNote.find(ClinicalNote.user_id == current_user.id).to_list()
+        # Fetch data with limits
+        patients = await Patient.find(
+            Patient.user_id == current_user.id
+        ).limit(limit).to_list()
+        notes = await ClinicalNote.find(
+            ClinicalNote.user_id == current_user.id
+        ).limit(limit).to_list()
 
         patients_by_id = {p.id: p for p in patients}
 
@@ -179,6 +196,7 @@ async def export_all_data(
         output.write(f"User ID: {current_user.id}\n")
         output.write(f"Total Patients: {len(patients)}\n")
         output.write(f"Total Clinical Notes: {len(notes)}\n")
+        output.write(f"Export Limit: {limit}\n")
 
         filename = f"full_data_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 

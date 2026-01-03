@@ -74,8 +74,12 @@ export const patientsApi = {
 
   // Clinical Notes
   getNotes: async (patientId: string, page = 1, pageSize = 20): Promise<PaginatedResponse<ClinicalNote>> => {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    });
     const response = await apiClient.get<PaginatedResponse<ClinicalNote>>(
-      `/patients/${patientId}/notes?page=${page}&page_size=${pageSize}`
+      `/patients/${encodeURIComponent(patientId)}/notes?${params}`
     );
     return response.data;
   },

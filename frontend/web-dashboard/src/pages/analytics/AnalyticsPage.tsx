@@ -24,8 +24,9 @@ export function AnalyticsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch {
-      // Handle error
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export analytics. Please try again.');
     } finally {
       setIsExporting(false);
     }

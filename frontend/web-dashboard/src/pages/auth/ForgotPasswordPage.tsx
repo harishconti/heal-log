@@ -30,7 +30,10 @@ export function ForgotPasswordPage() {
     try {
       await authApi.forgotPassword(data.email);
       setIsSubmitted(true);
-    } catch {
+    } catch (err) {
+      // For security, we still show the same message to prevent email enumeration
+      // But log the error for debugging purposes
+      console.error('Forgot password error:', err);
       setIsSubmitted(true);
     }
   };

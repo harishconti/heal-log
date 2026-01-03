@@ -104,7 +104,7 @@ async def get_patient_groups(request: Request, current_user: User = Depends(get_
         groups = await patient_service.get_patient_groups(current_user.id)
         return {"success": True, "groups": groups}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logging.error(f"Error fetching groups for user {current_user.id}: {e}", exc_info=True)
         raise HTTPException(
@@ -122,7 +122,7 @@ async def get_statistics(request: Request, current_user: User = Depends(get_curr
         stats = await patient_service.get_user_stats(current_user.id)
         return {"success": True, "stats": stats}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logging.error(f"Error fetching stats for user {current_user.id}: {e}", exc_info=True)
         raise HTTPException(

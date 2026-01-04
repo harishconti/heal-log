@@ -7,39 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
-### Added
-- Delete clinical notes endpoint (`DELETE /api/patients/{id}/notes/{note_id}`)
-  - Doctor-only access with rate limiting (20/minute)
-  - Returns appropriate 404 errors for missing patient or note
+## [1.0.49] - 2026-01-01 (Current)
 
 ### Fixed
-- **Critical:** Notes sync validation error - added `initial` visit type to backend schema
+- **Critical:** Fixed 'Unknown Date' issue - backend now correctly serializes datetimes to milliseconds for WatermelonDB sync
+- **Critical:** Fixed notes sync validation error - added `initial` visit type to backend schema
   - Frontend was creating notes with `visit_type: "initial"` but backend only accepted `regular`, `follow-up`, `emergency`
   - This caused sync push failures, preventing notes from persisting after app reinstall
 - **Critical:** Redis cache errors no longer crash patient create/delete operations
   - Cache invalidation now wrapped in try/except with graceful fallback
   - Errors logged as warnings instead of raising exceptions
-- OTP schema updated to accept 8-digit codes (was incorrectly validating 6-digit)
-
-### Removed
-- Redundant "By:" author field from notes display (single-user context makes it unnecessary)
-- Non-functional feature icons from login screen bottom
-
----
-
-## [3.1.0] - 2025-12-31
+- **Critical:** Fixed remaining patient_notes references in patient detail screen - now uses clinical_notes
+- **Critical:** Fixed app crash 'Cannot read property query of null' - added null safety check for database collection
+- Fixed OTP schema validation mismatch - changed from 6-digit to 8-digit to match OTP service
+- Fixed database migration error on fresh installs - removed SQL copy from non-existent patient_notes table
+- Fixed sync push 409 error: Empty email strings now converted to None
+- Convert string ID to MongoDB ObjectId() before querying database
+- Fixed user lookup to handle both _id (ObjectId) and id (UUID) fields
+- Fixed profile update 500 error
+- Added retry logic with exponential backoff
+- Added database indexes for performance
 
 ### Added
+- Delete clinical notes endpoint (`DELETE /api/patients/{id}/notes/{note_id}`)
+  - Doctor-only access with rate limiting (20/minute)
+  - Returns appropriate 404 errors for missing patient or note
 - Web dashboard for Pro users (React + Vite)
   - Patient analytics and statistics
   - Usage metrics visualization
   - Subscription management
 - Frontend telemetry integration with backend endpoint
 - Dynamic user name for clinical note author
+- Schema migration to v2 to preserve existing notes data
 
-### Fixed
+### Changed
 - All 14 integration audit issues resolved:
   - **Critical:** Token storage now uses sessionStorage consistently (security fix)
   - **Critical:** Password validation aligned with backend (12 char minimum)
@@ -52,63 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Medium:** Duplicate feedback screens consolidated
   - **Low:** Analytics screen theme colors applied
   - **Low:** Unused BACKEND_URL variable removed
-- Telemetry API endpoint path corrected
-- Hardcoded note author replaced with authenticated user
 
----
-
-## [3.0.0] - 2025-12-30
-
-### Added
-- Advanced search filtering with date range support
-- Patient list pagination with configurable limits
-- Clinical notes pagination
-- CSV export endpoints (patients, notes, all data)
-- Security headers middleware (CSP, HSTS, X-Frame-Options)
-- Rate limiting on all API endpoints
-- Input sanitization for search queries (NoSQL injection prevention)
-- Admin role requirement for debug endpoints
-- Stripe webhook signature verification
-
-### Changed
-- Token storage on web uses sessionStorage instead of localStorage
-- CORS configuration uses explicit allowed origins
-- Analytics endpoints require PRO subscription
-
-### Fixed
-- Division by zero in analytics service
-- Timezone handling in sync service
-- N+1 query issues in sync service (batch queries)
-
-### Security
-- NoSQL regex injection vulnerability patched
-- Debug endpoints require admin authentication
-- Webhook verification for Stripe payments
-- Security headers on all responses
-
----
-
-## [2.0.0] - 2025-12-24
-
-### Added
-- OTP email verification for new registrations
-- Password reset via email
-- Beta feedback submission endpoint
-- Known issues endpoint for beta users
-- Telemetry and analytics infrastructure
-- Patient groups and favorites
-- Document management (PRO feature)
-- Sentry error monitoring integration
-
-### Changed
-- Authentication flow requires email verification
-- User schema includes subscription fields
-- API response format standardized
-
-### Fixed
-- Auth context response parsing
-- Token refresh mechanism
-- Sync conflict resolution
+### Removed
+- Redundant "By:" author field from notes display (single-user context makes it unnecessary)
+- Non-functional feature icons from login screen bottom
 
 ---
 
@@ -117,13 +65,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 - User registration and authentication (JWT)
-- Patient CRUD operations
-- Clinical notes management
+- Email OTP verification for new registrations (8-digit codes)
+- Password reset via email with secure token
+- Patient CRUD operations with search, filtering, grouping
+- Clinical notes management with visit types (initial, regular, follow-up, emergency)
 - Offline-first sync with WatermelonDB
 - Cross-platform support (iOS, Android, Web)
 - MongoDB backend with Beanie ODM
-- FastAPI REST API
+- FastAPI REST API with 16 routers
 - React Native frontend with Expo
+- Advanced search filtering with date range support
+- Patient list pagination with configurable limits
+- CSV export endpoints (patients, notes, all data)
+- Security headers middleware (CSP, HSTS, X-Frame-Options)
+- Rate limiting on all API endpoints
+- Input sanitization for search queries (NoSQL injection prevention)
+- Beta feedback submission and known issues endpoint
+- Telemetry and analytics infrastructure
+- Document management (PRO feature)
+- Sentry error monitoring integration
+- Stripe webhook signature verification and payments integration
+
+### Security
+- JWT tokens with 30-minute access token expiry
+- 7-day refresh tokens for session renewal
+- Password hashing with bcrypt (12+ chars required)
+- NoSQL regex injection vulnerability prevention
+- Debug endpoints require admin authentication
+- Security headers on all responses
 
 ---
 
@@ -131,7 +100,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 3.1.0 | 2025-12-31 | Web dashboard, integration fixes |
-| 3.0.0 | 2025-12-30 | Security hardening, pagination, export |
-| 2.0.0 | 2025-12-24 | OTP verification, beta features |
-| 1.0.0 | 2025-12-01 | Initial release |
+| 1.0.49 | 2026-01-01 | Sync fixes, web dashboard, integration fixes |
+| 1.0.0 | 2025-12-01 | Initial release with full feature set |

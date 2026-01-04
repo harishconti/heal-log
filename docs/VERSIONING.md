@@ -52,23 +52,19 @@ For beta releases, append `-beta.N`:
 
 HealLog maintains version information in two locations:
 
-### Frontend (`frontend/app.json`)
+### Frontend (`frontend/package.json`)
 ```json
 {
-  "expo": {
-    "version": "1.0.0",
-    "android": {
-      "versionCode": 1
-    }
-  }
+  "name": "frontend",
+  "version": "1.0.49"
 }
 ```
 
 ### Backend (`backend/VERSION.json`)
 ```json
 {
-  "version": "1.0.0",
-  "build_date": "2025-01-01T00:00:00Z",
+  "version": "1.0.49",
+  "build_date": "2026-01-01T23:37:00+05:30",
   "features": ["..."],
   "fixes": ["..."]
 }

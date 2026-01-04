@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
@@ -6,6 +6,17 @@ import Constants from 'expo-constants';
 import { authEvents } from '@/utils/events';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://doctor-log-production.up.railway.app';
+
+// Token storage keys
+const ACCESS_TOKEN_KEY = 'token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+
+// Token refresh state
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
 
 const api = axios.create({
   baseURL: BACKEND_URL,
@@ -15,29 +26,128 @@ const api = axios.create({
   timeout: 30000,
 });
 
-// Helper to get token (web compatible)
-// SECURITY NOTE: On web, we use sessionStorage instead of localStorage.
-// sessionStorage is cleared when the browser tab closes, reducing XSS attack window.
-// For production, consider implementing HttpOnly cookies for token storage.
-const getToken = async () => {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      return window.sessionStorage.getItem('token');
+// Platform-specific token storage
+const TokenStorage = {
+  async getAccessToken(): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
+      }
+      return null;
+    }
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  },
+
+  async setAccessToken(token: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+      }
+    } else {
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+    }
+  },
+
+  async getRefreshToken(): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return window.sessionStorage.getItem(REFRESH_TOKEN_KEY);
+      }
+      return null;
+    }
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  },
+
+  async setRefreshToken(token: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+      }
+    } else {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+    }
+  },
+
+  async clearTokens(): Promise<void> {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+        window.sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+      }
+    } else {
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    }
+  },
+
+  async saveTokens(accessToken: string, refreshToken: string): Promise<void> {
+    await this.setAccessToken(accessToken);
+    await this.setRefreshToken(refreshToken);
+  },
+};
+
+// Export for use in other modules
+export { TokenStorage };
+
+// Process queued requests after token refresh
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Refresh the access token
+const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = await TokenStorage.getRefreshToken();
+
+    if (!refreshToken) {
+      if (__DEV__) {
+        console.log('🔐 [API] No refresh token available');
+      }
+      return null;
+    }
+
+    if (__DEV__) {
+      console.log('🔄 [API] Attempting to refresh access token...');
+    }
+
+    // Use a fresh axios instance to avoid interceptor loops
+    const response = await axios.post(
+      `${BACKEND_URL}/api/auth/refresh`,
+      { refresh_token: refreshToken },
+      { timeout: 10000 }
+    );
+
+    const { access_token, refresh_token: newRefreshToken } = response.data;
+
+    // Save new tokens
+    await TokenStorage.saveTokens(access_token, newRefreshToken);
+
+    if (__DEV__) {
+      console.log('✅ [API] Token refreshed successfully');
+    }
+
+    return access_token;
+  } catch (error: any) {
+    if (__DEV__) {
+      console.error('❌ [API] Token refresh failed:', error.message);
     }
     return null;
-  } else {
-    // SecureStore provides encrypted storage on native platforms
-    return await SecureStore.getItemAsync('token');
   }
 };
 
 // Request interceptor to add token to every request
 api.interceptors.request.use(
   async (config) => {
-    const token = await getToken();
+    const token = await TokenStorage.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      // SECURITY: Never log tokens, even partially - they can be reconstructed
       if (__DEV__) {
         console.log('📤 [API] Request:', config.url, '(authenticated)');
       }
@@ -53,7 +163,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor to handle errors and token refresh
 api.interceptors.response.use(
   (response) => {
     if (__DEV__) {
@@ -61,31 +171,67 @@ api.interceptors.response.use(
     }
     return response;
   },
-  async (error) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
     if (__DEV__) {
       console.error('❌ [API] Error:', {
         url: error.config?.url,
         status: error.response?.status,
-        // SECURITY: Don't log response data which may contain sensitive info
-        message: error.response?.data?.detail || error.message
+        message: (error.response?.data as any)?.detail || error.message,
       });
     }
 
-    if (error.response?.status === 401) {
-      if (__DEV__) {
-        console.warn('🔐 [API] 401 Unauthorized - Token invalid or expired');
-      }
-      // Clear invalid token
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          window.sessionStorage.removeItem('token');
-        }
-      } else {
-        await SecureStore.deleteItemAsync('token');
+    // Handle 401 Unauthorized - try to refresh token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Skip refresh for auth endpoints
+      const authEndpoints = ['/api/auth/login', '/api/auth/refresh', '/api/auth/register'];
+      if (authEndpoints.some((endpoint) => originalRequest.url?.includes(endpoint))) {
+        return Promise.reject(error);
       }
 
-      // Notify app to logout
-      authEvents.emit('auth:logout');
+      if (isRefreshing) {
+        // Token refresh in progress, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const newToken = await refreshAccessToken();
+
+        if (newToken) {
+          // Process queued requests with new token
+          processQueue(null, newToken);
+
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        } else {
+          // Refresh failed, clear tokens and logout
+          processQueue(error, null);
+          await TokenStorage.clearTokens();
+          authEvents.emit('auth:logout');
+          return Promise.reject(error);
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        await TokenStorage.clearTokens();
+        authEvents.emit('auth:logout');
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     if (error.response?.status === 500) {
@@ -128,23 +274,19 @@ export interface KnownIssue {
 
 export const submitFeedback = async (feedback: Feedback) => {
   try {
-    // Map frontend Feedback to backend BetaFeedbackIn structure if needed, 
-    // or just use the existing endpoint if it matches.
-    // Based on backend/app/api/feedback.py, it expects BetaFeedbackIn.
-    // Let's assume for now we are using the simple feedback endpoint or mapping it.
-    // Actually, looking at backend/app/api/feedback.py, it uses BetaFeedbackIn which is quite strict.
-    // Let's update the frontend to match the backend expectation or map it here.
-
     const payload = {
-      feedback_type: feedback.feedbackType === 'feature' ? 'suggestion' :
-                     feedback.feedbackType === 'other' ? 'general' :
-                     feedback.feedbackType,
+      feedback_type:
+        feedback.feedbackType === 'feature'
+          ? 'suggestion'
+          : feedback.feedbackType === 'other'
+          ? 'general'
+          : feedback.feedbackType,
       description: feedback.description,
       device_info: {
         os_version: Platform.OS + ' ' + Platform.Version,
         app_version: Constants.expoConfig?.version || '1.0.0',
-        device_model: Device.modelName || 'Unknown'
-      }
+        device_model: Device.modelName || 'Unknown',
+      },
     };
 
     const response = await api.post('/api/feedback/submit', payload);
@@ -208,7 +350,8 @@ export const verifyOTP = async (email: string, otp_code: string) => {
     return response.data;
   } catch (error: any) {
     console.error('Error verifying OTP:', error);
-    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to verify OTP';
+    const message =
+      error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to verify OTP';
     throw new Error(message);
   }
 };
@@ -222,7 +365,8 @@ export const resendOTP = async (email: string) => {
     return response.data;
   } catch (error: any) {
     console.error('Error resending OTP:', error);
-    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to resend OTP';
+    const message =
+      error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to resend OTP';
     throw new Error(message);
   }
 };
@@ -236,7 +380,8 @@ export const forgotPassword = async (email: string) => {
     return response.data;
   } catch (error: any) {
     console.error('Error requesting password reset:', error);
-    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to send reset email';
+    const message =
+      error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to send reset email';
     throw new Error(message);
   }
 };
@@ -253,7 +398,8 @@ export const resetPassword = async (token: string, new_password: string) => {
     return response.data;
   } catch (error: any) {
     console.error('Error resetting password:', error);
-    const message = error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to reset password';
+    const message =
+      error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to reset password';
     throw new Error(message);
   }
 };

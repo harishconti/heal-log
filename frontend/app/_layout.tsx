@@ -10,6 +10,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { trackOfflineOnlineTime } from '@/services/analytics';
 import { NetworkProvider } from '@/contexts/NetworkContext';
 import OfflineIndicator from '@/components/core/OfflineIndicator';
+import { initializeBackgroundSync, cleanupBackgroundSync } from '@/services/backgroundSync';
 
 initMonitoring();
 
@@ -48,6 +49,17 @@ const AppLayout = () => {
       unsubscribe();
     };
   }, []);
+
+  // Initialize background sync when user is authenticated
+  useEffect(() => {
+    if (user) {
+      initializeBackgroundSync();
+    }
+
+    return () => {
+      cleanupBackgroundSync();
+    };
+  }, [user]);
 
   if (!fontsLoaded || !isReady) {
     return (

@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import api from '@/services/api'; // Use centralized api
+import api, { TokenStorage } from '@/services/api';
 import { useAppStore, User } from '@/store/useAppStore';
 import { authEvents } from '@/utils/events';
+import { biometricAuth } from '@/services/biometricAuth';
 
 // Development-only logging helper
 const devLog = __DEV__
@@ -127,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         const storedUser = useAppStore.getState().user;
-        const storedToken = await SecureStorageAdapter.getItem('token'); // ✅ Changed from 'auth_token'
+        const storedToken = await TokenStorage.getAccessToken();
 
         devLog('🔑 [Auth] Init - Token exists?', !!storedToken);
         devLog('👤 [Auth] Init - User exists?', !!storedUser);
@@ -205,19 +206,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
       });
 
-      const { access_token, user: userData } = response.data;
+      const { access_token, refresh_token, user: userData } = response.data;
 
       devLog('✅ [Auth] Login successful');
-      devLog('💾 [Auth] Saving token to SecureStore...');
+      devLog('💾 [Auth] Saving tokens to SecureStore...');
 
-      // Store auth data
-      await SecureStorageAdapter.setItem('token', access_token); // ✅ Changed from 'auth_token'
+      // Store both access and refresh tokens
+      await TokenStorage.saveTokens(access_token, refresh_token);
 
       setToken(access_token);
       setUser(userData);
 
-      devLog('✅ [Auth] Token saved successfully');
-      // Interceptor will pick up the token from SecureStorage for next requests
+      // Update biometric token if enabled
+      const settings = useAppStore.getState().settings;
+      if (settings.biometricEnabled) {
+        await biometricAuth.updateStoredToken(access_token);
+      }
+
+      devLog('✅ [Auth] Tokens saved successfully');
 
     } catch (error: any) {
       devError('❌ [Auth] Login error:', error.response?.data || error.message);
@@ -245,13 +251,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Legacy flow - direct login after registration
-      const { access_token, user: newUser } = data;
+      const { access_token, refresh_token, user: newUser } = data;
 
       if (access_token && newUser) {
-        await SecureStorageAdapter.setItem('token', access_token);
+        await TokenStorage.saveTokens(access_token, refresh_token || '');
         setToken(access_token);
         setUser(newUser);
-        devLog('✅ [Auth] Token saved successfully');
+        devLog('✅ [Auth] Tokens saved successfully');
       }
 
       return {
@@ -272,16 +278,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // First, clear stored data - this is the critical part
       const storageCleanupResults = await Promise.allSettled([
-        SecureStorageAdapter.removeItem('token'), // ✅ Changed from 'auth_token'
+        TokenStorage.clearTokens(), // Clear both access and refresh tokens
         AsyncStorage.removeItem('patients_cache'),
         AsyncStorage.removeItem('medical_call_logs'),
         AsyncStorage.removeItem('contacts_sync_enabled'),
+        biometricAuth.clearOnLogout(), // Clear biometric stored token
       ]);
 
       // Log any storage cleanup failures for debugging
       storageCleanupResults.forEach((result, index) => {
         if (result.status === 'rejected') {
-          const keys = ['token', 'patients_cache', 'medical_call_logs', 'contacts_sync_enabled'];
+          const keys = ['tokens', 'patients_cache', 'medical_call_logs', 'contacts_sync_enabled', 'biometric'];
           devWarn(`⚠️ [Auth] Failed to clear ${keys[index]}:`, result.reason);
         }
       });

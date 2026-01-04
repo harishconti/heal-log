@@ -78,9 +78,8 @@ If you discover a security vulnerability in HealLog, please report it responsibl
 
 | Version | Supported |
 |---------|-----------|
-| 3.x.x | Yes |
-| 2.x.x | Security fixes only |
-| 1.x.x | No |
+| 1.0.x | Yes (current) |
+| < 1.0.0 | No |
 
 ---
 
@@ -157,7 +156,7 @@ Users can:
 
 Security patches are released as needed. Subscribe to releases on GitHub for notifications.
 
-**Last security review:** December 2025
+**Last security review:** January 2026
 
 ---
 

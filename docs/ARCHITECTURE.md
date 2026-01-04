@@ -40,6 +40,7 @@ HealLog is a patient management application designed for healthcare professional
 | HTTP Client | Axios | 1.12.2 | API communication |
 | Form Handling | React Hook Form + Zod | 7.51.3 / 3.23.8 | Form validation |
 | Authentication | JWT + SecureStore | - | Secure token storage |
+| React | React | 19.1.0 | UI library |
 
 ### Backend (API)
 | Component | Technology | Version | Purpose |
@@ -64,6 +65,9 @@ HealLog is a patient management application designed for healthcare professional
 | State | Zustand | 5.0.9 | Global state management |
 | Routing | React Router DOM | 7.11.0 | Client-side routing |
 | Form Handling | React Hook Form + Zod | 7.69.0 / 4.2.1 | Form validation |
+| HTTP Client | Axios | 1.13.2 | API communication |
+| Icons | Lucide React | 0.562.0 | Icon library |
+| Date Utilities | date-fns | 4.1.0 | Date formatting |
 
 ---
 
@@ -72,7 +76,7 @@ HealLog is a patient management application designed for healthcare professional
 ```
 heal-log/
 ├── frontend/                 # React Native mobile app
-│   ├── app/                  # Expo Router screens (15+ screens)
+│   ├── app/                  # Expo Router screens (25+ screens)
 │   │   ├── (auth)/           # Authentication screens
 │   │   ├── (tabs)/           # Main tab screens
 │   │   └── _layout.tsx       # Root layout
@@ -90,7 +94,7 @@ heal-log/
 │       │   ├── components/   # React components
 │       │   │   ├── ui/       # UI primitives
 │       │   │   └── charts/   # Chart components
-│       │   ├── pages/        # Page components (11 pages)
+│       │   ├── pages/        # Page components (6 page modules)
 │       │   ├── api/          # API clients
 │       │   ├── store/        # Zustand stores
 │       │   └── types/        # TypeScript types

@@ -16,7 +16,7 @@ A React-based web dashboard for HealLog Pro users, providing analytics, patient 
 |------------|---------|---------|
 | React | 19.2.0 | UI framework |
 | Vite | 7.2.4 | Build tool |
-| TypeScript | - | Type safety |
+| TypeScript | 5.9.3 | Type safety |
 | Tailwind CSS | 4.1.18 | Styling |
 | Zustand | 5.0.9 | State management |
 | React Router DOM | 7.11.0 | Navigation |

@@ -114,7 +114,7 @@ heal-log/
 │   └── requirements.txt
 │
 ├── frontend/
-│   ├── app/              # Expo Router pages (15+ screens)
+│   ├── app/              # Expo Router pages (25+ screens)
 │   ├── components/       # React components (core, forms, ui)
 │   ├── contexts/         # React contexts
 │   ├── models/           # WatermelonDB models

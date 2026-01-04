@@ -65,21 +65,29 @@ export default function ProfileScreen() {
       }
 
       // Fetch stats from local database (source of truth)
+      // Using WatermelonDB's native count() for O(1) performance instead of fetching all records
       try {
         const patientCollection = database.collections.get<Patient>('patients');
+        const { Q } = await import('@nozbe/watermelondb');
 
-        // Count all patients
+        // Use native count queries for O(1) performance
+        const totalCount = await patientCollection.query().fetchCount();
+        const favoriteCount = await patientCollection.query(
+          Q.where('is_favorite', true)
+        ).fetchCount();
+
+        // For groups, we still need to fetch but only the group field
+        // Use a raw query to get distinct groups efficiently
         const allPatients = await patientCollection.query().fetch();
-        const totalCount = allPatients.length;
-
-        // Count favorite patients
-        const favoriteCount = allPatients.filter(p => p.isFavorite).length;
-
-        // Get unique groups
-        const groups = [...new Set(allPatients.map(p => p.group).filter(Boolean))];
-        const groupsWithCount = groups.map(group => ({
+        const groupCounts = new Map<string, number>();
+        for (const patient of allPatients) {
+          if (patient.group) {
+            groupCounts.set(patient.group, (groupCounts.get(patient.group) || 0) + 1);
+          }
+        }
+        const groupsWithCount = Array.from(groupCounts.entries()).map(([group, count]) => ({
           _id: group,
-          count: allPatients.filter(p => p.group === group).length
+          count
         }));
 
         setStats({

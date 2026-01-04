@@ -57,22 +57,49 @@ async def register_user(request: Request, user_data: UserCreate):
 async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     """
     Verify email using OTP. Returns tokens on success.
+    Rate limited to 10/minute globally and 5 attempts per email per 15 minutes.
     """
+    email_lower = otp_data.email.lower().strip()
+
+    # Per-email rate limiting to prevent brute force attacks on specific emails
+    email_key = f"otp_verify_email:{email_lower}"
+    try:
+        from fastapi_cache import FastAPICache
+        backend = FastAPICache.get_backend()
+        if backend:
+            count_str = await backend.get(email_key)
+            email_count = int(count_str) if count_str else 0
+
+            # Max 5 attempts per email per 15 minutes
+            if email_count >= 5:
+                logger.warning(f"[VERIFY_OTP] Per-email rate limit exceeded for {email_lower[:3]}***")
+                raise APIException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Too many verification attempts for this email. Please wait 15 minutes."
+                )
+
+            # Increment count (expires in 15 minutes)
+            await backend.set(email_key, str(email_count + 1), expire=900)
+    except APIException:
+        raise
+    except Exception as e:
+        logger.debug(f"[VERIFY_OTP] Cache not available for per-email rate limit: {e}")
+
     user = await user_service.get_user_by_email(otp_data.email)
     if not user:
         raise APIException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No account found with this email."
         )
-    
+
     if user.is_verified:
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email is already verified."
         )
-    
+
     success, message = await otp_service.verify_otp(user, otp_data.otp_code)
-    
+
     if not success:
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -313,8 +340,8 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """
     Get the current authenticated user's information.
-    """
-    if not current_user:
-        raise HTTPException(status_code=404, detail="User not found")
 
+    Note: The get_current_user dependency already raises HTTPException if user is not authenticated,
+    so current_user is guaranteed to be valid at this point.
+    """
     return {"success": True, "user": UserResponse(**current_user.model_dump())}

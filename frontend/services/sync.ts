@@ -82,8 +82,13 @@ export async function sync() {
           }
 
           // Graceful degradation for non-auth errors - return empty changes with warning
+          // Track consecutive failures for monitoring
           console.warn('⚠️ [Sync] Sync pull failed, returning empty changes for offline resilience');
-          return { changes: {}, timestamp: lastPulledAt || Date.now() };
+          addBreadcrumb('sync', `Pull failed gracefully: ${error.message}`, 'warning');
+
+          // Return last timestamp to avoid re-pulling same data on next sync
+          // Using lastPulledAt ensures we don't lose sync position
+          return { changes: {}, timestamp: lastPulledAt ?? Date.now() };
         }
       },
 

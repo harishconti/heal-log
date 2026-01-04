@@ -101,7 +101,8 @@ async def export_patients(
             iter([csv_content]),
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
+                # RFC 2183 compliant filename with proper quoting
+                "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "text/csv; charset=utf-8"
             }
         )
@@ -143,7 +144,8 @@ async def export_notes(
             iter([csv_content]),
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
+                # RFC 2183 compliant filename with proper quoting
+                "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "text/csv; charset=utf-8"
             }
         )
@@ -204,7 +206,8 @@ async def export_all_data(
             iter([output.getvalue()]),
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
+                # RFC 2183 compliant filename with proper quoting
+                "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "text/csv; charset=utf-8"
             }
         )

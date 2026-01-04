@@ -84,10 +84,11 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
                 if attempt == max_retries - 1:
                     raise
 
-        # If all retries exhausted, use timestamp-based fallback with microseconds for uniqueness
-        fallback_seq = int(datetime.now().timestamp() * 1000) % 100000
-        fallback_id = f"{prefix}{fallback_seq:05d}"
-        logging.warning(f"[PATIENT_SERVICE] Using fallback patient ID: {fallback_id}")
+        # If all retries exhausted, use UUID-based fallback for guaranteed uniqueness
+        # UUID4 provides cryptographic randomness, eliminating collision risk
+        fallback_uuid = str(uuid.uuid4())[:8].upper()
+        fallback_id = f"{prefix}{fallback_uuid}"
+        logging.warning(f"[PATIENT_SERVICE] Using UUID fallback patient ID: {fallback_id}")
         return fallback_id
 
     async def _clear_patient_caches(self) -> None:

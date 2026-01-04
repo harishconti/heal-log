@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../../api';
 import { Button, Input, Select } from '../../components/ui';
 import { SPECIALTY_OPTIONS } from '../../constants';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const registerSchema = z
   .object({
@@ -53,8 +54,7 @@ export function RegisterPage() {
       });
       navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Registration failed. Please try again.');
+      setError(getErrorMessage(err, 'Registration failed. Please try again.'));
     }
   };
 

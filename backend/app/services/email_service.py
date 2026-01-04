@@ -323,8 +323,9 @@ https://heallog.com
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #f4f7fa; -webkit-font-smoothing: antialiased;">
     <!-- Preheader text (hidden but shows in email preview) -->
+    <!-- SECURITY: Do not expose any part of the token in preheader to prevent caching by email clients -->
     <div style="display: none; max-height: 0; overflow: hidden;">
-        Your password reset token: {reset_token[:8]}... Valid for {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
+        Reset your HealLog password. Valid for {settings.PASSWORD_RESET_EXPIRE_MINUTES} minutes.
     </div>
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f7fa;">

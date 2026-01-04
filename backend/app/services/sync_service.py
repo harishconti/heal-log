@@ -6,6 +6,9 @@ from app.schemas.sync_event import SyncEvent
 from typing import Dict, Any, List
 from app.core.exceptions import SyncConflictException
 
+# Maximum records per sync operation to prevent memory exhaustion
+MAX_SYNC_RECORDS = 5000
+
 
 async def get_deleted_records(user_id: str, last_pulled_at_dt: datetime) -> Dict[str, List[str]]:
     """
@@ -76,10 +79,17 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
             {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
 
-        created_patients = await created_patients_cursor.to_list()
-        updated_patients = await updated_patients_cursor.to_list()
-        created_notes = await created_notes_cursor.to_list()
-        updated_notes = await updated_notes_cursor.to_list()
+        # Apply limits to prevent memory exhaustion with large datasets
+        created_patients = await created_patients_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        updated_patients = await updated_patients_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        created_notes = await created_notes_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        updated_notes = await updated_notes_cursor.limit(MAX_SYNC_RECORDS).to_list()
+
+        # Log warning if any limits were reached
+        if len(created_patients) == MAX_SYNC_RECORDS or len(updated_patients) == MAX_SYNC_RECORDS:
+            logging.warning(f"[SYNC] User {user_id} hit sync limit ({MAX_SYNC_RECORDS}) for patients - consider incremental sync")
+        if len(created_notes) == MAX_SYNC_RECORDS or len(updated_notes) == MAX_SYNC_RECORDS:
+            logging.warning(f"[SYNC] User {user_id} hit sync limit ({MAX_SYNC_RECORDS}) for notes - consider incremental sync")
 
         def serialize_document(doc):
             # Use mode='python' to keep datetime objects as Python datetime, not ISO strings

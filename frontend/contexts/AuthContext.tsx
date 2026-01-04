@@ -102,6 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = React.useRef(true);
+
   const isAuthenticated = !!user && !!token;
 
   useEffect(() => {
@@ -164,11 +167,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Subscribe to auth events (e.g. 401 from API)
     const unsubscribe = authEvents.on('auth:logout', () => {
-      console.log('🔒 [Auth] Received logout event from API');
-      logout();
+      // Only handle logout if component is still mounted
+      if (isMountedRef.current) {
+        console.log('🔒 [Auth] Received logout event from API');
+        logout();
+      }
     });
 
     return () => {
+      // Mark as unmounted first to prevent race conditions
+      isMountedRef.current = false;
       unsubscribe();
     };
   }, []);

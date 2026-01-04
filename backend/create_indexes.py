@@ -31,27 +31,27 @@ async def create_indexes():
         # PATIENTS COLLECTION INDEXES
         # ================================================================
         logger.info("Creating indexes on 'patients' collection...")
-        
+
         patients = db.patients
-        
+
         # Index on user_id (most critical - used in all patient queries)
         await patients.create_index([("user_id", ASCENDING)], name="idx_user_id")
         logger.info("✅ Created index: patients.user_id")
-        
+
         # Compound index on user_id + is_favorite (for favorites queries)
         await patients.create_index(
             [("user_id", ASCENDING), ("is_favorite", DESCENDING)],
             name="idx_user_favorites"
         )
         logger.info("✅ Created index: patients.user_id + is_favorite")
-        
+
         # Compound index on user_id + group (for group filtering)
         await patients.create_index(
             [("user_id", ASCENDING), ("group", ASCENDING)],
             name="idx_user_group"
         )
         logger.info("✅ Created index: patients.user_id + group")
-        
+
         # Index on patient_id for lookup
         await patients.create_index([("patient_id", ASCENDING)], name="idx_patient_id")
         logger.info("✅ Created index: patients.patient_id")
@@ -64,46 +64,96 @@ async def create_indexes():
             name="idx_user_name_unique"
         )
         logger.info("✅ Created UNIQUE index: patients.user_id + name")
-        
+
         # Index on created_at for sorting
         await patients.create_index([("created_at", DESCENDING)], name="idx_created_at")
         logger.info("✅ Created index: patients.created_at")
-        
+
         # Compound index for sync queries (user_id + updated_at)
         await patients.create_index(
             [("user_id", ASCENDING), ("updated_at", DESCENDING)],
             name="idx_sync_patients"
         )
         logger.info("✅ Created index: patients.user_id + updated_at (for sync)")
+
+        # Index for soft delete queries (user_id + deleted_at)
+        # Critical for sync operations that need to find deleted records
+        await patients.create_index(
+            [("user_id", ASCENDING), ("deleted_at", ASCENDING)],
+            name="idx_user_deleted_at",
+            sparse=True  # Only index documents where deleted_at exists
+        )
+        logger.info("✅ Created index: patients.user_id + deleted_at (for soft delete)")
+
+        # Compound index for sync with soft delete filter
+        # Optimizes: find records updated after X that are not deleted
+        await patients.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING), ("deleted_at", ASCENDING)],
+            name="idx_sync_created_deleted"
+        )
+        logger.info("✅ Created index: patients.user_id + created_at + deleted_at (for sync)")
+
+        # Text search index on name field for faster patient search
+        await patients.create_index(
+            [("name", "text")],
+            name="idx_name_text",
+            default_language="english"
+        )
+        logger.info("✅ Created text index: patients.name (for search)")
         
         # ================================================================
         # CLINICAL NOTES COLLECTION INDEXES
         # ================================================================
         logger.info("\nCreating indexes on 'clinical_notes' collection...")
-        
+
         notes = db.clinical_notes
-        
+
         # Index on patient_id (most critical for fetching patient notes)
         await notes.create_index([("patient_id", ASCENDING)], name="idx_patient_id")
         logger.info("✅ Created index: clinical_notes.patient_id")
-        
+
         # Index on user_id
         await notes.create_index([("user_id", ASCENDING)], name="idx_user_id")
         logger.info("✅ Created index: clinical_notes.user_id")
-        
+
         # Compound index on patient_id + created_at (for sorted note retrieval)
         await notes.create_index(
             [("patient_id", ASCENDING), ("created_at", DESCENDING)],
             name="idx_patient_notes_sorted"
         )
         logger.info("✅ Created index: clinical_notes.patient_id + created_at")
-        
+
         # Compound index for sync queries (user_id + updated_at)
         await notes.create_index(
             [("user_id", ASCENDING), ("updated_at", DESCENDING)],
             name="idx_sync_notes"
         )
         logger.info("✅ Created index: clinical_notes.user_id + updated_at (for sync)")
+
+        # Index for soft delete queries (user_id + deleted_at)
+        # Critical for sync operations that need to find deleted notes
+        await notes.create_index(
+            [("user_id", ASCENDING), ("deleted_at", ASCENDING)],
+            name="idx_user_deleted_at",
+            sparse=True  # Only index documents where deleted_at exists
+        )
+        logger.info("✅ Created index: clinical_notes.user_id + deleted_at (for soft delete)")
+
+        # Compound index for sync with soft delete filter
+        # Optimizes: find notes updated after X that are not deleted
+        await notes.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING), ("deleted_at", ASCENDING)],
+            name="idx_sync_created_deleted"
+        )
+        logger.info("✅ Created index: clinical_notes.user_id + created_at + deleted_at (for sync)")
+
+        # Compound index for patient notes with soft delete filter
+        # Optimizes: get all non-deleted notes for a patient
+        await notes.create_index(
+            [("patient_id", ASCENDING), ("deleted_at", ASCENDING), ("created_at", DESCENDING)],
+            name="idx_patient_notes_active"
+        )
+        logger.info("✅ Created index: clinical_notes.patient_id + deleted_at + created_at (for active notes)")
         
         # ================================================================
         # USERS COLLECTION INDEXES

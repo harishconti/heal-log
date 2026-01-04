@@ -3,11 +3,63 @@ import logging
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.sync_event import SyncEvent
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from app.core.exceptions import SyncConflictException
 
 # Maximum records per sync operation to prevent memory exhaustion
 MAX_SYNC_RECORDS = 5000
+# Default batch size for incremental sync
+DEFAULT_BATCH_SIZE = 500
+# Minimum batch size to prevent excessive round trips
+MIN_BATCH_SIZE = 50
+
+
+async def get_sync_stats(user_id: str, last_pulled_at: Optional[int]) -> Dict[str, int]:
+    """
+    Get count of records that need to be synced.
+    Useful for progress indication and batch size optimization.
+    """
+    try:
+        last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0, tz=timezone.utc) if last_pulled_at else datetime.min.replace(tzinfo=timezone.utc)
+
+        # Count patients needing sync
+        created_patients_count = await Patient.find(
+            Patient.user_id == user_id,
+            Patient.created_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).count()
+
+        updated_patients_count = await Patient.find(
+            Patient.user_id == user_id,
+            Patient.created_at <= last_pulled_at_dt,
+            Patient.updated_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).count()
+
+        # Count notes needing sync
+        created_notes_count = await ClinicalNote.find(
+            ClinicalNote.user_id == user_id,
+            ClinicalNote.created_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).count()
+
+        updated_notes_count = await ClinicalNote.find(
+            ClinicalNote.user_id == user_id,
+            ClinicalNote.created_at <= last_pulled_at_dt,
+            ClinicalNote.updated_at > last_pulled_at_dt,
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).count()
+
+        return {
+            "patients_created": created_patients_count,
+            "patients_updated": updated_patients_count,
+            "notes_created": created_notes_count,
+            "notes_updated": updated_notes_count,
+            "total": created_patients_count + updated_patients_count + created_notes_count + updated_notes_count
+        }
+    except Exception as e:
+        logging.warning(f"[SYNC] Error getting sync stats: {e}")
+        return {"patients_created": 0, "patients_updated": 0, "notes_created": 0, "notes_updated": 0, "total": 0}
 
 
 async def get_deleted_records(user_id: str, last_pulled_at_dt: datetime) -> Dict[str, List[str]]:
@@ -42,6 +94,116 @@ async def get_deleted_records(user_id: str, last_pulled_at_dt: datetime) -> Dict
         "patients": deleted_patients,
         "clinical_notes": deleted_notes
     }
+
+
+async def pull_changes_batched(
+    last_pulled_at: int,
+    user_id: str,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    skip_patients: int = 0,
+    skip_notes: int = 0
+) -> Dict[str, Any]:
+    """
+    Fetches changes in batches for more efficient sync of large datasets.
+    Returns has_more flag to indicate if more records are available.
+    """
+    batch_size = max(MIN_BATCH_SIZE, min(batch_size, MAX_SYNC_RECORDS))
+
+    try:
+        last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0, tz=timezone.utc) if last_pulled_at else datetime.min.replace(tzinfo=timezone.utc)
+
+        def serialize_document(doc):
+            doc_dict = doc.model_dump(mode='python')
+            doc_dict["id"] = str(doc.id)
+            current_time_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+            for field in ['created_at', 'updated_at']:
+                if field in doc_dict:
+                    value = doc_dict[field]
+                    if isinstance(value, datetime):
+                        if value.year < 2000:
+                            doc_dict[field] = current_time_ms
+                        else:
+                            doc_dict[field] = int(value.timestamp() * 1000)
+                    elif isinstance(value, str):
+                        try:
+                            iso_str = value.replace('Z', '+00:00')
+                            parsed_dt = datetime.fromisoformat(iso_str)
+                            if parsed_dt.tzinfo is None:
+                                parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                            doc_dict[field] = int(parsed_dt.timestamp() * 1000)
+                        except Exception:
+                            doc_dict[field] = current_time_ms
+                    elif isinstance(value, (int, float)):
+                        if value < 1000000000000:
+                            doc_dict[field] = current_time_ms
+                    elif value is None or value == 0:
+                        doc_dict[field] = current_time_ms
+                    else:
+                        doc_dict[field] = current_time_ms
+            return doc_dict
+
+        # Fetch patients with pagination
+        all_patients_query = Patient.find(
+            Patient.user_id == user_id,
+            {"$or": [
+                {"created_at": {"$gt": last_pulled_at_dt}},
+                {"$and": [{"created_at": {"$lte": last_pulled_at_dt}}, {"updated_at": {"$gt": last_pulled_at_dt}}]}
+            ]},
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).sort("+created_at")
+
+        patients = await all_patients_query.skip(skip_patients).limit(batch_size + 1).to_list()
+        has_more_patients = len(patients) > batch_size
+        if has_more_patients:
+            patients = patients[:batch_size]
+
+        # Fetch notes with pagination
+        all_notes_query = ClinicalNote.find(
+            ClinicalNote.user_id == user_id,
+            {"$or": [
+                {"created_at": {"$gt": last_pulled_at_dt}},
+                {"$and": [{"created_at": {"$lte": last_pulled_at_dt}}, {"updated_at": {"$gt": last_pulled_at_dt}}]}
+            ]},
+            {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
+        ).sort("+created_at")
+
+        notes = await all_notes_query.skip(skip_notes).limit(batch_size + 1).to_list()
+        has_more_notes = len(notes) > batch_size
+        if has_more_notes:
+            notes = notes[:batch_size]
+
+        # Only fetch deleted records on first batch
+        deleted_records = {"patients": [], "clinical_notes": []}
+        if skip_patients == 0 and skip_notes == 0:
+            deleted_records = await get_deleted_records(user_id, last_pulled_at_dt)
+
+        # Separate into created/updated
+        created_patients = [p for p in patients if p.created_at > last_pulled_at_dt]
+        updated_patients = [p for p in patients if p.created_at <= last_pulled_at_dt]
+        created_notes = [n for n in notes if n.created_at > last_pulled_at_dt]
+        updated_notes = [n for n in notes if n.created_at <= last_pulled_at_dt]
+
+        return {
+            "changes": {
+                "patients": {
+                    "created": [serialize_document(p) for p in created_patients],
+                    "updated": [serialize_document(p) for p in updated_patients],
+                    "deleted": deleted_records["patients"]
+                },
+                "clinical_notes": {
+                    "created": [serialize_document(n) for n in created_notes],
+                    "updated": [serialize_document(n) for n in updated_notes],
+                    "deleted": deleted_records["clinical_notes"]
+                }
+            },
+            "has_more": has_more_patients or has_more_notes,
+            "next_skip_patients": skip_patients + len(patients) if has_more_patients else 0,
+            "next_skip_notes": skip_notes + len(notes) if has_more_notes else 0,
+            "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000)
+        }
+    except Exception as e:
+        logging.error(f"[SYNC] Batched pull error: {e}")
+        raise e
 
 
 async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:

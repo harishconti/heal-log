@@ -16,6 +16,88 @@ const devError = __DEV__
   ? (message: string, ...args: unknown[]) => console.error(message, ...args)
   : () => {};
 
+// Sync configuration
+const BATCH_SIZE = 500;
+const LARGE_SYNC_THRESHOLD = 1000;
+
+// Get sync statistics to determine sync strategy
+export async function getSyncStats(lastPulledAt: number | null) {
+  try {
+    const response = await api.get('/api/sync/stats', {
+      params: { last_pulled_at: lastPulledAt },
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (error) {
+    devWarn('Failed to get sync stats, using standard sync');
+    return { total: 0 };
+  }
+}
+
+// Batched pull for large syncs
+async function pullChangesBatched(lastPulledAt: number | null): Promise<{
+  changes: Record<string, any>;
+  timestamp: number;
+}> {
+  const allChanges: Record<string, any> = {
+    patients: { created: [], updated: [], deleted: [] },
+    clinical_notes: { created: [], updated: [], deleted: [] },
+  };
+  let timestamp = Date.now();
+  let skipPatients = 0;
+  let skipNotes = 0;
+  let hasMore = true;
+  let batchCount = 0;
+
+  devLog('🔄 [Sync] Starting batched pull...');
+
+  while (hasMore && batchCount < 20) { // Max 20 batches to prevent infinite loops
+    batchCount++;
+    devLog(`📦 [Sync] Fetching batch ${batchCount}...`);
+
+    const response = await api.post('/api/sync/pull/batched', {
+      last_pulled_at: lastPulledAt,
+      changes: {}
+    }, {
+      params: {
+        batch_size: BATCH_SIZE,
+        skip_patients: skipPatients,
+        skip_notes: skipNotes,
+      },
+      timeout: 30000,
+    });
+
+    const { changes, has_more, next_skip_patients, next_skip_notes, timestamp: newTimestamp } = response.data;
+
+    // Merge changes
+    for (const table of ['patients', 'clinical_notes']) {
+      if (changes[table]) {
+        allChanges[table].created.push(...(changes[table].created || []));
+        allChanges[table].updated.push(...(changes[table].updated || []));
+        // Only take deleted from first batch
+        if (batchCount === 1) {
+          allChanges[table].deleted.push(...(changes[table].deleted || []));
+        }
+      }
+    }
+
+    timestamp = newTimestamp;
+    hasMore = has_more;
+    skipPatients = next_skip_patients || 0;
+    skipNotes = next_skip_notes || 0;
+
+    devLog(`✅ [Sync] Batch ${batchCount} complete. Has more: ${hasMore}`);
+  }
+
+  const totalRecords =
+    allChanges.patients.created.length + allChanges.patients.updated.length +
+    allChanges.clinical_notes.created.length + allChanges.clinical_notes.updated.length;
+
+  devLog(`✅ [Sync] Batched pull complete. Total records: ${totalRecords}`);
+
+  return { changes: allChanges, timestamp };
+}
+
 export async function sync() {
   try {
     // Retrieve the auth token from SecureStore
@@ -36,6 +118,47 @@ export async function sync() {
         devLog('⬇️ [Sync] Starting pull...', { last_pulled_at: lastPulledAt });
 
         try {
+          // Check if we need batched sync (for large datasets or first sync)
+          const isFirstSync = lastPulledAt === null || lastPulledAt === undefined;
+          let useBatchedSync = isFirstSync;
+
+          // For subsequent syncs, check stats to determine if batched sync is needed
+          if (!isFirstSync) {
+            try {
+              const stats = await getSyncStats(lastPulledAt);
+              useBatchedSync = stats.total > LARGE_SYNC_THRESHOLD;
+              if (useBatchedSync) {
+                devLog(`📊 [Sync] Large sync detected (${stats.total} records), using batched sync`);
+              }
+            } catch {
+              // If stats fail, use standard sync
+              useBatchedSync = false;
+            }
+          }
+
+          // Use batched sync for large datasets or first sync
+          if (useBatchedSync) {
+            devLog('📦 [Sync] Using batched sync for better performance');
+            addBreadcrumb('sync', 'Using batched sync for large dataset');
+
+            const { changes, timestamp } = await pullChangesBatched(
+              lastPulledAt !== null && lastPulledAt !== undefined ? lastPulledAt : null
+            );
+
+            const changeSummary = Object.entries(changes).reduce((acc, [key, value]: [string, any]) => {
+              acc[key] = {
+                created: value?.created?.length || 0,
+                updated: value?.updated?.length || 0,
+                deleted: value?.deleted?.length || 0,
+              };
+              return acc;
+            }, {} as Record<string, { created: number; updated: number; deleted: number }>);
+
+            devLog('✅ [Sync] Batched pull complete:', changeSummary);
+            return { changes, timestamp };
+          }
+
+          // Standard sync for small datasets
           // Wrap API call in retry logic
           const pullOperation = async () => {
             // Send as JSON body to match backend SyncRequest schema

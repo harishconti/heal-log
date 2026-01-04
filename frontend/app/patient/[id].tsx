@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,20 @@ import {
   Linking,
   Clipboard,
   StatusBar,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+
+// Constants for lazy loading
+const NOTES_PAGE_SIZE = 20;
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // WatermelonDB imports
 import { database } from '@/models/database';
@@ -39,6 +45,30 @@ function PatientDetailsScreen({ patient, notes }) {
   const [showAddNote, setShowAddNote] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [newNoteType, setNewNoteType] = useState('initial');
+
+  // Lazy loading state for notes
+  const [visibleNotesCount, setVisibleNotesCount] = useState(NOTES_PAGE_SIZE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Memoized visible notes for lazy loading
+  const visibleNotes = useMemo(() => {
+    if (!notes) return [];
+    return notes.slice(0, visibleNotesCount);
+  }, [notes, visibleNotesCount]);
+
+  const hasMoreNotes = notes && notes.length > visibleNotesCount;
+
+  // Load more notes handler
+  const loadMoreNotes = useCallback(() => {
+    if (hasMoreNotes && !isLoadingMore) {
+      setIsLoadingMore(true);
+      // Simulate async loading for smooth UX
+      setTimeout(() => {
+        setVisibleNotesCount(prev => Math.min(prev + NOTES_PAGE_SIZE, notes?.length || 0));
+        setIsLoadingMore(false);
+      }, 100);
+    }
+  }, [hasMoreNotes, isLoadingMore, notes?.length]);
 
   const styles = createStyles(theme);
 
@@ -252,10 +282,10 @@ function PatientDetailsScreen({ patient, notes }) {
           </View>
         </View>
 
-        {/* Notes Section */}
+        {/* Notes Section - Virtualized with FlashList for performance */}
         <View style={styles.notesCard}>
           <View style={styles.notesHeader}>
-            <Text style={styles.sectionTitle}>Medical Notes ({notes.length})</Text>
+            <Text style={styles.sectionTitle}>Medical Notes ({notes?.length || 0})</Text>
             <TouchableOpacity
               style={styles.addNoteButton}
               onPress={() => {
@@ -267,25 +297,51 @@ function PatientDetailsScreen({ patient, notes }) {
             </TouchableOpacity>
           </View>
 
-          {notes && notes.length > 0 ? (
-            notes.map((note, index) => (
-              <View key={note.id || index} style={styles.noteItem}>
-                <View style={styles.noteHeader}>
-                  <View style={styles.noteHeaderLeft}>
-                    <Text style={styles.noteType}>{note.visitType}</Text>
-                    <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+          {visibleNotes && visibleNotes.length > 0 ? (
+            <View style={styles.notesListContainer}>
+              <FlashList
+                data={visibleNotes}
+                renderItem={({ item: note }) => (
+                  <View style={styles.noteItem}>
+                    <View style={styles.noteHeader}>
+                      <View style={styles.noteHeaderLeft}>
+                        <Text style={styles.noteType}>{note.visitType}</Text>
+                        <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.deleteNoteButton}
+                        onPress={() => deleteNote(note.id)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#e74c3c" />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.noteContent}>{note.content}</Text>
                   </View>
-                  <TouchableOpacity
-                    style={styles.deleteNoteButton}
-                    onPress={() => deleteNote(note.id)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#e74c3c" />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.noteContent}>{note.content}</Text>
-              </View>
-            ))
+                )}
+                keyExtractor={(item) => item.id}
+                estimatedItemSize={100}
+                onEndReached={loadMoreNotes}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                  hasMoreNotes ? (
+                    <View style={styles.loadMoreContainer}>
+                      {isLoadingMore ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                      ) : (
+                        <TouchableOpacity onPress={loadMoreNotes} style={styles.loadMoreButton}>
+                          <Text style={styles.loadMoreText}>
+                            Load more ({notes.length - visibleNotesCount} remaining)
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ) : null
+                }
+                scrollEnabled={false}
+                nestedScrollEnabled
+              />
+            </View>
           ) : (
             <View style={styles.emptyNotes}>
               <Ionicons name="document-text-outline" size={48} color="#ccc" />
@@ -629,6 +685,25 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  notesListContainer: {
+    minHeight: 100,
+    maxHeight: SCREEN_HEIGHT * 0.4,
+  },
+  loadMoreContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  loadMoreButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+  },
+  loadMoreText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
   },
   actionButtons: {
     paddingHorizontal: 16,

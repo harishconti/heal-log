@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,10 @@ import {
   LogBox,
   StatusBar
 } from 'react-native';
+
+// Constants for pagination
+const PATIENTS_PAGE_SIZE = 50;
+const INITIAL_LOAD_SIZE = 30;
 
 LogBox.ignoreLogs([
   'Accessing element.ref was removed in React 19',
@@ -34,6 +38,9 @@ import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
+
+// Optimized image component
+import { CachedImage } from '@/components/ui/CachedImage';
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -56,7 +63,11 @@ function Index({ patients, groups, totalPatientCount }) {
     settings,
   } = useAppStore();
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pagination state for lazy loading
+  const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_SIZE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
@@ -135,16 +146,14 @@ function Index({ patients, groups, totalPatientCount }) {
     >
       <View style={styles.cardContent}>
         <View style={styles.patientInfo}>
-          {item.photo ? (
-            <Image
-              source={{ uri: `data:image/jpeg;base64,${item.photo}` }}
-              style={styles.patientPhoto}
-            />
-          ) : (
-            <View style={[styles.patientPhotoPlaceholder, { backgroundColor: theme.colors.background }]}>
-              <Ionicons name="person" size={24} color={theme.colors.textSecondary} />
-            </View>
-          )}
+          <CachedImage
+            base64={item.photo}
+            cacheKey={`patient-${item.id}`}
+            size={50}
+            containerStyle={styles.patientPhoto}
+            placeholderColor={theme.colors.background}
+            placeholderIconColor={theme.colors.textSecondary}
+          />
           <View style={styles.patientDetails}>
             <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
             <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
@@ -214,6 +223,30 @@ function Index({ patients, groups, totalPatientCount }) {
 
     return result;
   }, [patients, searchQuery, selectedFilter]);
+
+  // Paginated visible patients for lazy loading
+  const visiblePatients = useMemo(() => {
+    return filteredPatients.slice(0, visibleCount);
+  }, [filteredPatients, visibleCount]);
+
+  const hasMorePatients = filteredPatients.length > visibleCount;
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(INITIAL_LOAD_SIZE);
+  }, [searchQuery, selectedFilter]);
+
+  // Load more patients handler
+  const loadMorePatients = useCallback(() => {
+    if (hasMorePatients && !isLoadingMore) {
+      setIsLoadingMore(true);
+      // Use requestAnimationFrame for smooth scrolling
+      requestAnimationFrame(() => {
+        setVisibleCount(prev => Math.min(prev + PATIENTS_PAGE_SIZE, filteredPatients.length));
+        setIsLoadingMore(false);
+      });
+    }
+  }, [hasMorePatients, isLoadingMore, filteredPatients.length]);
 
   if (authLoading || loading.patients) {
     return (
@@ -302,11 +335,13 @@ function Index({ patients, groups, totalPatientCount }) {
       </View>
 
       <FlashList
-        data={filteredPatients}
+        data={visiblePatients}
         renderItem={renderPatientCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.patientsList}
         estimatedItemSize={150}
+        onEndReached={loadMorePatients}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -314,6 +349,19 @@ function Index({ patients, groups, totalPatientCount }) {
             colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
           />
+        }
+        ListFooterComponent={
+          hasMorePatients ? (
+            <View style={styles.loadMoreContainer}>
+              {isLoadingMore ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Text style={[styles.loadMoreText, { color: theme.colors.textSecondary }]}>
+                  Showing {visiblePatients.length} of {filteredPatients.length} patients
+                </Text>
+              )}
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -575,6 +623,13 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     fontSize: 14 * fontScale,
     textAlign: 'center',
     paddingHorizontal: 32,
+  },
+  loadMoreContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    fontSize: 12 * fontScale,
   },
   statsFooter: {
     paddingHorizontal: 16,

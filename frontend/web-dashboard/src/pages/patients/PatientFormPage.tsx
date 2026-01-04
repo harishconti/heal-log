@@ -47,8 +47,10 @@ export function PatientFormPage() {
     patientsApi.getGroups()
       .then(setGroups)
       .catch((err) => {
-        console.error('Failed to load groups:', err);
-        // Groups are optional, so we just log the error
+        // Groups are optional, so we just log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load groups:', err);
+        }
       })
       .finally(() => setIsLoadingGroups(false));
 
@@ -69,7 +71,9 @@ export function PatientFormPage() {
           });
         })
         .catch((err) => {
-          console.error('Failed to load patient:', err);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Failed to load patient:', err);
+          }
           setError('Failed to load patient. Please try again.');
         })
         .finally(() => {

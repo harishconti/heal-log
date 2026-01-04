@@ -5,19 +5,29 @@ import uuid
 from beanie import Document, Indexed
 from pymongo import IndexModel
 
+# Field length constants
+MAX_NAME_LENGTH = 100
+MAX_PHONE_LENGTH = 25
+MAX_ADDRESS_LENGTH = 255
+MAX_LOCATION_LENGTH = 100
+MAX_COMPLAINT_LENGTH = 5000
+MAX_DIAGNOSIS_LENGTH = 5000
+MAX_GROUP_LENGTH = 50
+
+
 class Patient(Document):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
     patient_id: str
     user_id: Indexed(str)
-    name: str = Field(..., min_length=2, max_length=100)
-    phone: Optional[str] = Field(default="", max_length=25)
+    name: str = Field(..., min_length=2, max_length=MAX_NAME_LENGTH)
+    phone: Optional[str] = Field(default="", max_length=MAX_PHONE_LENGTH)
     email: Optional[EmailStr] = None
-    address: Optional[str] = Field(default="", max_length=255)
-    location: Optional[str] = Field(default="", max_length=100)
-    initial_complaint: Optional[str] = Field(default="", max_length=5000)
-    initial_diagnosis: Optional[str] = Field(default="", max_length=5000)
+    address: Optional[str] = Field(default="", max_length=MAX_ADDRESS_LENGTH)
+    location: Optional[str] = Field(default="", max_length=MAX_LOCATION_LENGTH)
+    initial_complaint: Optional[str] = Field(default="", max_length=MAX_COMPLAINT_LENGTH)
+    initial_diagnosis: Optional[str] = Field(default="", max_length=MAX_DIAGNOSIS_LENGTH)
     photo: Optional[str] = None
-    group: Optional[str] = Field(default="general", max_length=50)
+    group: Optional[str] = Field(default="general", max_length=MAX_GROUP_LENGTH)
     is_favorite: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -37,15 +47,15 @@ class Patient(Document):
         await super().save(*args, **kwargs)
 
 class PatientCreate(BaseModel):
-    name: str = Field(..., min_length=2, max_length=100)
-    phone: Optional[str] = Field(default="", max_length=25)
+    name: str = Field(..., min_length=2, max_length=MAX_NAME_LENGTH)
+    phone: Optional[str] = Field(default="", max_length=MAX_PHONE_LENGTH)
     email: Optional[EmailStr] = None
-    address: Optional[str] = Field(default="", max_length=255)
-    location: Optional[str] = Field(default="", max_length=100)
-    initial_complaint: Optional[str] = Field(default="", max_length=5000)
-    initial_diagnosis: Optional[str] = Field(default="", max_length=5000)
+    address: Optional[str] = Field(default="", max_length=MAX_ADDRESS_LENGTH)
+    location: Optional[str] = Field(default="", max_length=MAX_LOCATION_LENGTH)
+    initial_complaint: Optional[str] = Field(default="", max_length=MAX_COMPLAINT_LENGTH)
+    initial_diagnosis: Optional[str] = Field(default="", max_length=MAX_DIAGNOSIS_LENGTH)
     photo: Optional[str] = None
-    group: Optional[str] = Field(default="general", max_length=50)
+    group: Optional[str] = Field(default="general", max_length=MAX_GROUP_LENGTH)
     is_favorite: bool = False
 
 class PatientUpdate(BaseModel):

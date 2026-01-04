@@ -5,6 +5,9 @@ import { Card, Button, Input, Badge, Spinner } from '../../components/ui';
 import { usePatients } from '../../hooks';
 import { patientsApi } from '../../api/patients';
 
+// Pagination constant
+const DEFAULT_PAGE_SIZE = 20;
+
 export function PatientsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [groups, setGroups] = useState<string[]>([]);
@@ -16,14 +19,16 @@ export function PatientsListPage() {
     search: searchParams.get('search') || undefined,
     group: searchParams.get('group') || undefined,
     page: parseInt(searchParams.get('page') || '1'),
-    page_size: 20,
+    page_size: DEFAULT_PAGE_SIZE,
   });
 
   useEffect(() => {
     patientsApi.getGroups()
       .then(setGroups)
       .catch((err) => {
-        console.error('Failed to load groups:', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load groups:', err);
+        }
         setGroupsError('Failed to load groups');
       })
       .finally(() => setIsLoadingGroups(false));

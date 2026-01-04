@@ -41,6 +41,8 @@ import { Q } from '@nozbe/watermelondb';
 
 // Optimized image component
 import { CachedImage } from '@/components/ui/CachedImage';
+import SwipeableRow from '@/components/ui/SwipeableRow';
+import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -128,6 +130,76 @@ function Index({ patients, groups, totalPatientCount }) {
     }
   };
 
+  const handleDeletePatient = async (patient: Patient) => {
+    Alert.alert(
+      'Delete Patient',
+      `Are you sure you want to delete ${patient.name}? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await database.write(async () => {
+                await patient.markAsDeleted();
+              });
+              triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
+            } catch (error) {
+              Alert.alert('Delete Failed', 'Failed to delete patient.');
+              console.error('Failed to delete patient:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCallPatient = (patient: Patient) => {
+    if (patient.phone) {
+      triggerHaptic();
+      // Open phone dialer
+      import('react-native').then(({ Linking }) => {
+        Linking.openURL(`tel:${patient.phone}`);
+      });
+    }
+  };
+
+  const getPatientMenuOptions = (patient: Patient): MenuOption[] => [
+    {
+      id: 'view',
+      label: 'View Details',
+      icon: 'eye-outline',
+      onPress: () => router.push(`/patient/${patient.id}`),
+    },
+    {
+      id: 'edit',
+      label: 'Edit Patient',
+      icon: 'create-outline',
+      onPress: () => router.push(`/edit-patient/${patient.id}`),
+    },
+    {
+      id: 'call',
+      label: 'Call Patient',
+      icon: 'call-outline',
+      onPress: () => handleCallPatient(patient),
+      disabled: !patient.phone,
+    },
+    {
+      id: 'favorite',
+      label: patient.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+      icon: patient.isFavorite ? 'heart-dislike-outline' : 'heart-outline',
+      onPress: () => handleToggleFavorite(patient),
+    },
+    {
+      id: 'delete',
+      label: 'Delete Patient',
+      icon: 'trash-outline',
+      onPress: () => handleDeletePatient(patient),
+      destructive: true,
+    },
+  ];
+
   const navigateToProfile = () => {
     triggerHaptic();
     router.push('/profile');
@@ -140,48 +212,78 @@ function Index({ patients, groups, totalPatientCount }) {
   };
 
   const renderPatientCard = ({ item }: { item: Patient }) => (
-    <TouchableOpacity
-      style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}
-      onPress={() => router.push(`/patient/${item.id}`)}
+    <SwipeableRow
+      rightActions={[
+        {
+          icon: 'trash-outline',
+          color: theme.colors.surface,
+          backgroundColor: theme.colors.error,
+          onPress: () => handleDeletePatient(item),
+          label: 'Delete',
+        },
+      ]}
+      leftActions={[
+        {
+          icon: item.isFavorite ? 'heart-dislike' : 'heart',
+          color: theme.colors.surface,
+          backgroundColor: item.isFavorite ? theme.colors.textSecondary : theme.colors.error,
+          onPress: () => handleToggleFavorite(item),
+          label: item.isFavorite ? 'Unfavorite' : 'Favorite',
+        },
+        {
+          icon: 'create-outline',
+          color: theme.colors.surface,
+          backgroundColor: theme.colors.primary,
+          onPress: () => router.push(`/edit-patient/${item.id}`),
+          label: 'Edit',
+        },
+      ]}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.patientInfo}>
-          <CachedImage
-            base64={item.photo}
-            cacheKey={`patient-${item.id}`}
-            size={50}
-            containerStyle={styles.patientPhoto}
-            placeholderColor={theme.colors.background}
-            placeholderIconColor={theme.colors.textSecondary}
-          />
-          <View style={styles.patientDetails}>
-            <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-            <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-            {item.phone ? <Text style={[styles.patientContact, { color: theme.colors.primary }]}>{item.phone}</Text> : null}
-            {item.initialComplaint ? (
-              <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                {item.initialComplaint}
-              </Text>
-            ) : null}
+      <LongPressMenu
+        options={getPatientMenuOptions(item)}
+        onPress={() => router.push(`/patient/${item.id}`)}
+      >
+        <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.cardContent}>
+            <View style={styles.patientInfo}>
+              <CachedImage
+                base64={item.photo}
+                cacheKey={`patient-${item.id}`}
+                size={50}
+                containerStyle={styles.patientPhoto}
+                placeholderColor={theme.colors.background}
+                placeholderIconColor={theme.colors.textSecondary}
+              />
+              <View style={styles.patientDetails}>
+                <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
+                <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
+                {item.phone ? <Text style={[styles.patientContact, { color: theme.colors.primary }]}>{item.phone}</Text> : null}
+                {item.initialComplaint ? (
+                  <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                    {item.initialComplaint}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            <View style={styles.cardActions}>
+              <TouchableOpacity
+                onPress={() => handleToggleFavorite(item)}
+                style={styles.favoriteButton}
+              >
+                <Ionicons
+                  name={item.isFavorite ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={item.isFavorite ? theme.colors.error : theme.colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
+                <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+              </View>
+            </View>
           </View>
         </View>
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            onPress={() => handleToggleFavorite(item)}
-            style={styles.favoriteButton}
-          >
-            <Ionicons
-              name={item.isFavorite ? 'heart' : 'heart-outline'}
-              size={20}
-              color={item.isFavorite ? theme.colors.error : theme.colors.textSecondary}
-            />
-          </TouchableOpacity>
-          <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
-            <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </LongPressMenu>
+    </SwipeableRow>
   );
 
   const filterButtons = useMemo(() => {
@@ -275,23 +377,23 @@ function Index({ patients, groups, totalPatientCount }) {
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.syncButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
-            <Ionicons name={refreshing || loading.sync ? "sync-circle" : "sync"} size={24} color="#fff" />
+            <Ionicons name={refreshing || loading.sync ? "sync-circle" : "sync"} size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.profileButton} onPress={navigateToProfile}>
-            <Ionicons name="person-circle" size={32} color="#fff" />
+            <Ionicons name="person-circle" size={32} color={theme.colors.surface} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.addButton} onPress={addNewPatient}>
-            <Ionicons name="add" size={24} color="#fff" />
+            <Ionicons name="add" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.debugButton} onPress={() => router.push('/debug-console')}>
-            <Ionicons name="bug" size={24} color="#fff" />
+            <Ionicons name="bug" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
         </View>
       </View>
 
       {isOffline && (
         <View style={styles.offlineBanner}>
-          <Ionicons name="cloud-offline-outline" size={16} color="#fff" />
+          <Ionicons name="cloud-offline-outline" size={16} color={theme.colors.surface} />
           <Text style={styles.offlineText}>
             Offline Mode - {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Never synced'}
           </Text>
@@ -323,7 +425,7 @@ function Index({ patients, groups, totalPatientCount }) {
                 setSelectedFilter(item.filter);
               }}
             >
-              <Text style={[styles.filterText, { color: selectedFilter === item.filter ? '#fff' : theme.colors.textSecondary }]}>
+              <Text style={[styles.filterText, { color: selectedFilter === item.filter ? theme.colors.surface : theme.colors.textSecondary }]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -454,7 +556,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   headerTitle: {
     fontSize: 22 * fontScale,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.colors.surface,
   },
   headerSubtitle: {
     fontSize: 14 * fontScale,
@@ -489,7 +591,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
   },
   offlineBanner: {
-    backgroundColor: '#f39c12',
+    backgroundColor: theme.colors.warning,
     paddingHorizontal: 16,
     paddingVertical: 8,
     flexDirection: 'row',
@@ -497,7 +599,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     gap: 8,
   },
   offlineText: {
-    color: '#fff',
+    color: theme.colors.surface,
     fontSize: 14 * fontScale,
   },
   searchContainer: {

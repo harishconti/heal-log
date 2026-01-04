@@ -43,6 +43,17 @@ export interface AppSettings {
   offlineMode: boolean;
   autoSync: boolean;
   contactsSync: boolean;
+  backgroundSyncEnabled: boolean;
+  biometricEnabled: boolean;
+}
+
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'pending';
+
+export interface SyncState {
+  status: SyncStatus;
+  pendingChanges: number;
+  lastSyncAttempt: string | null;
+  consecutiveFailures: number;
 }
 
 interface LoadingState {
@@ -86,6 +97,9 @@ interface AppState {
   lastSyncTime: string | null;
   settings: AppSettings;
 
+  // Sync state
+  syncState: SyncState;
+
   // Actions
   setUser: (user: User | null) => void;
 
@@ -102,6 +116,15 @@ interface AppState {
   // App state actions
   setOffline: (offline: boolean) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
+  setLastSyncTime: (time: string | null) => void;
+
+  // Sync state actions
+  setSyncStatus: (status: SyncStatus) => void;
+  setPendingChanges: (count: number) => void;
+  incrementPendingChanges: () => void;
+  decrementPendingChanges: () => void;
+  recordSyncAttempt: (success: boolean) => void;
+  resetSyncState: () => void;
 
   // Convenience getters
   isAnyLoading: () => boolean;
@@ -116,7 +139,16 @@ const defaultSettings: AppSettings = {
   hapticEnabled: true,
   offlineMode: true,
   autoSync: true,
-  contactsSync: false
+  contactsSync: false,
+  backgroundSyncEnabled: true,
+  biometricEnabled: false,
+};
+
+const initialSyncState: SyncState = {
+  status: 'idle',
+  pendingChanges: 0,
+  lastSyncAttempt: null,
+  consecutiveFailures: 0,
 };
 
 const initialLoadingState: LoadingState = {
@@ -153,6 +185,7 @@ export const useAppStore = create(
       isOffline: false,
       lastSyncTime: null,
       settings: defaultSettings,
+      syncState: initialSyncState,
 
       // User actions
       setUser: (user) => set({ user }),
@@ -187,6 +220,38 @@ export const useAppStore = create(
         const settings = { ...get().settings, ...newSettings };
         set({ settings });
       },
+      setLastSyncTime: (lastSyncTime) => set({ lastSyncTime }),
+
+      // Sync state actions
+      setSyncStatus: (status) => {
+        const syncState = { ...get().syncState, status };
+        set({ syncState });
+      },
+      setPendingChanges: (count) => {
+        const syncState = { ...get().syncState, pendingChanges: count };
+        set({ syncState });
+      },
+      incrementPendingChanges: () => {
+        const current = get().syncState;
+        set({ syncState: { ...current, pendingChanges: current.pendingChanges + 1 } });
+      },
+      decrementPendingChanges: () => {
+        const current = get().syncState;
+        set({ syncState: { ...current, pendingChanges: Math.max(0, current.pendingChanges - 1) } });
+      },
+      recordSyncAttempt: (success) => {
+        const current = get().syncState;
+        set({
+          syncState: {
+            ...current,
+            lastSyncAttempt: new Date().toISOString(),
+            consecutiveFailures: success ? 0 : current.consecutiveFailures + 1,
+            status: success ? 'success' : 'error',
+          },
+          lastSyncTime: success ? new Date().toISOString() : get().lastSyncTime,
+        });
+      },
+      resetSyncState: () => set({ syncState: initialSyncState }),
 
       // Convenience getters
       isAnyLoading: () => {
@@ -223,6 +288,7 @@ export const useAppStore = create(
         searchQuery: state.searchQuery,
         selectedFilter: state.selectedFilter,
         isOffline: state.isOffline,
+        syncState: state.syncState,
       }),
     }
   )

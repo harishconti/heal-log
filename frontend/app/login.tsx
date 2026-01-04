@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -22,12 +22,24 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAppStore } from '@/store/useAppStore';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { getErrorMessage, isVerificationError } from '@/utils/errorMessages';
+import {
+  checkBiometricCapabilities,
+  attemptBiometricLogin,
+  isBiometricLoginEnabled,
+  BiometricCapabilities,
+} from '@/services/biometricAuth';
+import api from '@/services/api';
+import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, setToken, setUser } = useAuth();
   const router = useRouter();
   const { theme, fontScale } = useTheme();
-  const { loading, setLoading } = useAppStore();
+  const { loading, setLoading, settings } = useAppStore();
+
+  const [biometricCapabilities, setBiometricCapabilities] = useState<BiometricCapabilities | null>(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
 
   const { control, handleSubmit, getValues } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -37,8 +49,79 @@ export default function LoginScreen() {
     },
   });
 
+  // Check biometric capabilities on mount
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      const capabilities = await checkBiometricCapabilities();
+      setBiometricCapabilities(capabilities);
+
+      if (capabilities.isAvailable && capabilities.isEnrolled) {
+        const enabled = await isBiometricLoginEnabled();
+        setBiometricEnabled(enabled);
+
+        // Auto-trigger biometric login if enabled
+        if (enabled && settings.biometricEnabled) {
+          handleBiometricLogin();
+        }
+      }
+    };
+
+    checkBiometrics();
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+    addBreadcrumb('auth', 'Biometric login attempt');
+
+    try {
+      const result = await attemptBiometricLogin();
+
+      if (result.success && result.token) {
+        // Validate the token with the server
+        try {
+          // Set the token temporarily
+          if (Platform.OS === 'web') {
+            window.sessionStorage?.setItem('token', result.token);
+          } else {
+            await SecureStore.setItemAsync('token', result.token);
+          }
+
+          // Verify token is still valid
+          const response = await api.get('/api/auth/me');
+
+          if (response.data.user) {
+            setToken(result.token);
+            setUser(response.data.user);
+            addBreadcrumb('auth', 'Biometric login successful');
+            router.replace('/');
+          }
+        } catch (error: any) {
+          // Token is invalid, clear it
+          if (Platform.OS === 'web') {
+            window.sessionStorage?.removeItem('token');
+          } else {
+            await SecureStore.deleteItemAsync('token');
+          }
+
+          Alert.alert(
+            'Session Expired',
+            'Your session has expired. Please log in with your password.',
+            [{ text: 'OK' }]
+          );
+        }
+      } else if (result.error && result.error !== 'Authentication cancelled') {
+        Alert.alert('Biometric Login Failed', result.error);
+      }
+    } catch (error: any) {
+      console.error('Biometric login error:', error);
+      Alert.alert('Error', 'Failed to authenticate with biometrics');
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
   const onSubmit = async (data: LoginFormData) => {
-    setLoading('login', true);
+    setLoading('auth', true);
     addBreadcrumb('auth', `User login attempt: ${data.email}`);
     try {
       await login(data.email, data.password);
@@ -67,7 +150,7 @@ export default function LoginScreen() {
         Alert.alert('Login Failed', userMessage);
       }
     } finally {
-      setLoading('login', false);
+      setLoading('auth', false);
     }
   };
 
@@ -79,7 +162,27 @@ export default function LoginScreen() {
     router.push('/forgot-password');
   };
 
+  const getBiometricIcon = (): keyof typeof Ionicons.glyphMap => {
+    if (!biometricCapabilities) return 'finger-print';
+    if (biometricCapabilities.biometricTypes.includes('facial')) {
+      return Platform.OS === 'ios' ? 'scan' : 'happy-outline';
+    }
+    return 'finger-print';
+  };
+
+  const getBiometricLabel = (): string => {
+    if (!biometricCapabilities) return 'Biometric Login';
+    if (biometricCapabilities.biometricTypes.includes('facial')) {
+      return Platform.OS === 'ios' ? 'Sign in with Face ID' : 'Sign in with Face';
+    }
+    return Platform.OS === 'ios' ? 'Sign in with Touch ID' : 'Sign in with Fingerprint';
+  };
+
   const styles = getStyles(theme, fontScale);
+
+  const showBiometricButton = biometricCapabilities?.isAvailable &&
+    biometricCapabilities?.isEnrolled &&
+    biometricEnabled;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -94,6 +197,36 @@ export default function LoginScreen() {
             <Text style={styles.title}>HealLog</Text>
             <Text style={styles.subtitle}>Professional Patient Management</Text>
           </View>
+
+          {/* Biometric Login Button */}
+          {showBiometricButton && (
+            <TouchableOpacity
+              style={styles.biometricButton}
+              onPress={handleBiometricLogin}
+              disabled={biometricLoading}
+            >
+              {biometricLoading ? (
+                <ActivityIndicator color={theme.colors.primary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name={getBiometricIcon()}
+                    size={32}
+                    color={theme.colors.primary}
+                  />
+                  <Text style={styles.biometricText}>{getBiometricLabel()}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {showBiometricButton && (
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or sign in with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          )}
 
           {/* Login Form */}
           <View style={styles.form}>
@@ -123,12 +256,12 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.loginButton, loading.login && styles.loginButtonDisabled]}
+              style={[styles.loginButton, loading.auth && styles.loginButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
-              disabled={loading.login}
+              disabled={loading.auth}
             >
-              {loading.login ? (
-                <ActivityIndicator color="#fff" />
+              {loading.auth ? (
+                <ActivityIndicator color={theme.colors.surface} />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
@@ -183,6 +316,27 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
+  biometricButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    borderRadius: 16,
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  biometricText: {
+    fontSize: 16 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginTop: 8,
+  },
   form: {
     marginBottom: 32,
   },
@@ -203,7 +357,7 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -212,7 +366,7 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     backgroundColor: theme.colors.primaryMuted,
   },
   loginButtonText: {
-    color: '#fff',
+    color: theme.colors.surface,
     fontSize: 18 * fontScale,
     fontWeight: '600',
   },

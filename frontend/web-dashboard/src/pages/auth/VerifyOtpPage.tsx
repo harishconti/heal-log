@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,12 +12,41 @@ const otpSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits'),
 });
 
+// Email validation schema for URL parameter
+const emailSchema = z.string().email().max(254);
+
 type OtpFormData = z.infer<typeof otpSchema>;
+
+/**
+ * Sanitizes and validates email from URL parameter
+ * Returns empty string if invalid to prevent XSS
+ */
+function sanitizeEmailParam(rawEmail: string | null): string {
+  if (!rawEmail) return '';
+
+  // Decode and trim
+  const decoded = decodeURIComponent(rawEmail).trim().toLowerCase();
+
+  // Validate email format
+  const result = emailSchema.safeParse(decoded);
+  if (!result.success) {
+    console.warn('Invalid email parameter rejected:', rawEmail);
+    return '';
+  }
+
+  return result.data;
+}
 
 export function VerifyOtpPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email') || '';
+
+  // Sanitize and validate email from URL parameter
+  const email = useMemo(
+    () => sanitizeEmailParam(searchParams.get('email')),
+    [searchParams]
+  );
+
   const { login } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [resendMessage, setResendMessage] = useState<string | null>(null);

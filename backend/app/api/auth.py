@@ -15,10 +15,27 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Rate limiting constants
+REGISTER_RATE_LIMIT = "5/minute"
+VERIFY_OTP_RATE_LIMIT = "10/minute"
+RESEND_OTP_RATE_LIMIT = "3/minute"
+LOGIN_RATE_LIMIT = "5/minute"
+FORGOT_PASSWORD_RATE_LIMIT = "5/10minutes"
+FORGOT_PASSWORD_DAILY_LIMIT = "10/day"
+RESET_PASSWORD_RATE_LIMIT = "5/10minutes"
+RESET_PASSWORD_DAILY_LIMIT = "15/day"
+REFRESH_TOKEN_RATE_LIMIT = "20/minute"
+
+# Per-email rate limiting constants
+MAX_OTP_VERIFICATION_ATTEMPTS = 5
+OTP_VERIFICATION_CACHE_TTL = 900  # 15 minutes in seconds
+MAX_FORGOT_PASSWORD_EMAILS_PER_DAY = 5
+FORGOT_PASSWORD_CACHE_TTL = 86400  # 24 hours in seconds
+
 router = APIRouter()
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit(REGISTER_RATE_LIMIT)
 async def register_user(request: Request, user_data: UserCreate):
     """
     Register a new user. Sends OTP for email verification.
@@ -53,26 +70,53 @@ async def register_user(request: Request, user_data: UserCreate):
         )
 
 @router.post("/verify-otp", response_model=dict)
-@limiter.limit("10/minute")
+@limiter.limit(VERIFY_OTP_RATE_LIMIT)
 async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     """
     Verify email using OTP. Returns tokens on success.
+    Rate limited to 10/minute globally and 5 attempts per email per 15 minutes.
     """
+    email_lower = otp_data.email.lower().strip()
+
+    # Per-email rate limiting to prevent brute force attacks on specific emails
+    email_key = f"otp_verify_email:{email_lower}"
+    try:
+        from fastapi_cache import FastAPICache
+        backend = FastAPICache.get_backend()
+        if backend:
+            count_str = await backend.get(email_key)
+            email_count = int(count_str) if count_str else 0
+
+            # Check per-email rate limit
+            if email_count >= MAX_OTP_VERIFICATION_ATTEMPTS:
+                logger.warning(f"[VERIFY_OTP] Per-email rate limit exceeded for {email_lower[:3]}***")
+                raise APIException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Too many verification attempts for this email. Please wait {OTP_VERIFICATION_CACHE_TTL // 60} minutes."
+                )
+
+            # Increment count with TTL
+            await backend.set(email_key, str(email_count + 1), expire=OTP_VERIFICATION_CACHE_TTL)
+    except APIException:
+        raise
+    except Exception as e:
+        logger.debug(f"[VERIFY_OTP] Cache not available for per-email rate limit: {e}")
+
     user = await user_service.get_user_by_email(otp_data.email)
     if not user:
         raise APIException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No account found with this email."
         )
-    
+
     if user.is_verified:
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email is already verified."
         )
-    
+
     success, message = await otp_service.verify_otp(user, otp_data.otp_code)
-    
+
     if not success:
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -93,7 +137,7 @@ async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     }
 
 @router.post("/resend-otp", response_model=dict)
-@limiter.limit("3/minute")
+@limiter.limit(RESEND_OTP_RATE_LIMIT)
 async def resend_otp(request: Request, otp_data: OTPResendRequest):
     """
     Resend OTP for email verification. Has a 60-second cooldown.
@@ -133,7 +177,7 @@ async def resend_otp(request: Request, otp_data: OTPResendRequest):
     }
 
 @router.post("/login", response_model=dict)
-@limiter.limit("5/minute")
+@limiter.limit(LOGIN_RATE_LIMIT)
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Authenticate a user and return tokens and user info.
@@ -167,8 +211,8 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     }
 
 @router.post("/forgot-password", response_model=dict)
-@limiter.limit("5/10minutes")
-@limiter.limit("10/day")
+@limiter.limit(FORGOT_PASSWORD_RATE_LIMIT)
+@limiter.limit(FORGOT_PASSWORD_DAILY_LIMIT)
 async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     """
     Initiate password reset. Sends reset token via email.
@@ -192,16 +236,16 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
             count_str = await backend.get(email_key)
             email_count = int(count_str) if count_str else 0
             
-            # Max 5 requests per day per email
-            if email_count >= 5:
+            # Check per-email rate limit
+            if email_count >= MAX_FORGOT_PASSWORD_EMAILS_PER_DAY:
                 logger.warning(f"[FORGOT_PASSWORD] Email rate limit exceeded for {email_lower[:3]}*** (IP: {client_ip})")
                 return {
                     "success": True,
                     "message": "If an account exists with this email, a password reset link has been sent."
                 }
-            
-            # Increment count (expires in 24 hours)
-            await backend.set(email_key, str(email_count + 1), expire=86400)
+
+            # Increment count with TTL
+            await backend.set(email_key, str(email_count + 1), expire=FORGOT_PASSWORD_CACHE_TTL)
     except Exception as e:
         logger.debug(f"[FORGOT_PASSWORD] Cache not available for email rate limit: {e}")
     
@@ -228,8 +272,8 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     }
 
 @router.post("/reset-password", response_model=dict)
-@limiter.limit("5/10minutes")
-@limiter.limit("15/day")
+@limiter.limit(RESET_PASSWORD_RATE_LIMIT)
+@limiter.limit(RESET_PASSWORD_DAILY_LIMIT)
 async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     """
     Reset password using the token from email.
@@ -265,7 +309,7 @@ async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     }
 
 @router.post("/refresh", response_model=Token)
-@limiter.limit("20/minute")
+@limiter.limit(REFRESH_TOKEN_RATE_LIMIT)
 async def refresh_access_token(request: Request, refresh_token_data: RefreshToken):
     """
     Refresh an access token using a valid refresh token.
@@ -313,8 +357,8 @@ async def refresh_access_token(request: Request, refresh_token_data: RefreshToke
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """
     Get the current authenticated user's information.
-    """
-    if not current_user:
-        raise HTTPException(status_code=404, detail="User not found")
 
+    Note: The get_current_user dependency already raises HTTPException if user is not authenticated,
+    so current_user is guaranteed to be valid at this point.
+    """
     return {"success": True, "user": UserResponse(**current_user.model_dump())}

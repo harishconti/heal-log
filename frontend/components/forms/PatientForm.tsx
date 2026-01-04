@@ -44,6 +44,10 @@ const LOCATIONS = [
   'Telemedicine'
 ];
 
+// Maximum image size in bytes (2MB) - prevents memory issues and DoS
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_SIZE_MB = 2;
+
 export interface PatientFormProps {
   mode: 'create' | 'edit';
   initialData?: Partial<PatientFormValues>;
@@ -99,7 +103,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (status !== 'granted') {
       Alert.alert('Permission Required', 'Camera roll permissions are required to select photos');
       return;
@@ -114,13 +118,22 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     });
 
     if (!result.canceled && result.assets[0].base64) {
+      // Validate image size (base64 is ~33% larger than binary)
+      const base64Size = result.assets[0].base64.length * 0.75;
+      if (base64Size > MAX_IMAGE_SIZE_BYTES) {
+        Alert.alert(
+          'Image Too Large',
+          `Please select an image smaller than ${MAX_IMAGE_SIZE_MB}MB. The selected image is approximately ${(base64Size / (1024 * 1024)).toFixed(1)}MB.`
+        );
+        return;
+      }
       await updateFormData('photo', result.assets[0].base64);
     }
   };
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    
+
     if (status !== 'granted') {
       Alert.alert('Permission Required', 'Camera permissions are required to take photos');
       return;
@@ -134,6 +147,15 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     });
 
     if (!result.canceled && result.assets[0].base64) {
+      // Validate image size (base64 is ~33% larger than binary)
+      const base64Size = result.assets[0].base64.length * 0.75;
+      if (base64Size > MAX_IMAGE_SIZE_BYTES) {
+        Alert.alert(
+          'Image Too Large',
+          `The photo is too large (${(base64Size / (1024 * 1024)).toFixed(1)}MB). Please try again with lower quality settings.`
+        );
+        return;
+      }
       await updateFormData('photo', result.assets[0].base64);
     }
   };

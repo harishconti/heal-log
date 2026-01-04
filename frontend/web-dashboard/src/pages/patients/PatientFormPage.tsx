@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import { Card, Button, Input, Textarea, Spinner } from '../../components/ui';
 import { patientsApi, type CreatePatientData } from '../../api/patients';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const patientSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -28,6 +29,7 @@ export function PatientFormPage() {
   const [isLoading, setIsLoading] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<string[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
   const {
     register,
@@ -45,9 +47,12 @@ export function PatientFormPage() {
     patientsApi.getGroups()
       .then(setGroups)
       .catch((err) => {
-        console.error('Failed to load groups:', err);
-        // Groups are optional, so we just log the error
-      });
+        // Groups are optional, so we just log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load groups:', err);
+        }
+      })
+      .finally(() => setIsLoadingGroups(false));
 
     if (isEditing && id) {
       patientsApi
@@ -66,7 +71,9 @@ export function PatientFormPage() {
           });
         })
         .catch((err) => {
-          console.error('Failed to load patient:', err);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Failed to load patient:', err);
+          }
           setError('Failed to load patient. Please try again.');
         })
         .finally(() => {
@@ -98,8 +105,7 @@ export function PatientFormPage() {
         navigate(`/patients/${newPatient.id}`);
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to save patient');
+      setError(getErrorMessage(err, 'Failed to save patient'));
     }
   };
 
@@ -176,11 +182,14 @@ export function PatientFormPage() {
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Group/Category
+                {isLoadingGroups && (
+                  <span className="ml-2 text-xs text-gray-400">(loading groups...)</span>
+                )}
               </label>
               <input
                 type="text"
                 list="groups-list"
-                placeholder="Select or type a new group"
+                placeholder={isLoadingGroups ? "Loading groups..." : "Select or type a new group"}
                 className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 {...register('group')}
               />

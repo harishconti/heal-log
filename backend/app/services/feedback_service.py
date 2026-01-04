@@ -122,14 +122,20 @@ class FeedbackService(BaseService):
         """
         message.attach(MIMEText(body, "plain"))
 
+        server = None
         try:
             server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
             server.starttls()
             server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
             server.sendmail(settings.EMAIL_USER, settings.EMAIL_TO, message.as_string())
-            server.quit()
             logger.info("[FEEDBACK_SERVICE] Feedback email sent successfully.")
         except Exception as e:
             logger.error(f"[FEEDBACK_SERVICE] Failed to send feedback email: {e}")
+        finally:
+            if server:
+                try:
+                    server.quit()
+                except Exception:
+                    pass  # Ignore errors during cleanup
 
 feedback_service = FeedbackService(get_feedback_collection)

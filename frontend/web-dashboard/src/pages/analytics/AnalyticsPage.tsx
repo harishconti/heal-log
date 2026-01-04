@@ -5,9 +5,18 @@ import { LineChart, BarChart, PieChart } from '../../components/charts';
 import { useAnalytics, useRequirePro } from '../../hooks';
 import { analyticsApi } from '../../api/analytics';
 
+// Analytics period options
+const ANALYTICS_PERIOD_OPTIONS = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+] as const;
+
+const DEFAULT_ANALYTICS_PERIOD = 30;
+
 export function AnalyticsPage() {
   const { isLoading: isCheckingPro, isPro } = useRequirePro();
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(DEFAULT_ANALYTICS_PERIOD);
   const { patientGrowth, notesActivity, weeklyActivity, demographics, isLoading, error } =
     useAnalytics(days);
   const [isExporting, setIsExporting] = useState(false);
@@ -25,7 +34,10 @@ export function AnalyticsPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      console.error('Export error:', err);
+      // Log error for debugging, alert user
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Export error:', err);
+      }
       alert('Failed to export analytics. Please try again.');
     } finally {
       setIsExporting(false);
@@ -76,11 +88,7 @@ export function AnalyticsPage() {
           <Select
             value={String(days)}
             onChange={(e) => setDays(parseInt(e.target.value))}
-            options={[
-              { value: '7', label: 'Last 7 days' },
-              { value: '30', label: 'Last 30 days' },
-              { value: '90', label: 'Last 90 days' },
-            ]}
+            options={ANALYTICS_PERIOD_OPTIONS}
           />
           <Button variant="outline" onClick={handleExport} isLoading={isExporting}>
             <Download className="h-4 w-4 mr-2" />

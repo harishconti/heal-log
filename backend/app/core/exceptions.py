@@ -1,8 +1,8 @@
+import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from app.core.monitoring import capture_exception_with_boundary
 from app.schemas.error_event import ErrorEvent
-from app.core.security import get_optional_current_user
 
 
 class APIException(Exception):
@@ -43,7 +43,19 @@ async def api_exception_handler(request: Request, exc: APIException):
 async def generic_exception_handler(request: Request, exc: Exception):
     capture_exception_with_boundary(exc)
 
-    user_id = await get_optional_current_user(request)
+    # Extract user_id from authorization header if present
+    user_id = None
+    try:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            from app.core.security import decode_access_token
+            token = auth_header.split(" ")[1]
+            payload = decode_access_token(token)
+            if payload:
+                user_id = payload.get("sub")
+    except Exception as auth_error:
+        # Log but don't fail - user extraction is optional for error logging
+        logging.debug(f"Could not extract user_id for error logging: {auth_error}")
 
     error_event = ErrorEvent(
         user_id=user_id,

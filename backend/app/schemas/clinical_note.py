@@ -4,11 +4,15 @@ from typing import Literal
 import uuid
 from beanie import Document, Indexed
 
+# Field length constants
+MAX_NOTE_LENGTH = 5000
+
+
 class ClinicalNote(Document):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
     patient_id: Indexed(str)
     user_id: Indexed(str)
-    content: str = Field(..., min_length=1, max_length=5000)
+    content: str = Field(..., min_length=1, max_length=MAX_NOTE_LENGTH)
     visit_type: Literal["initial", "regular", "follow-up", "emergency"] = "regular"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -20,7 +24,7 @@ class ClinicalNote(Document):
         populate_by_name = True
 
 class NoteCreate(BaseModel):
-    content: str = Field(..., min_length=1, max_length=5000)
+    content: str = Field(..., min_length=1, max_length=MAX_NOTE_LENGTH)
     visit_type: Literal["initial", "regular", "follow-up", "emergency"] = "regular"
 
 class ClinicalNoteUpdate(BaseModel):

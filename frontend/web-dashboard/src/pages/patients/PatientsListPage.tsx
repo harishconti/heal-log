@@ -5,26 +5,33 @@ import { Card, Button, Input, Badge, Spinner } from '../../components/ui';
 import { usePatients } from '../../hooks';
 import { patientsApi } from '../../api/patients';
 
+// Pagination constant
+const DEFAULT_PAGE_SIZE = 20;
+
 export function PatientsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [groups, setGroups] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [groupsError, setGroupsError] = useState<string | null>(null);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
   const { patients, pagination, isLoading, filters, updateFilters, setPage } = usePatients({
     search: searchParams.get('search') || undefined,
     group: searchParams.get('group') || undefined,
     page: parseInt(searchParams.get('page') || '1'),
-    page_size: 20,
+    page_size: DEFAULT_PAGE_SIZE,
   });
 
   useEffect(() => {
     patientsApi.getGroups()
       .then(setGroups)
       .catch((err) => {
-        console.error('Failed to load groups:', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load groups:', err);
+        }
         setGroupsError('Failed to load groups');
-      });
+      })
+      .finally(() => setIsLoadingGroups(false));
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -102,9 +109,19 @@ export function PatientsListPage() {
             <select
               value={filters.group || ''}
               onChange={(e) => handleGroupFilter(e.target.value || null)}
-              className="block rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              disabled={isLoadingGroups}
+              className={`block rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 ${
+                groupsError
+                  ? 'border-red-300 bg-red-50 text-red-700'
+                  : isLoadingGroups
+                  ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-wait'
+                  : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+              }`}
+              title={groupsError || undefined}
             >
-              <option value="">All Groups</option>
+              <option value="">
+                {isLoadingGroups ? 'Loading groups...' : groupsError ? 'Groups unavailable' : 'All Groups'}
+              </option>
               {groups.map((group) => (
                 <option key={group} value={group}>
                   {group}

@@ -9,13 +9,30 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-// Track number of open modals for proper body overflow handling
-let openModalCount = 0;
+/**
+ * Manages modal count using a ref-based counter stored on document body.
+ * This avoids race conditions with module-level mutable state.
+ */
+function getModalCount(): number {
+  const count = document.body.dataset.openModals;
+  return count ? parseInt(count, 10) : 0;
+}
+
+function setModalCount(count: number): void {
+  if (count <= 0) {
+    delete document.body.dataset.openModals;
+  } else {
+    document.body.dataset.openModals = String(count);
+  }
+}
 
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   // Use ref to avoid stale closure issues with onClose callback
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  // Track if this modal instance has registered itself
+  const hasRegisteredRef = useRef(false);
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -24,20 +41,40 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Cleanup if modal was open and is now closing
+      if (hasRegisteredRef.current) {
+        const currentCount = getModalCount();
+        setModalCount(currentCount - 1);
+        if (currentCount - 1 <= 0) {
+          document.body.style.overflow = 'unset';
+        }
+        hasRegisteredRef.current = false;
+      }
+      return;
+    }
 
-    // Increment open modal count and set overflow
-    openModalCount++;
+    // Register this modal
+    if (!hasRegisteredRef.current) {
+      const newCount = getModalCount() + 1;
+      setModalCount(newCount);
+      hasRegisteredRef.current = true;
+    }
+
     document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', handleEscape);
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      // Decrement open modal count
-      openModalCount--;
-      // Only restore overflow when all modals are closed
-      if (openModalCount === 0) {
-        document.body.style.overflow = 'unset';
+
+      // Cleanup on unmount
+      if (hasRegisteredRef.current) {
+        const currentCount = getModalCount();
+        setModalCount(currentCount - 1);
+        if (currentCount - 1 <= 0) {
+          document.body.style.overflow = 'unset';
+        }
+        hasRegisteredRef.current = false;
       }
     };
   }, [isOpen, handleEscape]);

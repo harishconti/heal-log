@@ -55,6 +55,15 @@ async def create_indexes():
         # Index on patient_id for lookup
         await patients.create_index([("patient_id", ASCENDING)], name="idx_patient_id")
         logger.info("✅ Created index: patients.patient_id")
+
+        # UNIQUE compound index on user_id + name (prevents duplicate patient names per user)
+        # This enforces atomicity for patient creation race condition prevention
+        await patients.create_index(
+            [("user_id", ASCENDING), ("name", ASCENDING)],
+            unique=True,
+            name="idx_user_name_unique"
+        )
+        logger.info("✅ Created UNIQUE index: patients.user_id + name")
         
         # Index on created_at for sorting
         await patients.create_index([("created_at", DESCENDING)], name="idx_created_at")

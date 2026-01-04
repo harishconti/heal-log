@@ -100,8 +100,7 @@ if settings.ENV == "production":
 
     # Warn if localhost is in production CORS
     if "localhost" in settings.ALLOWED_ORIGINS.lower():
-        import logging
-        logging.warning(
+        logger.warning(
             "SECURITY WARNING: localhost found in ALLOWED_ORIGINS in production. "
             "This may be a security risk. Remove localhost origins for production."
         )

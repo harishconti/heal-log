@@ -2,9 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import FeedbackForm from '@/components/forms/FeedbackForm';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, Theme } from '@/contexts/ThemeContext';
 import api from '@/services/api';
 import Toast from 'react-native-toast-message';
+
+interface FeedbackData {
+  feedback_type: 'bug' | 'suggestion' | 'general';
+  description: string;
+  steps_to_reproduce?: string;
+  device_info: {
+    os_version: string;
+    app_version: string;
+    device_model: string | null;
+  };
+  screenshot: string | null;
+}
 
 const FeedbackScreen = () => {
   const { theme } = useTheme();
@@ -12,7 +24,7 @@ const FeedbackScreen = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (data) => {
+  const handleSubmit = async (data: FeedbackData) => {
     setIsSubmitting(true);
     try {
       await api.post('/api/feedback/submit', data);
@@ -23,7 +35,7 @@ const FeedbackScreen = () => {
       });
       router.back();
     } catch (error) {
-        console.log(error)
+      console.error('Failed to submit feedback:', error);
       Toast.show({
         type: 'error',
         text1: 'Submission Failed',
@@ -42,7 +54,7 @@ const FeedbackScreen = () => {
   );
 };
 
-const createStyles = (theme) => StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -198,14 +198,14 @@ export function PatientDetailPage() {
           {patient.initial_complaint && (
             <Card>
               <CardHeader title="Initial Complaint" />
-              <p className="text-gray-900">{patient.initial_complaint}</p>
+              <p className="text-gray-900">{sanitizeContent(patient.initial_complaint)}</p>
             </Card>
           )}
 
           {patient.initial_diagnosis && (
             <Card>
               <CardHeader title="Initial Diagnosis" />
-              <p className="text-gray-900">{patient.initial_diagnosis}</p>
+              <p className="text-gray-900">{sanitizeContent(patient.initial_diagnosis)}</p>
             </Card>
           )}
         </div>

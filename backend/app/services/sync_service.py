@@ -6,6 +6,9 @@ from app.schemas.sync_event import SyncEvent
 from typing import Dict, Any, List
 from app.core.exceptions import SyncConflictException
 
+# Maximum records per sync operation to prevent memory exhaustion
+MAX_SYNC_RECORDS = 5000
+
 
 async def get_deleted_records(user_id: str, last_pulled_at_dt: datetime) -> Dict[str, List[str]]:
     """
@@ -76,10 +79,17 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
             {"$or": [{"deleted_at": {"$exists": False}}, {"deleted_at": None}]}
         )
 
-        created_patients = await created_patients_cursor.to_list()
-        updated_patients = await updated_patients_cursor.to_list()
-        created_notes = await created_notes_cursor.to_list()
-        updated_notes = await updated_notes_cursor.to_list()
+        # Apply limits to prevent memory exhaustion with large datasets
+        created_patients = await created_patients_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        updated_patients = await updated_patients_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        created_notes = await created_notes_cursor.limit(MAX_SYNC_RECORDS).to_list()
+        updated_notes = await updated_notes_cursor.limit(MAX_SYNC_RECORDS).to_list()
+
+        # Log warning if any limits were reached
+        if len(created_patients) == MAX_SYNC_RECORDS or len(updated_patients) == MAX_SYNC_RECORDS:
+            logging.warning(f"[SYNC] User {user_id} hit sync limit ({MAX_SYNC_RECORDS}) for patients - consider incremental sync")
+        if len(created_notes) == MAX_SYNC_RECORDS or len(updated_notes) == MAX_SYNC_RECORDS:
+            logging.warning(f"[SYNC] User {user_id} hit sync limit ({MAX_SYNC_RECORDS}) for notes - consider incremental sync")
 
         def serialize_document(doc):
             # Use mode='python' to keep datetime objects as Python datetime, not ISO strings
@@ -93,8 +103,8 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                 if field in doc_dict:
                     value = doc_dict[field]
                     
-                    # Debug logging
-                    logging.info(f"[SYNC DEBUG] {field} raw value: {value}, type: {type(value)}")
+                    # Debug logging - use debug level to avoid log pollution in production
+                    logging.debug(f"[SYNC] {field} raw value: {value}, type: {type(value)}")
                     
                     if isinstance(value, datetime):
                         # Check if datetime is near epoch (before year 2000 = corrupt)
@@ -113,7 +123,7 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                                 parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                             doc_dict[field] = int(parsed_dt.timestamp() * 1000)
                         except Exception as e:
-                            logging.warning(f"[SYNC DEBUG] Failed to parse {field}: {value}, error: {e}")
+                            logging.warning(f"[SYNC] Failed to parse {field}: {value}, error: {e}")
                             doc_dict[field] = current_time_ms
                     elif isinstance(value, (int, float)):
                         # Corrupted data: already a number, check if it's valid
@@ -129,7 +139,7 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                         # Unknown format - set to current time
                         doc_dict[field] = current_time_ms
                     
-                    logging.info(f"[SYNC DEBUG] {field} final value: {doc_dict[field]}")
+                    logging.debug(f"[SYNC] {field} final value: {doc_dict[field]}")
             return doc_dict
 
         # Fetch deleted record IDs since last pull
@@ -235,10 +245,16 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 ).to_list()
                 patients_by_id = {str(p.id): p for p in existing_patients}
 
-                # Process updates
+                # Process updates with ownership validation
                 for patient_id, patient_data in patient_updates:
                     patient = patients_by_id.get(patient_id)
                     if patient:
+                        # SECURITY: Defense-in-depth ownership validation
+                        # The batch query above already filters by user_id, but we verify again
+                        if str(patient.user_id) != str(user_id):
+                            logging.warning(f"[SYNC] Ownership violation attempt: user {user_id} tried to update patient {patient_id}")
+                            continue  # Skip this patient silently
+
                         # client_updated_at is already converted to datetime by convert_timestamps
                         client_updated_at = patient_data['updated_at']
                         if not isinstance(client_updated_at, datetime):
@@ -249,6 +265,9 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                             raise SyncConflictException(f"Conflict detected for patient {patient_id}")
                         patient_data['updated_at'] = datetime.now(timezone.utc)
                         await patient.update({"$set": patient_data})
+                    else:
+                        # Patient not found - could be deleted or ownership mismatch
+                        logging.debug(f"[SYNC] Patient {patient_id} not found for user {user_id} during sync update")
 
         if 'clinical_notes' in changes and 'updated' in changes['clinical_notes']:
             # Extract and validate all note IDs first
@@ -269,12 +288,20 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 ).to_list()
                 notes_by_id = {str(n.id): n for n in existing_notes}
 
-                # Process updates
+                # Process updates with ownership validation
                 for note_id, note_data in note_updates:
                     note = notes_by_id.get(note_id)
                     if note:
+                        # SECURITY: Defense-in-depth ownership validation
+                        if str(note.user_id) != str(user_id):
+                            logging.warning(f"[SYNC] Ownership violation attempt: user {user_id} tried to update note {note_id}")
+                            continue  # Skip this note silently
+
                         note_data['updated_at'] = datetime.now(timezone.utc)
                         await note.update({"$set": note_data})
+                    else:
+                        # Note not found - could be deleted or ownership mismatch
+                        logging.debug(f"[SYNC] Note {note_id} not found for user {user_id} during sync update")
 
         # Process deleted records with soft delete (mark as deleted instead of removing)
         # This allows deleted records to be synced to other clients

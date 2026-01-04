@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import * as ImagePicker from 'expo-image-picker';
 import * as Device from 'expo-device';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, Theme } from '@/contexts/ThemeContext';
 import { ControlledInput } from './ControlledInput';
 import { Dropdown } from '@/components/core/Dropdown';
 
@@ -15,16 +15,32 @@ const feedbackSchema = z.object({
   steps_to_reproduce: z.string().optional(),
 });
 
+type FeedbackFormData = z.infer<typeof feedbackSchema>;
+
+interface FeedbackPayload extends FeedbackFormData {
+  device_info: {
+    os_version: string;
+    app_version: string;
+    device_model: string | null;
+  };
+  screenshot: string | null;
+}
+
+interface FeedbackFormProps {
+  onSubmit: (data: FeedbackPayload) => void | Promise<void>;
+  isSubmitting: boolean;
+}
+
 const feedbackTypes = [
   { label: 'Bug Report', value: 'bug' },
   { label: 'Suggestion', value: 'suggestion' },
   { label: 'General Feedback', value: 'general' },
 ];
 
-const FeedbackForm = ({ onSubmit, isSubmitting }) => {
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, isSubmitting }) => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const [screenshot, setScreenshot] = useState(null);
+  const [screenshot, setScreenshot] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const { control, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(feedbackSchema),
@@ -57,17 +73,17 @@ const FeedbackForm = ({ onSubmit, isSubmitting }) => {
     }
   };
 
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = (data: FeedbackFormData) => {
     const deviceInfo = {
       os_version: `${Device.osName} ${Device.osVersion}`,
       app_version: '1.0.0', // Replace with your actual app version
       device_model: Device.modelName,
     };
 
-    const payload = {
+    const payload: FeedbackPayload = {
       ...data,
       device_info: deviceInfo,
-      screenshot: screenshot ? screenshot.base64 : null,
+      screenshot: screenshot?.base64 ?? null,
     };
     onSubmit(payload);
   };
@@ -129,7 +145,7 @@ const FeedbackForm = ({ onSubmit, isSubmitting }) => {
   );
 };
 
-const createStyles = (theme) => StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,

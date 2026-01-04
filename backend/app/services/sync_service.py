@@ -103,8 +103,8 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                 if field in doc_dict:
                     value = doc_dict[field]
                     
-                    # Debug logging
-                    logging.info(f"[SYNC DEBUG] {field} raw value: {value}, type: {type(value)}")
+                    # Debug logging - use debug level to avoid log pollution in production
+                    logging.debug(f"[SYNC] {field} raw value: {value}, type: {type(value)}")
                     
                     if isinstance(value, datetime):
                         # Check if datetime is near epoch (before year 2000 = corrupt)
@@ -123,7 +123,7 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                                 parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                             doc_dict[field] = int(parsed_dt.timestamp() * 1000)
                         except Exception as e:
-                            logging.warning(f"[SYNC DEBUG] Failed to parse {field}: {value}, error: {e}")
+                            logging.warning(f"[SYNC] Failed to parse {field}: {value}, error: {e}")
                             doc_dict[field] = current_time_ms
                     elif isinstance(value, (int, float)):
                         # Corrupted data: already a number, check if it's valid
@@ -139,7 +139,7 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
                         # Unknown format - set to current time
                         doc_dict[field] = current_time_ms
                     
-                    logging.info(f"[SYNC DEBUG] {field} final value: {doc_dict[field]}")
+                    logging.debug(f"[SYNC] {field} final value: {doc_dict[field]}")
             return doc_dict
 
         # Fetch deleted record IDs since last pull

@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { compressImage, shouldCompressImage } from '@/services/image_service';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { patientSchema, PatientFormData } from '@/lib/validation';
@@ -107,12 +108,25 @@ export default function AddPatientScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
-      base64: true,
+      quality: 0.8, // Higher initial quality, we'll compress further if needed
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      setValue('photo', result.assets[0].base64);
+    if (!result.canceled && result.assets[0].uri) {
+      try {
+        // Use image service for optimal compression
+        const compressedBase64 = await compressImage(result.assets[0].uri, {
+          maxWidth: 800,
+          maxHeight: 800,
+          quality: 0.7,
+        });
+        setValue('photo', compressedBase64);
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        // Fallback to original if compression fails
+        if (result.assets[0].base64) {
+          setValue('photo', result.assets[0].base64);
+        }
+      }
     }
   };
 
@@ -126,12 +140,25 @@ export default function AddPatientScreen() {
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
-      base64: true,
+      quality: 0.8, // Higher initial quality, we'll compress further if needed
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      setValue('photo', result.assets[0].base64);
+    if (!result.canceled && result.assets[0].uri) {
+      try {
+        // Use image service for optimal compression
+        const compressedBase64 = await compressImage(result.assets[0].uri, {
+          maxWidth: 800,
+          maxHeight: 800,
+          quality: 0.7,
+        });
+        setValue('photo', compressedBase64);
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        // Fallback to original if compression fails
+        if (result.assets[0].base64) {
+          setValue('photo', result.assets[0].base64);
+        }
+      }
     }
   };
 

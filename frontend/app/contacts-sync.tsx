@@ -16,13 +16,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppStore } from '@/store/useAppStore';
+import { PatientService } from '@/services/patient_service';
+
+// Type for patient data used in contacts sync
+interface PatientContactData {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  patient_id: string;
+  group?: string;
+}
 
 export default function ContactsSyncScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const { patients, loading: storeLoading } = useAppStore();
+  // Local state for patients loaded from database
+  const [patients, setPatients] = useState<PatientContactData[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(true);
 
   const [syncing, setSyncing] = useState(false);
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -37,9 +49,32 @@ export default function ContactsSyncScreen() {
       return;
     }
 
+    loadPatients();
     loadScreenData();
     checkPhoneCapabilities();
   }, [isAuthenticated]);
+
+  const loadPatients = async () => {
+    try {
+      setPatientsLoading(true);
+      const fetchedPatients = await PatientService.getPatients();
+      // Map WatermelonDB patient model to our contact data interface
+      const patientData: PatientContactData[] = fetchedPatients.map(p => ({
+        id: p.id,
+        name: p.name,
+        phone: p.phone || '',
+        email: p.email || '',
+        patient_id: p.patientId || '',
+        group: p.group || 'general',
+      }));
+      setPatients(patientData);
+    } catch (error) {
+      console.error('Error loading patients:', error);
+      Alert.alert('Error', 'Failed to load patients. Please try again.');
+    } finally {
+      setPatientsLoading(false);
+    }
+  };
 
   const loadScreenData = async () => {
     try {
@@ -51,10 +86,15 @@ export default function ContactsSyncScreen() {
       const lastSync = await AsyncStorage.getItem('medical_contacts_synced');
       setLastSyncTime(lastSync);
 
-      // Load call logs
-      const { PhoneIntegration } = await import('@/utils/phoneIntegration');
-      const logs = await PhoneIntegration.getCallLogs();
-      setCallLogs(logs.slice(0, 10)); // Show last 10 calls
+      // Load call logs with error handling for dynamic import
+      try {
+        const { PhoneIntegration } = await import('@/utils/phoneIntegration');
+        const logs = await PhoneIntegration.getCallLogs();
+        setCallLogs(logs.slice(0, 10)); // Show last 10 calls
+      } catch (phoneError) {
+        console.error('Error loading phone integration module:', phoneError);
+        // Phone integration not available, continue without call logs
+      }
 
     } catch (error) {
       console.error('Error loading screen-specific data:', error);
@@ -74,6 +114,9 @@ export default function ContactsSyncScreen() {
       setSmsSupported(canSMS);
     } catch (error) {
       console.error('Error checking phone capabilities:', error);
+      // Phone integration not available on this platform
+      setPhoneSupported(false);
+      setSmsSupported(false);
     }
   };
 
@@ -81,10 +124,19 @@ export default function ContactsSyncScreen() {
     try {
       setSyncing(true);
 
-      const { PhoneIntegration } = await import('../utils/phoneIntegration');
+      // Dynamic import with error handling
+      let PhoneIntegration;
+      try {
+        const module = await import('../utils/phoneIntegration');
+        PhoneIntegration = module.PhoneIntegration;
+      } catch (importError) {
+        console.error('Failed to load phone integration module:', importError);
+        Alert.alert('Error', 'Phone integration is not available on this device.');
+        return;
+      }
 
       // Convert patients to contact format
-      const contactData = (patients || [])
+      const contactData = patients
         .filter(p => p.phone)
         .map(p => ({
           id: p.id,
@@ -134,7 +186,18 @@ export default function ContactsSyncScreen() {
             try {
               setSyncing(true);
 
-              const { PhoneIntegration } = await import('@/utils/phoneIntegration');
+              // Dynamic import with error handling
+              let PhoneIntegration;
+              try {
+                const module = await import('@/utils/phoneIntegration');
+                PhoneIntegration = module.PhoneIntegration;
+              } catch (importError) {
+                console.error('Failed to load phone integration module:', importError);
+                Alert.alert('Error', 'Phone integration is not available on this device.');
+                setSyncing(false);
+                return;
+              }
+
               const success = await PhoneIntegration.removeContactsFromDevice();
 
               if (success) {
@@ -188,7 +251,7 @@ export default function ContactsSyncScreen() {
     }
   };
 
-  if (storeLoading.patients) {
+  if (patientsLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -274,7 +337,7 @@ export default function ContactsSyncScreen() {
           </View>
 
           <Text style={styles.syncCount}>
-            {(patients || []).filter(p => p.phone).length} patients with phone numbers
+            {patients.filter(p => p.phone).length} patients with phone numbers
           </Text>
         </View>
 

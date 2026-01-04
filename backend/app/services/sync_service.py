@@ -235,10 +235,16 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 ).to_list()
                 patients_by_id = {str(p.id): p for p in existing_patients}
 
-                # Process updates
+                # Process updates with ownership validation
                 for patient_id, patient_data in patient_updates:
                     patient = patients_by_id.get(patient_id)
                     if patient:
+                        # SECURITY: Defense-in-depth ownership validation
+                        # The batch query above already filters by user_id, but we verify again
+                        if str(patient.user_id) != str(user_id):
+                            logging.warning(f"[SYNC] Ownership violation attempt: user {user_id} tried to update patient {patient_id}")
+                            continue  # Skip this patient silently
+
                         # client_updated_at is already converted to datetime by convert_timestamps
                         client_updated_at = patient_data['updated_at']
                         if not isinstance(client_updated_at, datetime):
@@ -249,6 +255,9 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                             raise SyncConflictException(f"Conflict detected for patient {patient_id}")
                         patient_data['updated_at'] = datetime.now(timezone.utc)
                         await patient.update({"$set": patient_data})
+                    else:
+                        # Patient not found - could be deleted or ownership mismatch
+                        logging.debug(f"[SYNC] Patient {patient_id} not found for user {user_id} during sync update")
 
         if 'clinical_notes' in changes and 'updated' in changes['clinical_notes']:
             # Extract and validate all note IDs first
@@ -269,12 +278,20 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 ).to_list()
                 notes_by_id = {str(n.id): n for n in existing_notes}
 
-                # Process updates
+                # Process updates with ownership validation
                 for note_id, note_data in note_updates:
                     note = notes_by_id.get(note_id)
                     if note:
+                        # SECURITY: Defense-in-depth ownership validation
+                        if str(note.user_id) != str(user_id):
+                            logging.warning(f"[SYNC] Ownership violation attempt: user {user_id} tried to update note {note_id}")
+                            continue  # Skip this note silently
+
                         note_data['updated_at'] = datetime.now(timezone.utc)
                         await note.update({"$set": note_data})
+                    else:
+                        # Note not found - could be deleted or ownership mismatch
+                        logging.debug(f"[SYNC] Note {note_id} not found for user {user_id} during sync update")
 
         # Process deleted records with soft delete (mark as deleted instead of removing)
         # This allows deleted records to be synced to other clients

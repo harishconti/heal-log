@@ -14,8 +14,10 @@ from app.services import user_service
 
 router = APIRouter()
 
-# Stripe webhook secret - must be set in environment for production
+# Stripe configuration - must be set in environment for production
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+STRIPE_CHECKOUT_BASE_URL = os.getenv("STRIPE_CHECKOUT_BASE_URL", "")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "")
 
 
 def verify_stripe_signature(payload: bytes, signature: str, secret: str) -> bool:
@@ -79,9 +81,22 @@ async def create_checkout_session(
     if user.plan == "pro":
         raise BetaUserException(detail="User is already on the PRO plan.")
 
-    # 4. Simulate the creation of a checkout session.
-    # In a real app, you would get a session ID and URL from the payment provider.
-    checkout_session_url = f"https://example.com/checkout?user_id={user.id}"
+    # 4. Create checkout session URL
+    # In production, this should integrate with Stripe's actual checkout session API
+    if not STRIPE_CHECKOUT_BASE_URL:
+        logging.warning("STRIPE_CHECKOUT_BASE_URL not configured - payment integration incomplete")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment service is not configured. Please contact support."
+        )
+
+    # Build secure checkout URL with encrypted session token
+    from app.core.security import create_access_token
+    checkout_token = create_access_token(
+        data={"sub": str(user.id), "purpose": "checkout"},
+        expires_delta_minutes=30
+    )
+    checkout_session_url = f"{STRIPE_CHECKOUT_BASE_URL}/checkout?session={checkout_token}"
 
     return {"checkout_url": checkout_session_url}
 

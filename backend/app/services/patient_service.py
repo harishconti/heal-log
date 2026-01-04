@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from .base_service import BaseService
 from fastapi_cache import FastAPICache
 from app.db.session import get_database
+from pymongo.errors import DuplicateKeyError
 
 
 def sanitize_regex_input(user_input: str, max_length: int = 100) -> str:
@@ -107,14 +108,8 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
     async def create(self, obj_in: PatientCreate, user_id: str) -> Patient:
         """
         Overrides the base create method to add user_id and a sequential patient_id.
+        Uses atomic insert with duplicate key handling to prevent race conditions.
         """
-        existing_patient = await self.model.find_one(
-            self.model.user_id == user_id,
-            self.model.name == obj_in.name
-        )
-        if existing_patient:
-            raise ValueError("A patient with this name already exists.")
-
         patient_id = await self.get_next_patient_id(user_id)
 
         patient_data = obj_in.model_dump()
@@ -123,7 +118,18 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         patient_data["user_id"] = user_id
 
         db_obj = self.model(**patient_data)
-        await db_obj.insert()
+
+        try:
+            # Attempt atomic insert - relies on unique compound index on (user_id, name)
+            await db_obj.insert()
+        except DuplicateKeyError:
+            # Handle race condition: another request created the same patient
+            raise ValueError("A patient with this name already exists.")
+        except Exception as e:
+            # Check for duplicate key error in nested exceptions
+            if "duplicate key" in str(e).lower() or "E11000" in str(e):
+                raise ValueError("A patient with this name already exists.")
+            raise
 
         # Invalidate caches if a backend is available
         await self._clear_patient_caches()

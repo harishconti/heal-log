@@ -52,8 +52,13 @@ export default function GoogleContactsSyncScreen() {
     syncLoading,
     syncError,
     isSyncing,
+    isQueuedOffline,
     startSync,
     cancelSync,
+    cancelQueuedSync,
+
+    // Network
+    isOnline,
 
     // Duplicates
     duplicates,
@@ -134,6 +139,21 @@ export default function GoogleContactsSyncScreen() {
           text: 'Yes, Cancel',
           style: 'destructive',
           onPress: cancelSync,
+        },
+      ]
+    );
+  };
+
+  const handleCancelQueuedSync = async () => {
+    Alert.alert(
+      'Cancel Queued Sync',
+      'Are you sure you want to cancel the queued sync?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: cancelQueuedSync,
         },
       ]
     );
@@ -269,10 +289,36 @@ export default function GoogleContactsSyncScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Sync Contacts</Text>
 
+        {/* Offline banner */}
+        {!isOnline && (
+          <View style={styles.offlineBanner}>
+            <Ionicons name="cloud-offline" size={16} color="#f39c12" />
+            <Text style={styles.offlineBannerText}>
+              You are offline. Sync will be queued for when you're back online.
+            </Text>
+          </View>
+        )}
+
         {syncError && (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={16} color="#e74c3c" />
             <Text style={styles.errorText}>{syncError}</Text>
+          </View>
+        )}
+
+        {/* Queued sync indicator */}
+        {isQueuedOffline && (
+          <View style={styles.queuedBox}>
+            <Ionicons name="time" size={24} color="#f39c12" />
+            <View style={styles.queuedInfo}>
+              <Text style={styles.queuedTitle}>Sync Queued</Text>
+              <Text style={styles.queuedText}>
+                Will sync automatically when you're back online
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleCancelQueuedSync}>
+              <Ionicons name="close-circle" size={24} color="#e74c3c" />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -301,7 +347,7 @@ export default function GoogleContactsSyncScreen() {
           </View>
         )}
 
-        {!isSyncing && (
+        {!isSyncing && !isQueuedOffline && (
           <TouchableOpacity
             style={[styles.primaryButton, !canSync && styles.disabledButton]}
             onPress={handleStartSync}
@@ -751,6 +797,42 @@ const styles = StyleSheet.create({
     color: '#2ecc71',
     fontSize: 14,
     flex: 1,
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 8,
+  },
+  offlineBannerText: {
+    color: '#856404',
+    fontSize: 14,
+    flex: 1,
+  },
+  queuedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff8e1',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 12,
+  },
+  queuedInfo: {
+    flex: 1,
+  },
+  queuedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#f39c12',
+  },
+  queuedText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
   skipAllText: {
     color: '#e74c3c',

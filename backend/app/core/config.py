@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     # Password Reset Settings
     PASSWORD_RESET_EXPIRE_MINUTES: int = 60
 
+    # Google OAuth Settings for Contacts Sync
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+    MOBILE_DEEP_LINK_SCHEME: str = "heallog"
+    MOBILE_CALLBACK_PATH: str = "google-contacts/callback"
+
     class Config:
         case_sensitive = True
 

@@ -33,6 +33,7 @@ from app.schemas.error_event import ErrorEvent
 from app.schemas.query_performance_event import QueryPerformanceEvent
 from app.schemas.sync_event import SyncEvent
 from app.schemas.beta_feedback import BetaFeedback
+from app.schemas.google_contacts import GoogleContactsSyncJob, DuplicateRecord
 
 
 # --- Lifespan Management ---
@@ -67,7 +68,7 @@ async def lifespan(app: FastAPI):
     db = await get_database()
     await init_beanie(
         database=db,
-        document_models=[User, Patient, ClinicalNote, Document, Feedback, Telemetry, ErrorEvent, QueryPerformanceEvent, SyncEvent, BetaFeedback],
+        document_models=[User, Patient, ClinicalNote, Document, Feedback, Telemetry, ErrorEvent, QueryPerformanceEvent, SyncEvent, BetaFeedback, GoogleContactsSyncJob, DuplicateRecord],
         allow_index_dropping=True
     )
     await init_dummy_data()
@@ -145,6 +146,7 @@ app.include_router(api.feedback.router, prefix="/api/feedback", tags=["Feedback"
 app.include_router(api.telemetry.router, prefix="/api/telemetry", tags=["Telemetry"])
 app.include_router(api.beta.router, prefix="/api/beta", tags=["Beta"])
 app.include_router(api.export.router, prefix="/api/export", tags=["Export"])
+app.include_router(api.google_contacts.router, prefix="/api/integrations/google-contacts", tags=["Google Contacts"])
 app.include_router(api.health.router, prefix="/api", tags=["Health"])
 app.include_router(api.metrics.router, prefix="/api", tags=["Metrics"])
 app.include_router(api.version.router, prefix="/api", tags=["Version"])

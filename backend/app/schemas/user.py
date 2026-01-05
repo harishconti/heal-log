@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, BeforeValidator, field_validator
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import datetime, timedelta, timezone
 import uuid
 from enum import Enum
@@ -17,6 +17,16 @@ class SubscriptionStatus(str, Enum):
     ACTIVE = "active"
     CANCELED = "canceled"
     PAST_DUE = "past_due"
+
+
+class GoogleOAuthTokens(BaseModel):
+    """Stores Google OAuth tokens for Google Contacts integration."""
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+    expires_at: datetime
+    scope: str
+    connected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class User(Document):
     id: PyObjectId = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
@@ -47,6 +57,9 @@ class User(Document):
     # Profile photo (base64 encoded)
     profile_photo: Optional[str] = None
 
+    # Google OAuth Integration
+    google_oauth_tokens: Optional[GoogleOAuthTokens] = None
+
     class Settings:
         name = "users"
 
@@ -75,8 +88,29 @@ class UserResponse(BaseModel):
     subscription_end_date: datetime
     is_verified: bool = False
     profile_photo: Optional[str] = None
+    google_contacts_connected: bool = False
+    google_contacts_connected_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_user(cls, user: "User") -> "UserResponse":
+        """Create UserResponse from User model with computed google_contacts_connected."""
+        return cls(
+            id=user.id,
+            email=user.email,
+            phone=user.phone,
+            full_name=user.full_name,
+            medical_specialty=user.medical_specialty,
+            plan=user.plan,
+            role=user.role,
+            subscription_status=user.subscription_status,
+            subscription_end_date=user.subscription_end_date,
+            is_verified=user.is_verified,
+            profile_photo=user.profile_photo,
+            google_contacts_connected=user.google_oauth_tokens is not None,
+            google_contacts_connected_at=user.google_oauth_tokens.connected_at if user.google_oauth_tokens else None
+        )
 
 class UserLogin(BaseModel):
     username: EmailStr

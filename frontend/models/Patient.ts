@@ -22,5 +22,12 @@ export default class Patient extends Model {
   @readonly @date('created_at') createdAt;
   @readonly @date('updated_at') updatedAt;
 
+  // Source tracking for Google Contacts sync
+  @text('source') source;
+  @text('external_id') externalId;
+  @date('last_synced_at') lastSyncedAt;
+  @field('sync_version') syncVersion;
+  @date('local_modified_at') localModifiedAt;
+
   @relation('clinical_notes', 'patient_id') notes;
 }

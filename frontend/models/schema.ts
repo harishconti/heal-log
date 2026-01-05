@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const mySchema = appSchema({
-  version: 3,
+  version: 4,
   tables: [
     tableSchema({
       name: 'patients',
@@ -19,6 +19,12 @@ export const mySchema = appSchema({
         { name: 'is_favorite', type: 'boolean' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
+        // Source tracking for Google Contacts sync
+        { name: 'source', type: 'string', isOptional: true },
+        { name: 'external_id', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'last_synced_at', type: 'number', isOptional: true },
+        { name: 'sync_version', type: 'number', isOptional: true },
+        { name: 'local_modified_at', type: 'number', isOptional: true },
       ],
     }),
     tableSchema({

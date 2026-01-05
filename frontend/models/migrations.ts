@@ -41,5 +41,21 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 4,
+      steps: [
+        // Add source tracking columns for Google Contacts sync
+        addColumns({
+          table: 'patients',
+          columns: [
+            { name: 'source', type: 'string', isOptional: true },
+            { name: 'external_id', type: 'string', isOptional: true, isIndexed: true },
+            { name: 'last_synced_at', type: 'number', isOptional: true },
+            { name: 'sync_version', type: 'number', isOptional: true },
+            { name: 'local_modified_at', type: 'number', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

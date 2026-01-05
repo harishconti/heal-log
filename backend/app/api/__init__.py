@@ -14,6 +14,7 @@ from . import health
 from . import metrics
 from . import version
 from . import export
+from . import google_contacts
 
 __all__ = [
     "auth",
@@ -32,4 +33,5 @@ __all__ = [
     "metrics",
     "version",
     "export",
+    "google_contacts",
 ]

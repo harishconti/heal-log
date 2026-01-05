@@ -1,14 +1,90 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, StatusBar, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, StatusBar, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/store/useAppStore';
 import { Ionicons } from '@expo/vector-icons';
+import {
+    checkBiometricCapabilities,
+    enableBiometricLogin,
+    disableBiometricLogin,
+    BiometricCapabilities,
+} from '@/services/biometricAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SettingsScreen = () => {
     const { theme, isDark, setTheme } = useTheme();
     const { settings, updateSettings } = useAppStore();
+    const { token } = useAuth();
     const router = useRouter();
+
+    const [biometricCapabilities, setBiometricCapabilities] = useState<BiometricCapabilities | null>(null);
+    const [biometricLoading, setBiometricLoading] = useState(false);
+    const [checkingBiometrics, setCheckingBiometrics] = useState(true);
+
+    // Check biometric capabilities on mount
+    useEffect(() => {
+        const checkBiometrics = async () => {
+            try {
+                const capabilities = await checkBiometricCapabilities();
+                setBiometricCapabilities(capabilities);
+            } catch (error) {
+                console.error('Error checking biometrics:', error);
+            } finally {
+                setCheckingBiometrics(false);
+            }
+        };
+        checkBiometrics();
+    }, []);
+
+    const getBiometricIcon = (): keyof typeof Ionicons.glyphMap => {
+        if (!biometricCapabilities) return 'finger-print';
+        if (biometricCapabilities.biometricTypes.includes('facial')) {
+            return Platform.OS === 'ios' ? 'scan' : 'happy-outline';
+        }
+        return 'finger-print';
+    };
+
+    const getBiometricLabel = (): string => {
+        if (!biometricCapabilities) return 'Biometric Login';
+        if (biometricCapabilities.biometricTypes.includes('facial')) {
+            return Platform.OS === 'ios' ? 'Face ID' : 'Face Recognition';
+        }
+        return Platform.OS === 'ios' ? 'Touch ID' : 'Fingerprint';
+    };
+
+    const handleBiometricToggle = async (value: boolean) => {
+        if (!token) {
+            Alert.alert('Error', 'You must be logged in to enable biometric login');
+            return;
+        }
+
+        setBiometricLoading(true);
+
+        try {
+            if (value) {
+                const success = await enableBiometricLogin(token);
+                if (success) {
+                    Alert.alert(
+                        'Success',
+                        `${getBiometricLabel()} login is now enabled. You can use it to quickly sign in next time.`
+                    );
+                } else {
+                    Alert.alert('Failed', 'Could not enable biometric login. Please try again.');
+                }
+            } else {
+                const success = await disableBiometricLogin();
+                if (success) {
+                    Alert.alert('Disabled', `${getBiometricLabel()} login has been disabled.`);
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling biometric:', error);
+            Alert.alert('Error', 'An unexpected error occurred');
+        } finally {
+            setBiometricLoading(false);
+        }
+    };
 
     const themeOptions = [
         { value: 'light', label: 'Light', icon: 'sunny' },
@@ -97,6 +173,54 @@ const SettingsScreen = () => {
                         </View>
                     </View>
                 </View>
+
+                {/* Security Section */}
+                {biometricCapabilities?.isAvailable && biometricCapabilities?.isEnrolled && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Security</Text>
+
+                        <View style={styles.card}>
+                            <View style={styles.toggleRow}>
+                                <View style={styles.biometricInfo}>
+                                    <View style={styles.biometricIconContainer}>
+                                        <Ionicons
+                                            name={getBiometricIcon()}
+                                            size={24}
+                                            color={settings.biometricEnabled ? theme.colors.primary : theme.colors.textSecondary}
+                                        />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.toggleLabel}>{getBiometricLabel()} Login</Text>
+                                        <Text style={styles.toggleDescription}>
+                                            {settings.biometricEnabled
+                                                ? 'Quick sign-in enabled'
+                                                : 'Sign in faster with biometrics'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                {biometricLoading ? (
+                                    <ActivityIndicator color={theme.colors.primary} />
+                                ) : (
+                                    <Switch
+                                        value={settings.biometricEnabled}
+                                        onValueChange={handleBiometricToggle}
+                                        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                                        thumbColor="#fff"
+                                    />
+                                )}
+                            </View>
+                        </View>
+
+                        {settings.biometricEnabled && (
+                            <View style={styles.infoCard}>
+                                <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} />
+                                <Text style={styles.infoText}>
+                                    Your biometric data never leaves your device
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 {/* Preferences Section */}
                 <View style={styles.section}>
@@ -303,6 +427,34 @@ const createStyles = (theme: any) => StyleSheet.create({
         fontSize: 13,
         color: theme.colors.textSecondary,
         marginTop: 2,
+    },
+    biometricInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    biometricIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: theme.colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    infoCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: `${theme.colors.success}15`,
+        borderRadius: 8,
+        padding: 12,
+        gap: 8,
+        marginTop: 8,
+    },
+    infoText: {
+        fontSize: 13,
+        color: theme.colors.success,
+        flex: 1,
     },
     linkRow: {
         flexDirection: 'row',

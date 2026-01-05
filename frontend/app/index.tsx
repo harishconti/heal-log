@@ -43,6 +43,8 @@ import { Q } from '@nozbe/watermelondb';
 import { CachedImage } from '@/components/ui/CachedImage';
 import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
+import ConnectionStatusBar from '@/components/core/ConnectionStatusBar';
+import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -66,6 +68,17 @@ function Index({ patients, groups, totalPatientCount }) {
   } = useAppStore();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<SearchFilters>({
+    query: '',
+    condition: '',
+    diagnosis: '',
+    dateFrom: null,
+    dateTo: null,
+    group: '',
+    favoritesOnly: false,
+    recentlyAdded: false,
+  });
 
   // Pagination state for lazy loading
   const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_SIZE);
@@ -299,22 +312,35 @@ function Index({ patients, groups, totalPatientCount }) {
     return buttons;
   }, [groups]);
 
+  // Count active advanced filters
+  const activeAdvancedFilterCount = useMemo(() => {
+    let count = 0;
+    if (advancedFilters.condition) count++;
+    if (advancedFilters.diagnosis) count++;
+    if (advancedFilters.dateFrom) count++;
+    if (advancedFilters.group) count++;
+    if (advancedFilters.favoritesOnly) count++;
+    if (advancedFilters.recentlyAdded) count++;
+    return count;
+  }, [advancedFilters]);
+
   // Filter patients based on search and selected filter - reactive to changes
   const filteredPatients = useMemo(() => {
     if (!patients) return [];
 
     let result = patients;
 
-    // Apply search filter
+    // Apply basic search filter (name, ID, phone)
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
       result = result.filter(p =>
         p.name?.toLowerCase().includes(lowerQuery) ||
-        p.patientId?.toLowerCase().includes(lowerQuery)
+        p.patientId?.toLowerCase().includes(lowerQuery) ||
+        p.phone?.toLowerCase().includes(lowerQuery)
       );
     }
 
-    // Apply group/favorites filter
+    // Apply group/favorites filter from quick filter buttons
     if (selectedFilter && selectedFilter !== 'all') {
       if (selectedFilter === 'favorites') {
         result = result.filter(p => p.isFavorite);
@@ -323,8 +349,57 @@ function Index({ patients, groups, totalPatientCount }) {
       }
     }
 
+    // Apply advanced filters
+    if (advancedFilters.condition) {
+      const lowerCondition = advancedFilters.condition.toLowerCase();
+      result = result.filter(p =>
+        p.initialComplaint?.toLowerCase().includes(lowerCondition)
+      );
+    }
+
+    if (advancedFilters.diagnosis) {
+      const lowerDiagnosis = advancedFilters.diagnosis.toLowerCase();
+      result = result.filter(p =>
+        p.initialDiagnosis?.toLowerCase().includes(lowerDiagnosis)
+      );
+    }
+
+    if (advancedFilters.dateFrom) {
+      const fromTime = advancedFilters.dateFrom.getTime();
+      result = result.filter(p => {
+        const createdAt = p.createdAt?.getTime?.() || 0;
+        return createdAt >= fromTime;
+      });
+    }
+
+    if (advancedFilters.dateTo) {
+      const toTime = advancedFilters.dateTo.getTime();
+      result = result.filter(p => {
+        const createdAt = p.createdAt?.getTime?.() || 0;
+        return createdAt <= toTime;
+      });
+    }
+
+    if (advancedFilters.group) {
+      result = result.filter(p => p.group === advancedFilters.group);
+    }
+
+    if (advancedFilters.favoritesOnly) {
+      result = result.filter(p => p.isFavorite);
+    }
+
+    if (advancedFilters.recentlyAdded) {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgoTime = sevenDaysAgo.getTime();
+      result = result.filter(p => {
+        const createdAt = p.createdAt?.getTime?.() || 0;
+        return createdAt >= sevenDaysAgoTime;
+      });
+    }
+
     return result;
-  }, [patients, searchQuery, selectedFilter]);
+  }, [patients, searchQuery, selectedFilter, advancedFilters]);
 
   // Paginated visible patients for lazy loading
   const visiblePatients = useMemo(() => {
@@ -391,24 +466,36 @@ function Index({ patients, groups, totalPatientCount }) {
         </View>
       </View>
 
-      {isOffline && (
-        <View style={styles.offlineBanner}>
-          <Ionicons name="cloud-offline-outline" size={16} color={theme.colors.surface} />
-          <Text style={styles.offlineText}>
-            Offline Mode - {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Never synced'}
-          </Text>
-        </View>
-      )}
+      {/* Enhanced Connection Status Bar */}
+      <ConnectionStatusBar onSyncPress={() => handleSync(true)} />
 
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Search patients..."
+          placeholder="Search by name, ID, phone..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor={theme.colors.textSecondary}
         />
+        <TouchableOpacity
+          style={styles.advancedSearchButton}
+          onPress={() => {
+            triggerHaptic();
+            setShowAdvancedSearch(true);
+          }}
+        >
+          <Ionicons
+            name="options"
+            size={20}
+            color={activeAdvancedFilterCount > 0 ? theme.colors.primary : theme.colors.textSecondary}
+          />
+          {activeAdvancedFilterCount > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
+              <Text style={styles.filterBadgeText}>{activeAdvancedFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View>
@@ -479,6 +566,7 @@ function Index({ patients, groups, totalPatientCount }) {
       <View style={[styles.statsFooter, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.statsText, { color: theme.colors.textSecondary }]}>
           {filteredPatients.length} of {totalPatientCount} patients
+          {activeAdvancedFilterCount > 0 && ` (${activeAdvancedFilterCount} filter${activeAdvancedFilterCount > 1 ? 's' : ''})`}
         </Text>
         <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
           {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : ''}
@@ -489,6 +577,15 @@ function Index({ patients, groups, totalPatientCount }) {
           </Text>
         )}
       </View>
+
+      {/* Advanced Search Panel */}
+      <AdvancedSearchPanel
+        visible={showAdvancedSearch}
+        onClose={() => setShowAdvancedSearch(false)}
+        filters={advancedFilters}
+        onFiltersChange={setAdvancedFilters}
+        groups={groups || []}
+      />
     </SafeAreaView>
   );
 }
@@ -622,6 +719,26 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16 * fontScale,
+  },
+  advancedSearchButton: {
+    padding: 8,
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   filtersContainer: {
     paddingHorizontal: 16,

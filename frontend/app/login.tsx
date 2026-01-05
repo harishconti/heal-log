@@ -184,6 +184,10 @@ export default function LoginScreen() {
     biometricCapabilities?.isEnrolled &&
     biometricEnabled;
 
+  const showBiometricSetupHint = biometricCapabilities?.isAvailable &&
+    biometricCapabilities?.isEnrolled &&
+    !biometricEnabled;
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -280,6 +284,27 @@ export default function LoginScreen() {
               <Text style={styles.registerButtonText}>Create New Account</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Biometric Setup Hint */}
+          {showBiometricSetupHint && (
+            <View style={styles.biometricHint}>
+              <View style={styles.biometricHintIcon}>
+                <Ionicons
+                  name={getBiometricIcon()}
+                  size={24}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <View style={styles.biometricHintTextContainer}>
+                <Text style={styles.biometricHintTitle}>
+                  {getBiometricLabel()} Available
+                </Text>
+                <Text style={styles.biometricHintDescription}>
+                  Enable quick sign-in with {getBiometricLabel().toLowerCase()} in Settings after logging in
+                </Text>
+              </View>
+            </View>
+          )}
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -396,5 +421,38 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 16 * fontScale,
     fontWeight: '600',
+  },
+  biometricHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${theme.colors.primary}10`,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: `${theme.colors.primary}30`,
+  },
+  biometricHintIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${theme.colors.primary}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  biometricHintTextContainer: {
+    flex: 1,
+  },
+  biometricHintTitle: {
+    fontSize: 15 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  biometricHintDescription: {
+    fontSize: 13 * fontScale,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
   },
 });

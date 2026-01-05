@@ -13,6 +13,16 @@ MAX_LOCATION_LENGTH = 100
 MAX_COMPLAINT_LENGTH = 5000
 MAX_DIAGNOSIS_LENGTH = 5000
 MAX_GROUP_LENGTH = 50
+MAX_SOURCE_LENGTH = 50
+MAX_EXTERNAL_ID_LENGTH = 255
+
+
+class PatientSource(str):
+    """Valid sources for patient records."""
+    MANUAL = "manual"
+    GOOGLE_CONTACTS = "google_contacts"
+    DEVICE_CONTACTS = "device_contacts"
+    IMPORTED = "imported"
 
 
 class Patient(Document):
@@ -32,11 +42,20 @@ class Patient(Document):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # Source tracking for imports (Google Contacts sync)
+    source: Optional[str] = Field(default="manual", max_length=MAX_SOURCE_LENGTH)
+    external_id: Optional[str] = Field(default=None, max_length=MAX_EXTERNAL_ID_LENGTH)
+    last_synced_at: Optional[datetime] = None
+    sync_version: Optional[int] = Field(default=0)
+    local_modified_at: Optional[datetime] = None
+
     class Settings:
         name = "patients"
         indexes = [
             IndexModel([("user_id", 1), ("patient_id", 1)], unique=True),
-            IndexModel([("user_id", 1), ("created_at", -1)])
+            IndexModel([("user_id", 1), ("created_at", -1)]),
+            IndexModel([("user_id", 1), ("external_id", 1)]),
+            IndexModel([("user_id", 1), ("source", 1)])
         ]
 
     class Config:
@@ -57,6 +76,9 @@ class PatientCreate(BaseModel):
     photo: Optional[str] = None
     group: Optional[str] = Field(default="general", max_length=MAX_GROUP_LENGTH)
     is_favorite: bool = False
+    # Source tracking (optional - defaults to manual if not specified)
+    source: Optional[str] = Field(default="manual", max_length=MAX_SOURCE_LENGTH)
+    external_id: Optional[str] = Field(default=None, max_length=MAX_EXTERNAL_ID_LENGTH)
 
 class PatientUpdate(BaseModel):
     name: Optional[str] = None
@@ -86,3 +108,9 @@ class PatientResponse(BaseModel):
     is_favorite: bool
     created_at: datetime
     updated_at: datetime
+    # Source tracking fields
+    source: Optional[str] = "manual"
+    external_id: Optional[str] = None
+    last_synced_at: Optional[datetime] = None
+    sync_version: Optional[int] = 0
+    local_modified_at: Optional[datetime] = None

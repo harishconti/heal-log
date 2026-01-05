@@ -20,6 +20,7 @@ Complete API reference for the HealLog backend.
 - [Analytics](#analytics)
 - [Feedback & Beta](#feedback--beta)
 - [Payments](#payments)
+- [Google Contacts](#google-contacts)
 - [System](#system)
 - [Error Handling](#error-handling)
 
@@ -732,6 +733,204 @@ POST /payments/webhooks/stripe
 
 ---
 
+## Google Contacts
+
+*Google Contacts synchronization for importing patients*
+
+### Get Connection Status
+
+```
+GET /google-contacts/status
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "is_connected": true,
+  "connected_at": "2026-01-01T10:00:00Z",
+  "last_sync_at": "2026-01-01T12:00:00Z",
+  "total_synced_patients": 150
+}
+```
+
+### Get Auth URL
+
+```
+GET /google-contacts/auth-url
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "auth_url": "https://accounts.google.com/o/oauth2/...",
+  "state": "random_state_string"
+}
+```
+
+### OAuth Callback
+
+```
+POST /google-contacts/callback
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "code": "authorization_code_from_google",
+  "state": "state_from_auth_url"
+}
+```
+
+### Disconnect Google
+
+```
+POST /google-contacts/disconnect
+Authorization: Bearer <token>
+```
+
+### Start Sync
+
+```
+POST /google-contacts/sync
+Authorization: Bearer <token>
+```
+
+**Request Body (optional):**
+```json
+{
+  "job_type": "initial"
+}
+```
+
+**Job Types:** `initial`, `incremental`
+
+**Response (200):**
+```json
+{
+  "id": "job_uuid",
+  "status": "running",
+  "job_type": "initial",
+  "progress": 0,
+  "total_contacts": null,
+  "created_at": "2026-01-01T10:00:00Z"
+}
+```
+
+### Get Sync Status
+
+```
+GET /google-contacts/sync-status/{job_id}
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "id": "job_uuid",
+  "status": "completed",
+  "job_type": "initial",
+  "progress": 100,
+  "total_contacts": 150,
+  "processed_contacts": 150,
+  "created_patients": 120,
+  "updated_patients": 25,
+  "duplicate_count": 5,
+  "created_at": "2026-01-01T10:00:00Z",
+  "completed_at": "2026-01-01T10:05:00Z"
+}
+```
+
+**Status Values:** `pending`, `running`, `completed`, `failed`, `cancelled`
+
+### Cancel Sync
+
+```
+POST /google-contacts/sync/cancel/{job_id}
+Authorization: Bearer <token>
+```
+
+### Get Sync History
+
+```
+GET /google-contacts/sync/history?limit=10
+Authorization: Bearer <token>
+```
+
+### Get Pending Duplicates
+
+```
+GET /google-contacts/duplicates?limit=50&offset=0
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+[
+  {
+    "id": "duplicate_uuid",
+    "google_contact": {
+      "name": "John Smith",
+      "phone": "+1234567890",
+      "email": "john@example.com"
+    },
+    "existing_patient": {
+      "id": "patient_uuid",
+      "name": "John Smith",
+      "phone": "+1234567890"
+    },
+    "match_reason": "phone",
+    "match_confidence": 0.95,
+    "status": "pending"
+  }
+]
+```
+
+### Resolve Duplicate
+
+```
+POST /google-contacts/duplicates/{duplicate_id}/resolve
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "resolution": "merge",
+  "merge_fields": ["email", "address"]
+}
+```
+
+**Resolutions:** `keep_existing`, `replace`, `merge`, `create_new`
+
+### Skip Duplicate
+
+```
+POST /google-contacts/duplicates/{duplicate_id}/skip
+Authorization: Bearer <token>
+```
+
+### Batch Resolve Duplicates
+
+```
+POST /google-contacts/duplicates/batch-resolve
+Authorization: Bearer <token>
+```
+
+**Request Body:**
+```json
+{
+  "resolutions": [
+    {"duplicate_id": "uuid1", "resolution": "keep_existing"},
+    {"duplicate_id": "uuid2", "resolution": "merge", "merge_fields": ["email"]}
+  ]
+}
+```
+
+---
+
 ## System
 
 ### Health Check
@@ -824,3 +1023,4 @@ Authorization: Bearer <admin_token>
 | `/patients/{id}/notes` DELETE | 20/minute |
 | `/sync/*` | 30/minute |
 | `/export/*` | 5/minute |
+| `/google-contacts/sync` | 10/hour |

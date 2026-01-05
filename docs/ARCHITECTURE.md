@@ -86,7 +86,7 @@ heal-log/
 │   │   └── ui/               # UI primitives
 │   ├── contexts/             # React contexts
 │   ├── models/               # WatermelonDB models
-│   ├── services/             # API services (11 services)
+│   ├── services/             # API services (12+ services)
 │   ├── store/                # Zustand global store
 │   ├── constants/            # App constants
 │   └── web-dashboard/        # React web dashboard
@@ -102,12 +102,12 @@ heal-log/
 │
 ├── backend/                  # FastAPI backend
 │   ├── app/                  # Application modules
-│   │   ├── api/              # API route handlers (16 routers)
+│   │   ├── api/              # API route handlers (17 routers)
 │   │   ├── core/             # Config, security, exceptions
 │   │   ├── db/               # Database connection
 │   │   ├── models/           # Beanie ODM models
 │   │   ├── schemas/          # Pydantic schemas
-│   │   ├── services/         # Business logic (13 services)
+│   │   ├── services/         # Business logic (16 services)
 │   │   └── middleware/       # Request logging
 │   ├── tests/                # Test files (48 tests)
 │   ├── scripts/              # Database scripts
@@ -244,6 +244,8 @@ heal-log/
 - `error_events` - Error logs
 - `query_performance_events` - Performance metrics
 - `sync_events` - Sync tracking
+- `google_contacts_sync_jobs` - Google Contacts sync job tracking
+- `duplicate_records` - Duplicate patient detection records
 
 ### WatermelonDB Schema (Mobile)
 
@@ -270,6 +272,8 @@ See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete details.
 | POST | `/api/notes` | Create note |
 | POST | `/api/sync/push` | Push local changes |
 | GET | `/api/sync/pull` | Pull remote changes |
+| POST | `/api/google-contacts/sync` | Start Google Contacts sync |
+| GET | `/api/google-contacts/status` | Get sync job status |
 
 ### Response Format
 ```json

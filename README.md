@@ -14,6 +14,9 @@ HealLog is a patient management system with a FastAPI backend and a React Native
 - Data export (CSV format)
 - Web dashboard for Pro users (analytics and management)
 - Document management for patient files
+- Google Contacts sync integration
+- Push notifications support
+- Biometric authentication (fingerprint/face)
 - Beta feedback and known issues system
 
 ### Technical Features
@@ -36,12 +39,12 @@ The application uses a decoupled, three-tier architecture. The core is a **FastA
 
 The backend is a FastAPI application with a modular structure. The main entrypoint is `backend/main.py`.
 
--   **`api/`**: API endpoint definitions (16 routers)
+-   **`api/`**: API endpoint definitions (17 routers)
 -   **`core/`**: Configuration, security, exceptions, and logging
 -   **`db/`**: Database session management and initialization
 -   **`models/`**: Beanie ODM document models
 -   **`schemas/`**: Pydantic request/response schemas
--   **`services/`**: Business logic (13 services)
+-   **`services/`**: Business logic (16 services)
 -   **`middleware/`**: Request logging middleware
 
 ### Frontend
@@ -202,6 +205,13 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for complete details.
 | `/api/analytics/demographics` | GET | Patient demographics |
 | `/api/analytics/health` | GET | User health statistics |
 
+### Google Contacts
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/google-contacts/sync` | POST | Start Google Contacts sync |
+| `/api/google-contacts/status` | GET | Get sync job status |
+
 ### Other Endpoints
 
 | Endpoint | Method | Description |
@@ -263,13 +273,14 @@ REDIS_URL=redis://localhost:6379
 
 - **Version:** 1.0.49 (stable)
 - **Tests:** 48 backend tests passing
-- **Endpoints:** All 16 API routers operational
+- **Endpoints:** All 17 API routers operational
 - **Sync:** Offline-first with WatermelonDB working
-- **Auth:** OTP verification and password reset functional
+- **Auth:** OTP verification, password reset, and biometric authentication functional
 - **Security:** Rate limiting, security headers, input sanitization complete
 - **Audit:** All 14 integration issues resolved
 - **Dashboard:** Web dashboard for Pro users available
 - **Payments:** Stripe subscription integration ready
+- **Integrations:** Google Contacts sync with offline queue support
 
 ---
 

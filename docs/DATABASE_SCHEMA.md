@@ -232,6 +232,55 @@ Tracks offline sync operations.
 
 ---
 
+### 11. google_contacts_sync_jobs
+
+Tracks Google Contacts synchronization jobs.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `_id` | string (UUID) | Yes | Primary key |
+| `user_id` | string | Yes | Reference to users._id, indexed |
+| `job_type` | enum | Yes | `initial` \| `incremental` |
+| `status` | enum | Yes | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` |
+| `total_contacts` | integer | No | Total contacts to sync |
+| `processed_contacts` | integer | No | Contacts processed so far |
+| `created_patients` | integer | No | New patients created |
+| `updated_patients` | integer | No | Existing patients updated |
+| `duplicate_count` | integer | No | Duplicates found |
+| `error_message` | string | No | Error message if failed |
+| `google_sync_token` | string | No | Token for incremental sync |
+| `created_at` | datetime | Yes | UTC timestamp |
+| `completed_at` | datetime | No | UTC timestamp when finished |
+
+**Indexes:**
+- `user_id`
+
+---
+
+### 12. duplicate_records
+
+Stores potential duplicate patient records for review.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `_id` | string (UUID) | Yes | Primary key |
+| `user_id` | string | Yes | Reference to users._id, indexed |
+| `sync_job_id` | string | Yes | Reference to google_contacts_sync_jobs._id |
+| `google_contact` | object | Yes | Original Google contact data |
+| `existing_patient_id` | string | Yes | Reference to patients._id |
+| `match_reason` | string | Yes | Why flagged as duplicate (phone, email, name) |
+| `match_confidence` | float | Yes | Confidence score (0-1) |
+| `status` | enum | Yes | `pending` \| `resolved` \| `skipped` |
+| `resolution` | enum | No | `keep_existing` \| `replace` \| `merge` \| `create_new` |
+| `created_at` | datetime | Yes | UTC timestamp |
+| `resolved_at` | datetime | No | UTC timestamp when resolved |
+
+**Indexes:**
+- `user_id`
+- `status`
+
+---
+
 ## Frontend Local Database (WatermelonDB/SQLite)
 
 The mobile app uses WatermelonDB with SQLite for offline-first functionality.
@@ -298,6 +347,26 @@ type BetaFeedbackType = 'bug' | 'suggestion' | 'general';
 ### VisitType
 ```typescript
 type VisitType = 'initial' | 'regular' | 'follow-up' | 'emergency';
+```
+
+### SyncJobType
+```typescript
+type SyncJobType = 'initial' | 'incremental';
+```
+
+### SyncJobStatus
+```typescript
+type SyncJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+```
+
+### DuplicateStatus
+```typescript
+type DuplicateStatus = 'pending' | 'resolved' | 'skipped';
+```
+
+### DuplicateResolution
+```typescript
+type DuplicateResolution = 'keep_existing' | 'replace' | 'merge' | 'create_new';
 ```
 
 ---

@@ -101,12 +101,12 @@ npm test
 heal-log/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # API route handlers (16 routers)
+│   │   ├── api/          # API route handlers (17 routers)
 │   │   ├── core/         # Config, security, exceptions, logging
 │   │   ├── db/           # Database connection and initialization
 │   │   ├── models/       # Beanie ODM document models
 │   │   ├── schemas/      # Pydantic request/response schemas
-│   │   ├── services/     # Business logic (13 services)
+│   │   ├── services/     # Business logic (16 services)
 │   │   └── middleware/   # Request logging middleware
 │   ├── tests/            # Test files (48 tests)
 │   ├── scripts/          # Database scripts
@@ -118,7 +118,7 @@ heal-log/
 │   ├── components/       # React components (core, forms, ui)
 │   ├── contexts/         # React contexts
 │   ├── models/           # WatermelonDB models
-│   ├── services/         # API services (11 services)
+│   ├── services/         # API services (12+ services)
 │   ├── store/            # Zustand store
 │   ├── constants/        # App constants
 │   └── web-dashboard/    # React + Vite web dashboard

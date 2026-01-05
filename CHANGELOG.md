@@ -36,6 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Patient analytics and statistics
   - Usage metrics visualization
   - Subscription management
+- **Google Contacts sync integration**
+  - OAuth flow for connecting Google accounts
+  - Initial and incremental sync support
+  - Duplicate detection with manual resolution
+  - Background sync with progress tracking
+  - Offline queue support for failed sync operations
+  - Batch duplicate resolution
+- Push notifications support
+- Biometric authentication (fingerprint/face) for mobile
 - Frontend telemetry integration with backend endpoint
 - Dynamic user name for clinical note author
 - Schema migration to v2 to preserve existing notes data

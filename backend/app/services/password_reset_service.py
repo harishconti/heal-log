@@ -27,10 +27,10 @@ class PasswordResetService:
     
     def generate_reset_token(self) -> str:
         """Generate a secure random token for password reset.
-        
+
         Uses 18 bytes (144 bits of entropy) which produces a 24-character token.
-        This is still cryptographically secure (2^144 combinations) but more
-        mobile-friendly for copying.
+        This is cryptographically secure (2^144 combinations) and more
+        secure than a 6-digit OTP for password reset operations.
         """
         return secrets.token_urlsafe(18)  # 24 chars, 144 bits entropy
     

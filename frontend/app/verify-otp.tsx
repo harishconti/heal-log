@@ -25,7 +25,7 @@ export default function VerifyOTPScreen() {
     const { theme, fontScale } = useTheme();
     const { setUser, setToken } = useAuth();
 
-    const [otp, setOtp] = useState(['', '', '', '', '', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [countdown, setCountdown] = useState(60);
@@ -48,16 +48,16 @@ export default function VerifyOTPScreen() {
     const handleOtpChange = (value: string, index: number) => {
         if (value.length > 1) {
             // Handle paste
-            const digits = value.replace(/\D/g, '').slice(0, 8).split('');
+            const digits = value.replace(/\D/g, '').slice(0, 6).split('');
             const newOtp = [...otp];
             digits.forEach((digit, i) => {
-                if (i + index < 8) {
+                if (i + index < 6) {
                     newOtp[i + index] = digit;
                 }
             });
             setOtp(newOtp);
             // Focus last filled or next empty
-            const nextIndex = Math.min(index + digits.length, 7);
+            const nextIndex = Math.min(index + digits.length, 5);
             inputRefs.current[nextIndex]?.focus();
 
             // Auto-submit if complete
@@ -69,7 +69,7 @@ export default function VerifyOTPScreen() {
             newOtp[index] = value.replace(/\D/g, '');
             setOtp(newOtp);
 
-            if (value && index < 7) {
+            if (value && index < 5) {
                 inputRefs.current[index + 1]?.focus();
             }
 
@@ -88,8 +88,8 @@ export default function VerifyOTPScreen() {
 
     const handleVerify = async (otpCode?: string) => {
         const code = otpCode || otp.join('');
-        if (code.length !== 8) {
-            Alert.alert('Invalid OTP', 'Please enter the complete 8-digit code.');
+        if (code.length !== 6) {
+            Alert.alert('Invalid OTP', 'Please enter the complete 6-digit code.');
             return;
         }
 
@@ -117,7 +117,7 @@ export default function VerifyOTPScreen() {
             const message = getErrorMessage(error.message, 'verify_otp');
             Alert.alert('Verification Failed', message);
             // Clear OTP on error
-            setOtp(['', '', '', '', '', '', '', '']);
+            setOtp(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
         } finally {
             setIsLoading(false);
@@ -159,7 +159,7 @@ export default function VerifyOTPScreen() {
                         </View>
                         <Text style={styles.title}>Verify Your Email</Text>
                         <Text style={styles.subtitle}>
-                            We've sent an 8-digit code to{'\n'}
+                            We've sent a 6-digit code to{'\n'}
                             <Text style={styles.email}>{email}</Text>
                         </Text>
                     </View>
@@ -178,7 +178,7 @@ export default function VerifyOTPScreen() {
                                 onChangeText={(value) => handleOtpChange(value, index)}
                                 onKeyPress={(e) => handleKeyPress(e, index)}
                                 keyboardType="number-pad"
-                                maxLength={8}
+                                maxLength={6}
                                 selectTextOnFocus
                                 autoFocus={index === 0}
                             />
@@ -271,13 +271,13 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
         marginBottom: 32,
     },
     otpInput: {
-        width: 40,
-        height: 52,
+        width: 48,
+        height: 56,
         borderRadius: 12,
         borderWidth: 2,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.surface,
-        fontSize: 20 * fontScale,
+        fontSize: 24 * fontScale,
         fontWeight: 'bold',
         textAlign: 'center',
         color: theme.colors.text,

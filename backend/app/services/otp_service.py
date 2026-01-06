@@ -25,8 +25,8 @@ class OTPService:
     """Handles OTP generation, storage, and verification."""
     
     def generate_otp(self) -> str:
-        """Generate an 8-digit OTP."""
-        return ''.join([str(secrets.randbelow(10)) for _ in range(8)])
+        """Generate a 6-digit OTP."""
+        return ''.join([str(secrets.randbelow(10)) for _ in range(6)])
     
     async def create_and_send_otp(self, user: User) -> Tuple[bool, str]:
         """

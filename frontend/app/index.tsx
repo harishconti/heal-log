@@ -99,6 +99,8 @@ function Index({ patients, groups, totalPatientCount }) {
     }
   }, [authLoading, isAuthenticated, router]);
 
+  const { recordSyncAttempt, setLastSyncTime } = useAppStore();
+
   const handleSync = useCallback(async (showRefresh = false) => {
     if (!isAuthenticated) return;
 
@@ -114,14 +116,38 @@ function Index({ patients, groups, totalPatientCount }) {
       setOffline(false);
       trackFeatureAdoption('sync');
 
+      // Record successful sync and update timestamp
+      recordSyncAttempt(true);
+      setLastSyncTime(new Date().toISOString());
+
+      // Show success feedback when manually triggered
+      if (showRefresh) {
+        triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+        Alert.alert(
+          'Sync Complete',
+          'Your data has been saved and synced successfully.',
+          [{ text: 'OK' }]
+        );
+      }
+
     } catch (error) {
       console.log('Sync failed, using local DB:', error);
       setOffline(true);
+      recordSyncAttempt(false);
+
+      // Show error feedback when manually triggered
+      if (showRefresh) {
+        Alert.alert(
+          'Sync Failed',
+          'Unable to sync with server. Your changes are saved locally and will sync when connection is restored.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setLoading('sync', false);
       setRefreshing(false);
     }
-  }, [isAuthenticated, setLoading, setOffline]);
+  }, [isAuthenticated, setLoading, setOffline, recordSyncAttempt, setLastSyncTime]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -568,9 +594,22 @@ function Index({ patients, groups, totalPatientCount }) {
           {filteredPatients.length} of {totalPatientCount} patients
           {activeAdvancedFilterCount > 0 && ` (${activeAdvancedFilterCount} filter${activeAdvancedFilterCount > 1 ? 's' : ''})`}
         </Text>
-        <Text style={[styles.syncTimeText, { color: theme.colors.textSecondary }]}>
-          {lastSyncTime ? `Last synced: ${new Date(lastSyncTime).toLocaleTimeString()}` : ''}
-        </Text>
+        <View style={styles.syncStatusContainer}>
+          <Ionicons
+            name={isOffline ? 'cloud-offline' : 'cloud-done'}
+            size={14}
+            color={isOffline ? theme.colors.warning : theme.colors.success}
+            style={styles.syncIcon}
+          />
+          <Text style={[styles.syncTimeText, { color: isOffline ? theme.colors.warning : theme.colors.textSecondary }]}>
+            {isOffline
+              ? 'Offline - Changes saved locally'
+              : lastSyncTime
+                ? `Synced ${new Date(lastSyncTime).toLocaleTimeString()}`
+                : 'Not synced yet'
+            }
+          </Text>
+        </View>
         {user?.plan && (
           <Text style={[styles.planText, { color: theme.colors.primary }]}>
             {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
@@ -754,6 +793,13 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   filterText: {
     fontSize: 14 * fontScale,
     fontWeight: '600',
+  },
+  syncStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  syncIcon: {
+    marginRight: 4,
   },
   syncTimeText: {
     fontSize: 12 * fontScale,

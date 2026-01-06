@@ -180,13 +180,12 @@ export default function LoginScreen() {
 
   const styles = getStyles(theme, fontScale);
 
+  // Show biometric button when device has biometrics available
   const showBiometricButton = biometricCapabilities?.isAvailable &&
-    biometricCapabilities?.isEnrolled &&
-    biometricEnabled;
+    biometricCapabilities?.isEnrolled;
 
-  const showBiometricSetupHint = biometricCapabilities?.isAvailable &&
-    biometricCapabilities?.isEnrolled &&
-    !biometricEnabled;
+  // Check if biometric login is ready to use (already set up)
+  const biometricReady = biometricEnabled && settings.biometricEnabled;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -205,8 +204,21 @@ export default function LoginScreen() {
           {/* Biometric Login Button */}
           {showBiometricButton && (
             <TouchableOpacity
-              style={styles.biometricButton}
-              onPress={handleBiometricLogin}
+              style={[
+                styles.biometricButton,
+                !biometricReady && styles.biometricButtonSetup
+              ]}
+              onPress={() => {
+                if (biometricReady) {
+                  handleBiometricLogin();
+                } else {
+                  Alert.alert(
+                    'Set Up Biometric Login',
+                    `To use ${getBiometricLabel().toLowerCase()}, first sign in with your email and password, then enable biometric login in Settings.`,
+                    [{ text: 'OK' }]
+                  );
+                }
+              }}
               disabled={biometricLoading}
             >
               {biometricLoading ? (
@@ -216,9 +228,19 @@ export default function LoginScreen() {
                   <Ionicons
                     name={getBiometricIcon()}
                     size={32}
-                    color={theme.colors.primary}
+                    color={biometricReady ? theme.colors.primary : theme.colors.textSecondary}
                   />
-                  <Text style={styles.biometricText}>{getBiometricLabel()}</Text>
+                  <Text style={[
+                    styles.biometricText,
+                    !biometricReady && styles.biometricTextSetup
+                  ]}>
+                    {biometricReady ? getBiometricLabel() : `Set up ${getBiometricLabel().replace('Sign in with ', '')}`}
+                  </Text>
+                  {!biometricReady && (
+                    <Text style={styles.biometricSubtext}>
+                      Login first, then enable in Settings
+                    </Text>
+                  )}
                 </>
               )}
             </TouchableOpacity>
@@ -285,26 +307,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Biometric Setup Hint */}
-          {showBiometricSetupHint && (
-            <View style={styles.biometricHint}>
-              <View style={styles.biometricHintIcon}>
-                <Ionicons
-                  name={getBiometricIcon()}
-                  size={24}
-                  color={theme.colors.primary}
-                />
-              </View>
-              <View style={styles.biometricHintTextContainer}>
-                <Text style={styles.biometricHintTitle}>
-                  {getBiometricLabel()} Available
-                </Text>
-                <Text style={styles.biometricHintDescription}>
-                  Enable quick sign-in with {getBiometricLabel().toLowerCase()} in Settings after logging in
-                </Text>
-              </View>
-            </View>
-          )}
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -361,6 +363,19 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
     marginTop: 8,
+  },
+  biometricTextSetup: {
+    color: theme.colors.textSecondary,
+  },
+  biometricSubtext: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  biometricButtonSetup: {
+    borderColor: theme.colors.border,
+    borderStyle: 'dashed',
   },
   form: {
     marginBottom: 32,
@@ -421,38 +436,5 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 16 * fontScale,
     fontWeight: '600',
-  },
-  biometricHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: `${theme.colors.primary}10`,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: `${theme.colors.primary}30`,
-  },
-  biometricHintIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: `${theme.colors.primary}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  biometricHintTextContainer: {
-    flex: 1,
-  },
-  biometricHintTitle: {
-    fontSize: 15 * fontScale,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  biometricHintDescription: {
-    fontSize: 13 * fontScale,
-    color: theme.colors.textSecondary,
-    lineHeight: 18,
   },
 });

@@ -297,50 +297,26 @@ function PatientDetailsScreen({ patient, notes }) {
             </TouchableOpacity>
           </View>
 
-          {visibleNotes && visibleNotes.length > 0 ? (
-            <View style={styles.notesListContainer}>
-              <FlashList
-                data={visibleNotes}
-                renderItem={({ item: note }) => (
-                  <View style={styles.noteItem}>
-                    <View style={styles.noteHeader}>
-                      <View style={styles.noteHeaderLeft}>
-                        <Text style={styles.noteType}>{note.visitType}</Text>
-                        <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.deleteNoteButton}
-                        onPress={() => deleteNote(note.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Ionicons name="trash-outline" size={18} color="#e74c3c" />
-                      </TouchableOpacity>
+          {notes && notes.length > 0 ? (
+            <View>
+              {notes.map((note: any) => (
+                <View key={note.id} style={styles.noteItem}>
+                  <View style={styles.noteHeader}>
+                    <View style={styles.noteHeaderLeft}>
+                      <Text style={styles.noteType}>{note.visitType}</Text>
+                      <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
                     </View>
-                    <Text style={styles.noteContent}>{note.content}</Text>
+                    <TouchableOpacity
+                      style={styles.deleteNoteButton}
+                      onPress={() => deleteNote(note.id)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#e74c3c" />
+                    </TouchableOpacity>
                   </View>
-                )}
-                keyExtractor={(item) => item.id}
-                estimatedItemSize={100}
-                onEndReached={loadMoreNotes}
-                onEndReachedThreshold={0.5}
-                ListFooterComponent={
-                  hasMoreNotes ? (
-                    <View style={styles.loadMoreContainer}>
-                      {isLoadingMore ? (
-                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                      ) : (
-                        <TouchableOpacity onPress={loadMoreNotes} style={styles.loadMoreButton}>
-                          <Text style={styles.loadMoreText}>
-                            Load more ({notes.length - visibleNotesCount} remaining)
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ) : null
-                }
-                scrollEnabled={false}
-                nestedScrollEnabled
-              />
+                  <Text style={styles.noteContent}>{note.content}</Text>
+                </View>
+              ))}
             </View>
           ) : (
             <View style={styles.emptyNotes}>

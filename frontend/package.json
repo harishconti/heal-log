@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "main": "expo-router/entry",
-  "version": "1.0.49",
+  "version": "1.0.54",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -40,10 +40,11 @@
     "expo-device": "~8.0.10",
     "expo-font": "~14.0.9",
     "expo-haptics": "~15.0.8",
-    "expo-local-authentication": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-linking": "~8.0.10",
+    "expo-local-authentication": "~17.0.8",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.12",

@@ -8,13 +8,16 @@ import { retrySyncOperation } from '@/utils/retry';
 // Development-only logging helper
 const devLog = __DEV__
   ? (message: string, ...args: unknown[]) => console.log(message, ...args)
-  : () => {};
+  : () => { };
 const devWarn = __DEV__
   ? (message: string, ...args: unknown[]) => console.warn(message, ...args)
-  : () => {};
+  : () => { };
 const devError = __DEV__
   ? (message: string, ...args: unknown[]) => console.error(message, ...args)
-  : () => {};
+  : () => { };
+
+// Production logging for critical sync events (temporary for debugging)
+const prodLog = (message: string, ...args: unknown[]) => console.log('[SYNC-PROD]', message, ...args);
 
 // Sync configuration
 const BATCH_SIZE = 500;
@@ -104,12 +107,13 @@ export async function sync() {
     const token = await SecureStore.getItemAsync('token');
 
     if (!token) {
+      prodLog('❌ No auth token found, skipping sync');
       devWarn('❌ No auth token found, skipping sync');
       addBreadcrumb('sync', 'No auth token found', 'warning');
       return;
     }
 
-    devLog('🔄 [Sync] Starting sync process...');
+    prodLog('🔄 Starting sync process...');
 
     await synchronize({
       database,
@@ -120,6 +124,7 @@ export async function sync() {
         try {
           // Check if we need batched sync (for large datasets or first sync)
           const isFirstSync = lastPulledAt === null || lastPulledAt === undefined;
+          prodLog('First sync?', isFirstSync, 'lastPulledAt:', lastPulledAt);
           let useBatchedSync = isFirstSync;
 
           // For subsequent syncs, check stats to determine if batched sync is needed
@@ -138,6 +143,7 @@ export async function sync() {
 
           // Use batched sync for large datasets or first sync
           if (useBatchedSync) {
+            prodLog('📦 Using batched sync');
             devLog('📦 [Sync] Using batched sync for better performance');
             addBreadcrumb('sync', 'Using batched sync for large dataset');
 
@@ -154,6 +160,7 @@ export async function sync() {
               return acc;
             }, {} as Record<string, { created: number; updated: number; deleted: number }>);
 
+            prodLog('✅ Batched pull complete:', JSON.stringify(changeSummary));
             devLog('✅ [Sync] Batched pull complete:', changeSummary);
             return { changes, timestamp };
           }
@@ -256,9 +263,11 @@ export async function sync() {
       },
     });
 
+    prodLog('✅ Sync completed successfully');
     devLog('✅ [Sync] Sync completed successfully');
 
   } catch (error: any) {
+    prodLog('❌ Sync failed globally:', error?.message);
     devError('❌ [Sync] Sync failed globally:', error);
     devError('❌ [Sync] Error details:', {
       message: error.message,

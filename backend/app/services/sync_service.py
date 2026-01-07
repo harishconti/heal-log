@@ -177,11 +177,17 @@ async def pull_changes_batched(
         if skip_patients == 0 and skip_notes == 0:
             deleted_records = await get_deleted_records(user_id, last_pulled_at_dt)
 
+        # Helper to ensure timezone-aware comparison
+        def ensure_aware(dt):
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
+
         # Separate into created/updated
-        created_patients = [p for p in patients if p.created_at > last_pulled_at_dt]
-        updated_patients = [p for p in patients if p.created_at <= last_pulled_at_dt]
-        created_notes = [n for n in notes if n.created_at > last_pulled_at_dt]
-        updated_notes = [n for n in notes if n.created_at <= last_pulled_at_dt]
+        created_patients = [p for p in patients if ensure_aware(p.created_at) > last_pulled_at_dt]
+        updated_patients = [p for p in patients if ensure_aware(p.created_at) <= last_pulled_at_dt]
+        created_notes = [n for n in notes if ensure_aware(n.created_at) > last_pulled_at_dt]
+        updated_notes = [n for n in notes if ensure_aware(n.created_at) <= last_pulled_at_dt]
 
         return {
             "changes": {

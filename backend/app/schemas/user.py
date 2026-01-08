@@ -2,11 +2,36 @@ from pydantic import BaseModel, EmailStr, Field, BeforeValidator, field_validato
 from typing import Optional, Annotated, List
 from datetime import datetime, timedelta, timezone
 import uuid
+import re
 from enum import Enum
 from beanie import Document, Indexed
 from .role import UserRole
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
+
+
+def validate_password_strength(password: str) -> str:
+    """
+    Validate password meets security requirements.
+
+    Requirements:
+    - At least 12 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one digit
+    - At least one special character
+    """
+    if len(password) < 12:
+        raise ValueError("Password must be at least 12 characters long")
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not re.search(r"[a-z]", password):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not re.search(r"\d", password):
+        raise ValueError("Password must contain at least one digit")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        raise ValueError("Password must contain at least one special character")
+    return password
 
 class UserPlan(str, Enum):
     BASIC = "basic"
@@ -68,7 +93,13 @@ class UserCreate(BaseModel):
     phone: Optional[str] = Field(default="", max_length=25)
     full_name: str = Field(..., min_length=2, max_length=100)
     medical_specialty: Optional[str] = Field(default="general", max_length=100)
-    password: str
+    password: str = Field(..., min_length=12)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        """Validate password strength on registration."""
+        return validate_password_strength(v)
 
 class UserUpdate(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=25)
@@ -124,15 +155,4 @@ class UserPasswordUpdate(BaseModel):
     @classmethod
     def validate_new_password(cls, v: str) -> str:
         """Validate password strength requirements."""
-        import re
-        if len(v) < 12:
-            raise ValueError("Password must be at least 12 characters long")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", v):
-            raise ValueError("Password must contain at least one digit")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError("Password must contain at least one special character")
-        return v
+        return validate_password_strength(v)

@@ -45,6 +45,11 @@ class OfflineQueueService {
   private handlers: Map<OfflineJobType, JobHandler> = new Map();
   private isProcessing = false;
   private unsubscribeNetInfo: (() => void) | null = null;
+  // Track retry timer to prevent multiple concurrent retry loops
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  // Track total retries in current session to prevent infinite loops
+  private sessionRetryCount = 0;
+  private readonly MAX_SESSION_RETRIES = 50;
 
   constructor() {
     this.initialize();
@@ -200,8 +205,20 @@ class OfflineQueueService {
    * Process pending jobs in the queue
    */
   async processQueue(): Promise<void> {
+    // Clear any pending retry timer to prevent duplicate processing
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+
     if (this.isProcessing) {
       console.log('[OfflineQueue] Already processing queue');
+      return;
+    }
+
+    // Check session retry limit to prevent infinite loops
+    if (this.sessionRetryCount >= this.MAX_SESSION_RETRIES) {
+      console.warn('[OfflineQueue] Max session retries reached, stopping automatic retries');
       return;
     }
 
@@ -226,6 +243,12 @@ class OfflineQueueService {
       // Clean up completed jobs
       this.queue = this.queue.filter(j => j.status !== 'completed');
       await this.saveQueue();
+
+      // Reset session retry count if all jobs are done
+      const remainingPending = this.queue.filter(j => j.status === 'pending').length;
+      if (remainingPending === 0) {
+        this.sessionRetryCount = 0;
+      }
 
     } finally {
       this.isProcessing = false;
@@ -268,14 +291,24 @@ class OfflineQueueService {
         job.status = 'failed';
         console.log(`[OfflineQueue] Job max retries reached: ${job.id}`);
       } else {
-        // Calculate exponential backoff delay
-        const delay = Math.min(1000 * Math.pow(2, job.retryCount), 60000);
-        console.log(`[OfflineQueue] Job will retry in ${delay}ms: ${job.id}`);
+        // Increment session retry count
+        this.sessionRetryCount += 1;
 
-        job.status = 'pending';
+        // Check if we've hit session limit
+        if (this.sessionRetryCount >= this.MAX_SESSION_RETRIES) {
+          console.warn(`[OfflineQueue] Session retry limit reached, marking job as failed: ${job.id}`);
+          job.status = 'failed';
+          job.lastError = 'Max session retries exceeded';
+        } else {
+          // Calculate exponential backoff delay
+          const delay = Math.min(1000 * Math.pow(2, job.retryCount), 60000);
+          console.log(`[OfflineQueue] Job will retry in ${delay}ms: ${job.id} (session retry ${this.sessionRetryCount}/${this.MAX_SESSION_RETRIES})`);
 
-        // Schedule retry
-        setTimeout(() => this.processQueue(), delay);
+          job.status = 'pending';
+
+          // Schedule retry with tracked timer
+          this.retryTimer = setTimeout(() => this.processQueue(), delay);
+        }
       }
     }
 
@@ -318,9 +351,21 @@ class OfflineQueueService {
   }
 
   /**
+   * Reset session retry counter (call after app restart or manual intervention)
+   */
+  resetSessionRetries(): void {
+    this.sessionRetryCount = 0;
+    console.log('[OfflineQueue] Session retry counter reset');
+  }
+
+  /**
    * Cleanup
    */
   destroy() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     if (this.unsubscribeNetInfo) {
       this.unsubscribeNetInfo();
       this.unsubscribeNetInfo = null;

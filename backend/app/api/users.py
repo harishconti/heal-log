@@ -1,16 +1,20 @@
 from typing import List
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user, require_role
+from app.core.limiter import limiter
 from app.schemas.role import UserRole
 from app.schemas.user import User, UserResponse, UserUpdate, UserPasswordUpdate
 from app.services.user_service import user_service
 
 
 router = APIRouter()
+
+# Rate limit for password changes: 3 per hour to prevent brute force
+PASSWORD_CHANGE_RATE_LIMIT = "3/hour"
 
 @router.get("/", response_model=List[UserResponse])
 async def read_users(
@@ -74,12 +78,15 @@ async def update_user_me(
         )
 
 @router.post("/me/password")
+@limiter.limit(PASSWORD_CHANGE_RATE_LIMIT)
 async def change_password(
+    request: Request,
     password_in: UserPasswordUpdate,
     current_user: User = Depends(get_current_user),
 ):
     """
     Change current user's password.
+    Rate limited to 3 attempts per hour to prevent brute force attacks.
     """
     try:
         await user_service.change_password(current_user, password_in.current_password, password_in.new_password)

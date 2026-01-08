@@ -8,6 +8,7 @@ from app.schemas.token import Token, RefreshToken
 from app.services.user_service import user_service
 from app.services.otp_service import otp_service
 from app.services.password_reset_service import password_reset_service
+from app.services.account_lockout_service import account_lockout
 from app.core.security import create_access_token, create_refresh_token, get_current_user
 import jwt
 import logging
@@ -182,14 +183,38 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     """
     Authenticate a user and return tokens and user info.
     User must be verified to login.
+    Implements account lockout after 5 failed attempts.
     """
+    email = form_data.username.lower().strip()
+
+    # Check if account is locked
+    is_locked, lock_info = account_lockout.is_locked(email)
+    if is_locked:
+        minutes_remaining = (lock_info or 0) // 60 + 1
+        logger.warning(f"[LOGIN] Blocked login attempt for locked account: {email[:3]}***")
+        raise APIException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account temporarily locked due to too many failed attempts. Try again in {minutes_remaining} minutes."
+        )
+
     user = await user_service.authenticate(form_data.username, form_data.password)
     if not user:
+        # Record failed attempt and check if now locked
+        is_now_locked, info = account_lockout.record_failed_attempt(email)
+        if is_now_locked:
+            minutes_remaining = (info or 0) // 60 + 1
+            raise APIException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Account locked due to too many failed attempts. Try again in {minutes_remaining} minutes."
+            )
         raise APIException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
-    
+
+    # Clear lockout on successful authentication
+    account_lockout.clear_attempts(email)
+
     # Check if user is verified
     if not user.is_verified:
         # Send new OTP

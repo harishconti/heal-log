@@ -79,22 +79,47 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             return None
         return user
 
+    # Allowlist of fields that users can update on their own profile
+    # SECURITY: Do not add sensitive fields like 'role', 'plan', 'is_verified', 'password_hash', etc.
+    ALLOWED_UPDATE_FIELDS = frozenset({
+        'full_name',
+        'phone',
+        'medical_specialty',
+        'profile_image',
+        'preferences',
+    })
+
     async def update(self, user_id: str, user_data: dict) -> Optional[User]:
         """
         Updates a user's information.
+        Only allows updating fields in ALLOWED_UPDATE_FIELDS to prevent mass assignment attacks.
         """
-        logger.info(f"[USER_SERVICE] Updating user: {user_id} with data: {user_data}")
+        logger.info(f"[USER_SERVICE] Updating user: {user_id}")
         try:
             user = await self.get_user_by_id(user_id)
             if not user:
                 logger.warning(f"[USER_SERVICE] User not found for update: {user_id}")
                 return None
 
-            # Update only provided fields
-            for key, value in user_data.items():
+            # Filter to only allowed fields to prevent mass assignment vulnerability
+            filtered_data = {
+                key: value for key, value in user_data.items()
+                if key in self.ALLOWED_UPDATE_FIELDS
+            }
+
+            # Log any rejected fields for security monitoring
+            rejected_fields = set(user_data.keys()) - set(filtered_data.keys())
+            if rejected_fields:
+                logger.warning(
+                    f"[USER_SERVICE] Rejected update attempt for protected fields: {rejected_fields} "
+                    f"by user: {user_id}"
+                )
+
+            # Update only filtered fields
+            for key, value in filtered_data.items():
                 if hasattr(user, key):
                     setattr(user, key, value)
-                    logger.debug(f"[USER_SERVICE] Set {key} = {value}")
+                    logger.debug(f"[USER_SERVICE] Set {key}")
 
             await user.save()
             logger.info(f"[USER_SERVICE] User updated successfully: {user_id}")
@@ -132,6 +157,11 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         # Hash and save new password
         user.password_hash = get_password_hash(new_password)
         await user.save()
+
+        # Revoke all existing tokens for this user (force re-login on all devices)
+        # Lazy import to avoid circular dependency
+        from app.core.security import revoke_all_user_tokens
+        revoke_all_user_tokens(str(user.id))
 
         logger.info(f"[USER_SERVICE] Password changed successfully for user: {user.id}")
         return True

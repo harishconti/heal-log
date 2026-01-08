@@ -120,6 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAuthenticated = !!user && !!token;
 
   useEffect(() => {
+    // Set mounted state at the start
+    isMountedRef.current = true;
+
     const initializeApp = async () => {
       try {
         // 1. Rehydrate the store first to get persisted user data
@@ -127,8 +130,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await useAppStore.persist.rehydrate();
         }
 
+        // Check if still mounted before proceeding
+        if (!isMountedRef.current) return;
+
         const storedUser = useAppStore.getState().user;
         const storedToken = await TokenStorage.getAccessToken();
+
+        // Check if still mounted after async operation
+        if (!isMountedRef.current) return;
 
         devLog('🔑 [Auth] Init - Token exists?', !!storedToken);
         devLog('👤 [Auth] Init - User exists?', !!storedUser);
@@ -139,8 +148,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (storedUser) {
             // OPTIMISTIC AUTH: We have a user and a token. Let them in.
             devLog('✅ [Auth] Optimistic Auth: Using persisted user data.');
-            setToken(storedToken);
-            setUser(storedUser);
+            if (isMountedRef.current) {
+              setToken(storedToken);
+              setUser(storedUser);
+            }
 
             // Verify in background (non-blocking)
             refreshUser().catch(err => devWarn('⚠️ [Auth] Background refresh failed:', err));
@@ -149,13 +160,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               devLog('🔄 [Auth] Fetching user data (blocking)...');
               const response = await api.get('/api/auth/me');
-              setToken(storedToken);
-              setUser(response.data.user);
-              devLog('✅ [Auth] User data fetched successfully');
+
+              // Check if still mounted after async operation
+              if (isMountedRef.current) {
+                setToken(storedToken);
+                setUser(response.data.user);
+                devLog('✅ [Auth] User data fetched successfully');
+              }
             } catch (error: any) {
               devError('❌ [Auth] Blocking auth failed:', error);
               if (error.response?.status === 401 || error.response?.status === 404) {
-                await logout();
+                if (isMountedRef.current) {
+                  await logout();
+                }
               } else {
                 devWarn('⚠️ [Auth] Server error without cached user. Keeping token but user is null.');
               }
@@ -167,14 +184,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (e) {
         devError('❌ [Auth] Initialization error:', e);
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
         devLog('✅ [Auth] Initialization complete');
       }
     };
 
     initializeApp().catch(err => {
       devError('❌ [Auth] Unhandled initialization error:', err);
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     });
 
     // Subscribe to auth events (e.g. 401 from API)

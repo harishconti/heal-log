@@ -11,6 +11,7 @@ from app.schemas.user import UserPlan, User  # ✅ Import User from schemas (Bea
 from app.schemas.role import UserRole
 from app.core.hashing import verify_password
 from app.services import user_service
+from app.services.token_blacklist_service import token_blacklist
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +32,20 @@ async def authenticate_user(email: str, password: str) -> User | None:
 # --- JWT Token Creation ---
 def create_access_token(subject: str, plan: str, role: str, expires_delta: Optional[timedelta] = None) -> str:
     """Creates a new access token with plan and role."""
+    now = datetime.now(timezone.utc)
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode = {"exp": expire, "sub": str(subject), "plan": plan, "role": role}
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "plan": plan,
+        "role": role,
+        "iat": now,
+        "jti": str(uuid.uuid4())  # Unique token ID for revocation support
+    }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -58,6 +67,24 @@ def create_refresh_token(subject: str, expires_delta: Optional[timedelta] = None
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+
+def decode_access_token(token: str) -> Optional[dict]:
+    """
+    Decodes and validates an access token.
+    Returns the payload if valid, None otherwise.
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        logger.debug("Token has expired")
+        return None
+    except jwt.PyJWTError as e:
+        logger.debug(f"Token decode error: {e}")
+        return None
+
 # --- Dependency to Get Current User ---
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
     """
@@ -71,7 +98,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
             credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id: str = payload.get("sub")
-        
+        jti: str = payload.get("jti")
+        iat_timestamp = payload.get("iat")
+
         if user_id is None:
             logger.error("[AUTH] Token payload missing 'sub' (user_id)")
             raise HTTPException(
@@ -80,19 +109,30 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Step 2: Check if token is blacklisted (revoked)
+        if jti:
+            iat = datetime.fromtimestamp(iat_timestamp, tz=timezone.utc) if iat_timestamp else None
+            if token_blacklist.is_token_blacklisted(jti, user_id, iat):
+                logger.warning(f"[AUTH] Token has been revoked. User ID: {user_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
         logger.info(f"[AUTH] Token decoded successfully. User ID: {user_id}")
 
-        # Step 2: Fetch user from database
+        # Step 3: Fetch user from database
         logger.info(f"[AUTH] Fetching user from database...")
         user = await user_service.get_user_by_id(user_id)
-        
+
         if not user:
             logger.error(f"[AUTH] User not found in database. User ID: {user_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         logger.info(f"[AUTH] User authenticated successfully: {user.email}")
         return user
-        
+
     except jwt.ExpiredSignatureError:
         logger.warning("[AUTH] Token has expired")
         raise HTTPException(
@@ -119,6 +159,37 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred during authentication: {str(e)}"
         )
+
+
+def revoke_token(token: str) -> bool:
+    """
+    Revoke a specific token by adding it to the blacklist.
+    Call this on logout or when a token should be invalidated.
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        jti = payload.get("jti")
+        exp_timestamp = payload.get("exp")
+
+        if not jti:
+            logger.warning("[AUTH] Cannot revoke token without jti")
+            return False
+
+        exp = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc) if exp_timestamp else None
+        token_blacklist.blacklist_token(jti, exp)
+        return True
+    except jwt.PyJWTError as e:
+        logger.error(f"[AUTH] Failed to revoke token: {e}")
+        return False
+
+
+def revoke_all_user_tokens(user_id: str) -> None:
+    """
+    Revoke all tokens for a user. Call this on password change.
+    """
+    token_blacklist.blacklist_user_tokens(user_id, datetime.now(timezone.utc))
 
 # --- Dependency to Require "Pro" User ---
 async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:

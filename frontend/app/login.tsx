@@ -51,12 +51,22 @@ export default function LoginScreen() {
 
   // Check biometric capabilities on mount
   useEffect(() => {
+    let isMounted = true;
+
     const checkBiometrics = async () => {
       const capabilities = await checkBiometricCapabilities();
+
+      // Check if component is still mounted before updating state
+      if (!isMounted) return;
+
       setBiometricCapabilities(capabilities);
 
       if (capabilities.isAvailable && capabilities.isEnrolled) {
         const enabled = await isBiometricLoginEnabled();
+
+        // Check again after async operation
+        if (!isMounted) return;
+
         setBiometricEnabled(enabled);
 
         // Auto-trigger biometric login if enabled
@@ -67,6 +77,10 @@ export default function LoginScreen() {
     };
 
     checkBiometrics();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleBiometricLogin = async () => {

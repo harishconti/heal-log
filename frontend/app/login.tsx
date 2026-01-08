@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
+import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppStore } from '@/store/useAppStore';
 import { addBreadcrumb } from '@/utils/monitoring';
@@ -187,9 +188,9 @@ export default function LoginScreen() {
   const getBiometricLabel = (): string => {
     if (!biometricCapabilities) return 'Biometric Login';
     if (biometricCapabilities.biometricTypes.includes('facial')) {
-      return Platform.OS === 'ios' ? 'Sign in with Face ID' : 'Sign in with Face';
+      return Platform.OS === 'ios' ? 'Face ID' : 'Face';
     }
-    return Platform.OS === 'ios' ? 'Sign in with Touch ID' : 'Sign in with Fingerprint';
+    return Platform.OS === 'ios' ? 'Touch ID' : 'Fingerprint';
   };
 
   const styles = getStyles(theme, fontScale);
@@ -207,84 +208,39 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with Logo */}
           <View style={styles.header}>
-            <Ionicons name="medical" size={64} color={theme.colors.primary} />
-            <Text style={styles.title}>HealLog</Text>
-            <Text style={styles.subtitle}>Professional Patient Management</Text>
-          </View>
-
-          {/* Biometric Login Button */}
-          {showBiometricButton && (
-            <TouchableOpacity
-              style={[
-                styles.biometricButton,
-                !biometricReady && styles.biometricButtonSetup
-              ]}
-              onPress={() => {
-                if (biometricReady) {
-                  handleBiometricLogin();
-                } else {
-                  Alert.alert(
-                    'Set Up Biometric Login',
-                    `To use ${getBiometricLabel().toLowerCase()}, first sign in with your email and password, then enable biometric login in Settings.`,
-                    [{ text: 'OK' }]
-                  );
-                }
-              }}
-              disabled={biometricLoading}
-            >
-              {biometricLoading ? (
-                <ActivityIndicator color={theme.colors.primary} />
-              ) : (
-                <>
-                  <Ionicons
-                    name={getBiometricIcon()}
-                    size={32}
-                    color={biometricReady ? theme.colors.primary : theme.colors.textSecondary}
-                  />
-                  <Text style={[
-                    styles.biometricText,
-                    !biometricReady && styles.biometricTextSetup
-                  ]}>
-                    {biometricReady ? getBiometricLabel() : `Set up ${getBiometricLabel().replace('Sign in with ', '')}`}
-                  </Text>
-                  {!biometricReady && (
-                    <Text style={styles.biometricSubtext}>
-                      Login first, then enable in Settings
-                    </Text>
-                  )}
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {showBiometricButton && (
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or sign in with email</Text>
-              <View style={styles.dividerLine} />
+            <View style={styles.logoContainer}>
+              <Ionicons name="heart" size={40} color={theme.colors.primary} />
             </View>
-          )}
+            <Text style={styles.title}>Welcome back, Doctor</Text>
+            <Text style={styles.subtitle}>Securely access your patient logs</Text>
+          </View>
 
           {/* Login Form */}
           <View style={styles.form}>
             <ControlledInput
               control={control}
               name="email"
-              placeholder="Email Address"
+              label="Medical ID or Email"
+              placeholder="Enter your ID"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              placeholderTextColor={theme.colors.textSecondary}
+              iconName="person-outline"
             />
+
             <ControlledInput
               control={control}
               name="password"
-              placeholder="Password"
+              label="Password"
+              placeholder="Enter your password"
               isPassword
-              placeholderTextColor={theme.colors.textSecondary}
+              iconName="lock-closed-outline"
             />
 
             {/* Forgot Password Link */}
@@ -295,33 +251,100 @@ export default function LoginScreen() {
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.loginButton, loading.auth && styles.loginButtonDisabled]}
+            {/* Login Button */}
+            <Button
+              title="Log In"
               onPress={handleSubmit(onSubmit)}
+              loading={loading.auth}
               disabled={loading.auth}
-            >
-              {loading.auth ? (
-                <ActivityIndicator color={theme.colors.surface} />
-              ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
+              icon="log-in-outline"
+              iconPosition="right"
+              size="large"
+            />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            {/* Biometric Login Section */}
+            {showBiometricButton && (
+              <>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>Or sign in with</Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <TouchableOpacity
-              style={styles.registerButton}
-              onPress={navigateToRegister}
-            >
-              <Text style={styles.registerButtonText}>Create New Account</Text>
-            </TouchableOpacity>
+                <View style={styles.biometricRow}>
+                  {biometricCapabilities?.biometricTypes.includes('facial') && (
+                    <TouchableOpacity
+                      style={styles.biometricButton}
+                      onPress={() => {
+                        if (biometricReady) {
+                          handleBiometricLogin();
+                        } else {
+                          Alert.alert(
+                            'Set Up Face ID',
+                            'Sign in with your email and password first, then enable Face ID in Settings.',
+                            [{ text: 'OK' }]
+                          );
+                        }
+                      }}
+                      disabled={biometricLoading}
+                    >
+                      {biometricLoading ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                      ) : (
+                        <Ionicons
+                          name="happy-outline"
+                          size={28}
+                          color={biometricReady ? theme.colors.text : theme.colors.textSecondary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.biometricButton}
+                    onPress={() => {
+                      if (biometricReady) {
+                        handleBiometricLogin();
+                      } else {
+                        Alert.alert(
+                          `Set Up ${getBiometricLabel()}`,
+                          `Sign in with your email and password first, then enable ${getBiometricLabel()} in Settings.`,
+                          [{ text: 'OK' }]
+                        );
+                      }
+                    }}
+                    disabled={biometricLoading}
+                  >
+                    {biometricLoading ? (
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : (
+                      <Ionicons
+                        name="finger-print"
+                        size={28}
+                        color={biometricReady ? theme.colors.text : theme.colors.textSecondary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
 
+          {/* Footer */}
+          <View style={styles.footer}>
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={navigateToRegister}>
+                <Text style={styles.registerLink}>Contact Admin</Text>
+              </TouchableOpacity>
+            </View>
 
+            {/* HIPAA Badge */}
+            <View style={styles.hipaaBadge}>
+              <Ionicons name="shield-checkmark" size={14} color={theme.colors.success} />
+              <Text style={styles.hipaaText}>HIPAA COMPLIANT SECURE LOGIN</Text>
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -339,64 +362,51 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 40,
+    paddingBottom: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   title: {
     fontSize: 28 * fontScale,
     fontWeight: 'bold',
     color: theme.colors.text,
-    marginTop: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16 * fontScale,
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  biometricButton: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    borderRadius: 16,
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  biometricText: {
-    fontSize: 16 * fontScale,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginTop: 8,
-  },
-  biometricTextSetup: {
-    color: theme.colors.textSecondary,
-  },
-  biometricSubtext: {
-    fontSize: 12 * fontScale,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  biometricButtonSetup: {
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
-  },
   form: {
     marginBottom: 32,
   },
   forgotPasswordLink: {
     alignSelf: 'flex-end',
-    marginBottom: 16,
+    marginBottom: 24,
     marginTop: -8,
   },
   forgotPasswordText: {
@@ -404,30 +414,10 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '500',
   },
-  loginButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  loginButtonDisabled: {
-    backgroundColor: theme.colors.primaryMuted,
-  },
-  loginButtonText: {
-    color: theme.colors.surface,
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
-  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 24,
   },
   dividerLine: {
     flex: 1,
@@ -439,16 +429,63 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: 14 * fontScale,
   },
-  registerButton: {
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
+  biometricRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  biometricButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  footer: {
+    marginTop: 'auto',
     alignItems: 'center',
   },
-  registerButtonText: {
+  registerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  registerText: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
+  },
+  registerLink: {
+    fontSize: 14 * fontScale,
     color: theme.colors.primary,
-    fontSize: 16 * fontScale,
     fontWeight: '600',
+  },
+  hipaaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  hipaaText: {
+    fontSize: 11 * fontScale,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
 });

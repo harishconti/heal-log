@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Platform,
+  View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -15,20 +17,22 @@ import { useAppStore } from '@/store/useAppStore';
 export interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   iconPosition?: 'left' | 'right';
+  fullWidth?: boolean;
+  rounded?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   hapticFeedback?: boolean;
 }
 
 /**
- * Reusable Button component with theming, haptic feedback, and multiple variants
- * 
+ * Reusable Button component with healthcare design system styling
+ *
  * @param title - Button text
  * @param onPress - Function to call when button is pressed
  * @param variant - Button style variant (default: 'primary')
@@ -37,6 +41,8 @@ export interface ButtonProps {
  * @param loading - Whether to show loading spinner
  * @param icon - Ionicon name to display
  * @param iconPosition - Position of icon relative to text
+ * @param fullWidth - Whether button should take full width
+ * @param rounded - Whether to use fully rounded corners (pill style)
  * @param hapticFeedback - Whether to trigger haptic feedback on press
  */
 export const Button: React.FC<ButtonProps> = ({
@@ -48,6 +54,8 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   icon,
   iconPosition = 'left',
+  fullWidth = true,
+  rounded = false,
   style,
   textStyle,
   hapticFeedback = true,
@@ -68,7 +76,6 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
-      borderRadius: theme.borderRadius.md,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
@@ -77,19 +84,22 @@ export const Button: React.FC<ButtonProps> = ({
     // Size variations
     const sizeStyles: Record<string, ViewStyle> = {
       small: {
-        paddingHorizontal: theme.spacing.sm,
-        paddingVertical: theme.spacing.xs,
-        minHeight: 36,
-      },
-      medium: {
         paddingHorizontal: theme.spacing.md,
         paddingVertical: theme.spacing.sm,
-        minHeight: 44,
+        minHeight: 40,
+        borderRadius: rounded ? theme.borderRadius.full : theme.borderRadius.md,
       },
-      large: {
+      medium: {
         paddingHorizontal: theme.spacing.lg,
         paddingVertical: theme.spacing.md,
         minHeight: 52,
+        borderRadius: rounded ? theme.borderRadius.full : theme.borderRadius.lg,
+      },
+      large: {
+        paddingHorizontal: theme.spacing.xl,
+        paddingVertical: theme.spacing.lg,
+        minHeight: 60,
+        borderRadius: rounded ? theme.borderRadius.full : theme.borderRadius.xl,
       },
     };
 
@@ -97,28 +107,79 @@ export const Button: React.FC<ButtonProps> = ({
     const variantStyles: Record<string, ViewStyle> = {
       primary: {
         backgroundColor: theme.colors.primary,
+        ...Platform.select({
+          ios: {
+            shadowColor: theme.colors.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+          },
+          android: {
+            elevation: 4,
+          },
+        }),
       },
       secondary: {
         backgroundColor: theme.colors.secondary,
+        ...Platform.select({
+          ios: {
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          },
+          android: {
+            elevation: 2,
+          },
+        }),
       },
       outline: {
         backgroundColor: 'transparent',
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: theme.colors.primary,
       },
       danger: {
         backgroundColor: theme.colors.error,
+        ...Platform.select({
+          ios: {
+            shadowColor: theme.colors.error,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+          },
+          android: {
+            elevation: 4,
+          },
+        }),
       },
       success: {
         backgroundColor: theme.colors.success,
+        ...Platform.select({
+          ios: {
+            shadowColor: theme.colors.success,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+          },
+          android: {
+            elevation: 4,
+          },
+        }),
+      },
+      ghost: {
+        backgroundColor: 'transparent',
       },
     };
+
+    // Width style
+    const widthStyle: ViewStyle = fullWidth
+      ? { width: '100%' }
+      : { alignSelf: 'flex-start' };
 
     // Disabled style
     const disabledStyle: ViewStyle = disabled
       ? {
-          opacity: 0.6,
-          backgroundColor: theme.colors.border,
+          opacity: 0.5,
         }
       : {};
 
@@ -126,6 +187,7 @@ export const Button: React.FC<ButtonProps> = ({
       ...baseStyle,
       ...sizeStyles[size],
       ...variantStyles[variant],
+      ...widthStyle,
       ...disabledStyle,
       ...style,
     };
@@ -133,7 +195,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getTextStyle = (): TextStyle => {
     const baseTextStyle: TextStyle = {
-      fontWeight: theme.typography.weights.semibold,
+      fontWeight: '600',
       textAlign: 'center',
     };
 
@@ -153,19 +215,22 @@ export const Button: React.FC<ButtonProps> = ({
     // Variant text colors
     const variantTextStyles: Record<string, TextStyle> = {
       primary: {
-        color: '#ffffff',
+        color: '#FFFFFF',
       },
       secondary: {
-        color: '#ffffff',
+        color: '#FFFFFF',
       },
       outline: {
         color: theme.colors.primary,
       },
       danger: {
-        color: '#ffffff',
+        color: '#FFFFFF',
       },
       success: {
-        color: '#ffffff',
+        color: '#FFFFFF',
+      },
+      ghost: {
+        color: theme.colors.primary,
       },
     };
 
@@ -179,7 +244,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getIconSize = () => {
     const iconSizes = {
-      small: 16,
+      small: 18,
       medium: 20,
       large: 24,
     };
@@ -187,7 +252,10 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getIconColor = () => {
-    return variant === 'outline' ? theme.colors.primary : '#ffffff';
+    if (variant === 'outline' || variant === 'ghost') {
+      return theme.colors.primary;
+    }
+    return '#FFFFFF';
   };
 
   const renderIcon = () => {
@@ -199,8 +267,8 @@ export const Button: React.FC<ButtonProps> = ({
         size={getIconSize()}
         color={getIconColor()}
         style={{
-          marginRight: iconPosition === 'left' && title ? theme.spacing.xs : 0,
-          marginLeft: iconPosition === 'right' && title ? theme.spacing.xs : 0,
+          marginRight: iconPosition === 'left' && title ? theme.spacing.sm : 0,
+          marginLeft: iconPosition === 'right' && title ? theme.spacing.sm : 0,
         }}
       />
     );
@@ -212,18 +280,18 @@ export const Button: React.FC<ButtonProps> = ({
     if (loading) {
       return (
         <ActivityIndicator
-          size={size === 'small' ? 'small' : 'small'}
+          size="small"
           color={getIconColor()}
         />
       );
     }
 
     return (
-      <>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {icon && iconPosition === 'left' && renderIcon()}
         {title ? <Text style={getTextStyle()}>{title}</Text> : null}
         {icon && iconPosition === 'right' && renderIcon()}
-      </>
+      </View>
     );
   };
 
@@ -232,7 +300,7 @@ export const Button: React.FC<ButtonProps> = ({
       style={getButtonStyle()}
       onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       {renderContent()}
     </TouchableOpacity>

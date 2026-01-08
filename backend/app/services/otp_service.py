@@ -1,7 +1,12 @@
 """
 OTP Service - Generate, store, and verify one-time passwords.
+
+SECURITY:
+- OTP codes are hashed using SHA-256 before storage
+- Atomic increment is used to prevent race condition bypasses
 """
 import secrets
+import hashlib
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
@@ -10,6 +15,11 @@ from app.core.config import settings
 from app.services.email_service import email_service
 
 logger = logging.getLogger(__name__)
+
+
+def _hash_otp(otp_code: str) -> str:
+    """Hash an OTP code using SHA-256 for secure storage."""
+    return hashlib.sha256(otp_code.encode()).hexdigest()
 
 
 def _ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
@@ -30,28 +40,31 @@ class OTPService:
     
     async def create_and_send_otp(self, user: User) -> Tuple[bool, str]:
         """
-        Generate OTP, save to user, and send via email.
-        
+        Generate OTP, save hashed version to user, and send plain version via email.
+
+        SECURITY: Only the hash is stored in the database.
+
         Returns (success, message) tuple.
         """
         otp_code = self.generate_otp()
+        otp_hash = _hash_otp(otp_code)
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
-        
-        # Update user with OTP
-        user.otp_code = otp_code
+
+        # Update user with HASHED OTP
+        user.otp_code = otp_hash
         user.otp_expires_at = expires_at
         user.otp_attempts = 0
         await user.save()
-        
+
         logger.info(f"[OTP_SERVICE] OTP created for user {user.email}, expires at {expires_at}")
-        
-        # Send email
+
+        # Send email with plain OTP (user needs this to verify)
         email_sent = await email_service.send_otp_email(
             email=user.email,
-            otp_code=otp_code,
+            otp_code=otp_code,  # Plain OTP sent to email
             full_name=user.full_name
         )
-        
+
         if email_sent:
             return True, "OTP sent successfully"
         else:
@@ -60,39 +73,56 @@ class OTPService:
     async def verify_otp(self, user: User, otp_code: str) -> Tuple[bool, str]:
         """
         Verify the OTP for a user.
-        
+
+        SECURITY:
+        - Hashes incoming OTP and compares against stored hash
+        - Uses atomic increment to prevent race condition bypass
+
         Returns (success, message) tuple.
         """
         # Check if OTP exists
         if not user.otp_code or not user.otp_expires_at:
             return False, "No OTP found. Please request a new one."
-        
-        # Check attempt limit
+
+        # Check attempt limit BEFORE incrementing
         if user.otp_attempts >= settings.OTP_MAX_ATTEMPTS:
             return False, "Maximum attempts exceeded. Please request a new OTP."
-        
-        # Increment attempts
-        user.otp_attempts += 1
-        await user.save()
-        
+
+        # Atomic increment using MongoDB's $inc operator to prevent race conditions
+        # This ensures that even if multiple requests come in simultaneously,
+        # the attempt counter is incremented atomically
+        result = await User.find_one(
+            {"_id": user.id, "otp_attempts": {"$lt": settings.OTP_MAX_ATTEMPTS}}
+        ).update({"$inc": {"otp_attempts": 1}})
+
+        # If no document was updated, another request already maxed out attempts
+        if not result or result.modified_count == 0:
+            return False, "Maximum attempts exceeded. Please request a new OTP."
+
+        # Reload user to get updated attempt count
+        user = await User.get(user.id)
+        if not user:
+            return False, "User not found"
+
         # Check expiry - normalize both datetimes to UTC
         now = datetime.now(timezone.utc)
         expires_at = _ensure_utc(user.otp_expires_at)
         if now > expires_at:
             return False, "OTP has expired. Please request a new one."
-        
-        # Verify code using constant-time comparison to prevent timing attacks
-        if not secrets.compare_digest(user.otp_code, otp_code):
+
+        # Hash incoming OTP and compare using constant-time comparison
+        otp_hash = _hash_otp(otp_code)
+        if not secrets.compare_digest(user.otp_code, otp_hash):
             remaining = settings.OTP_MAX_ATTEMPTS - user.otp_attempts
             return False, f"Invalid OTP. {remaining} attempts remaining."
-        
+
         # Success - clear OTP and mark verified
         user.is_verified = True
         user.otp_code = None
         user.otp_expires_at = None
         user.otp_attempts = 0
         await user.save()
-        
+
         logger.info(f"[OTP_SERVICE] User {user.email} verified successfully")
         return True, "Email verified successfully"
     

@@ -108,8 +108,101 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# --- CSRF Protection Middleware ---
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    """
+    CSRF protection via Origin/Referer header validation.
+
+    For state-changing requests (POST, PUT, DELETE, PATCH), validates that
+    the Origin or Referer header matches allowed origins.
+
+    This is defense-in-depth for token-based auth, as Bearer tokens
+    are inherently CSRF-safe (they can't be sent automatically by browsers).
+    """
+
+    SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip validation for safe methods
+        if request.method in self.SAFE_METHODS:
+            return await call_next(request)
+
+        # Skip for health check endpoints
+        if request.url.path in ["/health", "/api", "/api/health"]:
+            return await call_next(request)
+
+        # Get allowed origins from settings
+        allowed_origins = (
+            settings.ALLOWED_ORIGINS.split(',')
+            if ',' in settings.ALLOWED_ORIGINS
+            else [settings.ALLOWED_ORIGINS]
+        )
+        # Add common localhost variations for development
+        if settings.ENV != "production":
+            allowed_origins.extend([
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:8000",
+            ])
+
+        # Check Origin header first (preferred)
+        origin = request.headers.get("origin")
+        if origin:
+            origin_allowed = any(
+                origin == allowed or allowed == "*"
+                for allowed in allowed_origins
+            )
+            if not origin_allowed:
+                logging.warning(f"[CSRF] Blocked request from origin: {origin}")
+                return Response(
+                    content='{"detail": "CSRF validation failed: Origin not allowed"}',
+                    status_code=403,
+                    media_type="application/json"
+                )
+            return await call_next(request)
+
+        # Fall back to Referer header for same-origin requests
+        referer = request.headers.get("referer")
+        if referer:
+            from urllib.parse import urlparse
+            referer_origin = f"{urlparse(referer).scheme}://{urlparse(referer).netloc}"
+            referer_allowed = any(
+                referer_origin == allowed or allowed == "*"
+                for allowed in allowed_origins
+            )
+            if not referer_allowed:
+                logging.warning(f"[CSRF] Blocked request from referer: {referer}")
+                return Response(
+                    content='{"detail": "CSRF validation failed: Referer not allowed"}',
+                    status_code=403,
+                    media_type="application/json"
+                )
+            return await call_next(request)
+
+        # For mobile apps and API clients without Origin/Referer,
+        # require Authorization header (which can't be set by CSRF attacks)
+        auth_header = request.headers.get("authorization")
+        if auth_header:
+            return await call_next(request)
+
+        # No Origin, Referer, or Authorization - block in production
+        if settings.ENV == "production":
+            logging.warning(f"[CSRF] Blocked request without origin validation: {request.url.path}")
+            return Response(
+                content='{"detail": "CSRF validation failed: No origin information"}',
+                status_code=403,
+                media_type="application/json"
+            )
+
+        # Allow in development for testing
+        return await call_next(request)
+
+
 # --- Middleware ---
+# Order matters: Security headers first, then CSRF, then logging
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFProtectionMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 # CORS Configuration - restrict methods and headers to only what's needed

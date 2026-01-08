@@ -23,6 +23,41 @@ const prodLog = (message: string, ...args: unknown[]) => console.log('[SYNC-PROD
 const BATCH_SIZE = 500;
 const LARGE_SYNC_THRESHOLD = 1000;
 
+// Sync health tracking
+interface SyncHealth {
+  consecutiveFailures: number;
+  lastSuccessTime: number | null;
+  lastFailureTime: number | null;
+  lastError: string | null;
+}
+
+const syncHealth: SyncHealth = {
+  consecutiveFailures: 0,
+  lastSuccessTime: null,
+  lastFailureTime: null,
+  lastError: null,
+};
+
+const MAX_CONSECUTIVE_FAILURES = 5;
+
+/**
+ * Get the current sync health status
+ */
+export function getSyncHealth(): SyncHealth & { isHealthy: boolean } {
+  return {
+    ...syncHealth,
+    isHealthy: syncHealth.consecutiveFailures < MAX_CONSECUTIVE_FAILURES,
+  };
+}
+
+/**
+ * Reset sync health (call after successful manual retry)
+ */
+export function resetSyncHealth(): void {
+  syncHealth.consecutiveFailures = 0;
+  syncHealth.lastError = null;
+}
+
 // Get sync statistics to determine sync strategy
 export async function getSyncStats(lastPulledAt: number | null) {
   try {
@@ -222,8 +257,18 @@ export async function sync() {
             addBreadcrumb('sync', 'Pull error', 'error');
           }
 
+          // Track failure for health monitoring
+          syncHealth.consecutiveFailures += 1;
+          syncHealth.lastFailureTime = Date.now();
+          syncHealth.lastError = error.message || 'Unknown sync error';
+
+          // Log warning about consecutive failures
+          if (syncHealth.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            prodLog(`⚠️ [Sync] ${syncHealth.consecutiveFailures} consecutive failures - sync health degraded`);
+            addBreadcrumb('sync', `Sync health degraded: ${syncHealth.consecutiveFailures} failures`, 'error');
+          }
+
           // Graceful degradation for non-auth errors - return empty changes with warning
-          // Track consecutive failures for monitoring
           devWarn('⚠️ [Sync] Sync pull failed, returning empty changes for offline resilience');
           addBreadcrumb('sync', `Pull failed gracefully: ${error.message}`, 'warning');
 
@@ -262,6 +307,11 @@ export async function sync() {
         }
       },
     });
+
+    // Reset failure tracking on success
+    syncHealth.consecutiveFailures = 0;
+    syncHealth.lastSuccessTime = Date.now();
+    syncHealth.lastError = null;
 
     prodLog('✅ Sync completed successfully');
     devLog('✅ [Sync] Sync completed successfully');

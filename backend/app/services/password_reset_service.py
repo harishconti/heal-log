@@ -1,7 +1,11 @@
 """
 Password Reset Service - Secure password reset token management.
+
+SECURITY: Tokens are hashed before storage using SHA-256 to prevent
+token theft from database compromise.
 """
 import secrets
+import hashlib
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
@@ -11,6 +15,11 @@ from app.core.hashing import get_password_hash
 from app.services.email_service import email_service
 
 logger = logging.getLogger(__name__)
+
+
+def _hash_token(token: str) -> str:
+    """Hash a token using SHA-256 for secure storage."""
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def _ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
@@ -36,27 +45,30 @@ class PasswordResetService:
     
     async def create_and_send_reset_token(self, user: User) -> Tuple[bool, str]:
         """
-        Generate reset token, save to user, and send via email.
-        
+        Generate reset token, save hashed version to user, and send plain version via email.
+
+        SECURITY: Only the hash is stored in the database.
+
         Returns (success, message) tuple.
         """
         reset_token = self.generate_reset_token()
+        token_hash = _hash_token(reset_token)
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
-        
-        # Update user with reset token
-        user.password_reset_token = reset_token
+
+        # Update user with HASHED reset token
+        user.password_reset_token = token_hash
         user.password_reset_expires_at = expires_at
         await user.save()
-        
+
         logger.info(f"[PASSWORD_RESET] Reset token created for user {user.email}, expires at {expires_at}")
-        
-        # Send email
+
+        # Send email with plain token (user needs this to reset)
         email_sent = await email_service.send_password_reset_email(
             email=user.email,
-            reset_token=reset_token,
+            reset_token=reset_token,  # Plain token sent to email
             full_name=user.full_name
         )
-        
+
         if email_sent:
             return True, "Password reset email sent"
         else:
@@ -65,15 +77,20 @@ class PasswordResetService:
     async def verify_reset_token(self, token: str) -> Tuple[Optional[User], str]:
         """
         Verify a password reset token.
-        
+
+        SECURITY: Hashes the incoming token and compares against stored hash.
+
         Returns (user, message) tuple. User is None if token is invalid.
         """
-        # Find user with this token
-        user = await User.find_one({"password_reset_token": token})
-        
+        # Hash the incoming token to compare with stored hash
+        token_hash = _hash_token(token)
+
+        # Find user with this token hash
+        user = await User.find_one({"password_reset_token": token_hash})
+
         if not user:
             return None, "Invalid or expired reset token"
-        
+
         # Check expiry - normalize datetime
         expires_at = _ensure_utc(user.password_reset_expires_at)
         if not expires_at or datetime.now(timezone.utc) > expires_at:
@@ -82,7 +99,7 @@ class PasswordResetService:
             user.password_reset_expires_at = None
             await user.save()
             return None, "Reset token has expired. Please request a new one."
-        
+
         return user, "Token is valid"
     
     async def reset_password(self, user: User, new_password: str) -> Tuple[bool, str]:

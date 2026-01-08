@@ -199,10 +199,67 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+# --- Request Size Limit Middleware ---
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    """
+    Limits request body size to prevent DoS attacks.
+
+    Default limit: 10MB for most requests
+    Higher limit: 50MB for specific upload endpoints (photos, documents)
+    """
+
+    # Default max size: 10MB
+    DEFAULT_MAX_SIZE = 10 * 1024 * 1024
+
+    # Higher limit for upload endpoints: 50MB
+    UPLOAD_MAX_SIZE = 50 * 1024 * 1024
+
+    # Endpoints that allow larger uploads
+    UPLOAD_ENDPOINTS = [
+        "/api/patients",  # Patient photos
+        "/api/documents",  # Document uploads
+        "/api/users/me",  # Profile photos
+    ]
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip size check for safe methods
+        if request.method in {"GET", "HEAD", "OPTIONS", "DELETE"}:
+            return await call_next(request)
+
+        # Determine max size based on endpoint
+        max_size = self.DEFAULT_MAX_SIZE
+        for endpoint in self.UPLOAD_ENDPOINTS:
+            if request.url.path.startswith(endpoint):
+                max_size = self.UPLOAD_MAX_SIZE
+                break
+
+        # Check Content-Length header
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                size = int(content_length)
+                if size > max_size:
+                    max_mb = max_size / (1024 * 1024)
+                    logging.warning(
+                        f"[REQUEST_SIZE] Rejected request to {request.url.path}: "
+                        f"size {size} exceeds limit {max_size}"
+                    )
+                    return Response(
+                        content=f'{{"detail": "Request body too large. Maximum size is {max_mb:.0f}MB"}}',
+                        status_code=413,
+                        media_type="application/json"
+                    )
+            except ValueError:
+                pass  # Invalid content-length, let the request proceed
+
+        return await call_next(request)
+
+
 # --- Middleware ---
-# Order matters: Security headers first, then CSRF, then logging
+# Order matters: Request size first (reject early), then security headers, CSRF, logging
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFProtectionMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 # CORS Configuration - restrict methods and headers to only what's needed

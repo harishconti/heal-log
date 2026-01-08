@@ -2,24 +2,66 @@ from typing import Type, TypeVar, Generic, Optional, List, Dict, Any
 from beanie import Document
 from pydantic import BaseModel
 import uuid
+import random
+import logging
 from datetime import datetime, timezone
 import time
 from functools import wraps
-from app.schemas.query_performance_event import QueryPerformanceEvent
+from app.core.config import settings
 
 ModelType = TypeVar("ModelType", bound=Document)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
+# Query performance logging configuration
+QUERY_LOG_SAMPLE_RATE = 0.01  # Log 1% of queries to prevent database bloat
+SLOW_QUERY_THRESHOLD_MS = 500  # Always log queries slower than 500ms
+
+logger = logging.getLogger(__name__)
+
+
 def log_query_performance(func):
+    """
+    Decorator to log query performance with sampling to prevent memory leaks.
+
+    - Samples 1% of queries randomly
+    - Always logs slow queries (>500ms)
+    - Disabled in production by default (set ENABLE_QUERY_LOGGING=true to enable)
+    """
     @wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.time()
         result = await func(*args, **kwargs)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        query = f"{func.__name__} on {args[0].model.__name__}"
-        await QueryPerformanceEvent(query=query, execution_time=execution_time).insert()
+        execution_time_ms = (time.time() - start_time) * 1000
+
+        # Skip logging if disabled
+        if not getattr(settings, 'ENABLE_QUERY_LOGGING', False):
+            return result
+
+        # Log slow queries always, otherwise sample
+        is_slow = execution_time_ms > SLOW_QUERY_THRESHOLD_MS
+        should_sample = random.random() < QUERY_LOG_SAMPLE_RATE
+
+        if is_slow or should_sample:
+            try:
+                from app.schemas.query_performance_event import QueryPerformanceEvent
+                query = f"{func.__name__} on {args[0].model.__name__}"
+                await QueryPerformanceEvent(
+                    query=query,
+                    execution_time=execution_time_ms / 1000,  # Store in seconds
+                    is_slow=is_slow
+                ).insert()
+            except Exception as e:
+                # Don't let logging failures affect the actual query
+                logger.debug(f"Failed to log query performance: {e}")
+
+        # Log slow queries to standard logging as well
+        if is_slow:
+            logger.warning(
+                f"[SLOW_QUERY] {func.__name__} on {args[0].model.__name__} "
+                f"took {execution_time_ms:.2f}ms"
+            )
+
         return result
     return wrapper
 

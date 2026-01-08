@@ -44,6 +44,32 @@ try {
     fs.writeFileSync(versionFilePath, newVersion, 'utf8');
     console.log('VERSION file updated.');
 
+    // Update README.md
+    try {
+        const readmePath = path.join(__dirname, '..', 'README.md');
+        if (fs.existsSync(readmePath)) {
+            let readmeContent = fs.readFileSync(readmePath, 'utf8');
+
+            // Regex to replace "Current Version: X.Y.Z" and "Version: X.Y.Z" matches
+            const versionRegex1 = /(\*\*Current Version:\*\* )(\d+\.\d+\.\d+)/g;
+            const versionRegex2 = /(- \*\*Version:\*\* )(\d+\.\d+\.\d+) \(stable\)/g;
+
+            let updatedReadme = readmeContent.replace(versionRegex1, `$1${newVersion}`);
+            updatedReadme = updatedReadme.replace(versionRegex2, `$1${newVersion} (stable)`);
+
+            if (readmeContent !== updatedReadme) {
+                fs.writeFileSync(readmePath, updatedReadme, 'utf8');
+                console.log('README.md version updated.');
+            } else {
+                console.log('No matching version string found in README.md to update.');
+            }
+        } else {
+            console.warn('README.md not found, skipping update.');
+        }
+    } catch (readmeError) {
+        console.error('Error updating README.md:', readmeError);
+    }
+
 } catch (error) {
     console.error('Error bumping version:', error);
     process.exit(1);

@@ -33,6 +33,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add VERSION
+          git add VERSION README.md
           git commit -m "chore: bump version to $(cat VERSION) [skip ci]"
           git push

@@ -4,6 +4,7 @@ import { NoteFormData } from '@/lib/validation';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { Q } from '@nozbe/watermelondb';
 import { useAppStore } from '@/store/useAppStore';
+import { triggerChangeBasedSync } from './backgroundSync';
 
 export const NoteService = {
     async createNote(data: NoteFormData) {
@@ -13,7 +14,7 @@ export const NoteService = {
             const currentUser = useAppStore.getState().user;
             const userId = currentUser?.id || 'unknown';
 
-            return await database.write(async () => {
+            const note = await database.write(async () => {
                 return await database.collections.get<PatientNote>('clinical_notes').create(note => {
                     note.patientId = data.patient_id;
                     note.content = data.content;
@@ -23,6 +24,11 @@ export const NoteService = {
                     note.updatedAt = new Date();
                 });
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
+
+            return note;
         } catch (error) {
             console.error('Error creating note:', error);
             throw error;
@@ -32,7 +38,7 @@ export const NoteService = {
     async updateNote(noteId: string, content: string) {
         addBreadcrumb('note_service', `Updating note: ${noteId}`);
         try {
-            return await database.write(async () => {
+            const note = await database.write(async () => {
                 const note = await database.collections.get<PatientNote>('clinical_notes').find(noteId);
                 await note.update(n => {
                     n.content = content;
@@ -40,6 +46,11 @@ export const NoteService = {
                 });
                 return note;
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
+
+            return note;
         } catch (error) {
             console.error('Error updating note:', error);
             throw error;
@@ -53,6 +64,9 @@ export const NoteService = {
                 const note = await database.collections.get<PatientNote>('clinical_notes').find(noteId);
                 await note.markAsDeleted();
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
         } catch (error) {
             console.error('Error deleting note:', error);
             throw error;

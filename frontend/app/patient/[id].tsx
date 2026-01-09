@@ -39,6 +39,7 @@ import PatientNote from '@/models/PatientNote';
 import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
 import { NoteService } from '@/services/note_service';
+import { triggerChangeBasedSync } from '@/services/backgroundSync';
 
 const TABS: TabItem[] = [
   { key: 'overview', label: 'Overview' },
@@ -96,6 +97,8 @@ function PatientDetailsScreen({ patient, notes }) {
           p.isFavorite = !p.isFavorite;
         });
       });
+      // Trigger immediate sync after favorite toggle
+      triggerChangeBasedSync();
     } catch (error) {
       Alert.alert('Error', 'Failed to update favorite status');
     }
@@ -134,6 +137,8 @@ function PatientDetailsScreen({ patient, notes }) {
       });
       setNewNote('');
       setShowAddNote(false);
+      // Trigger immediate sync after adding note
+      triggerChangeBasedSync();
       if (settings.hapticEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -156,6 +161,8 @@ function PatientDetailsScreen({ patient, notes }) {
           onPress: async () => {
             try {
               await NoteService.deleteNote(noteId);
+              // Trigger immediate sync after deleting note
+              triggerChangeBasedSync();
               if (settings.hapticEnabled) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               }
@@ -595,6 +602,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 12,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,

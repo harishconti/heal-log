@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const mySchema = appSchema({
-  version: 4,
+  version: 5,
   tables: [
     tableSchema({
       name: 'patients',
@@ -25,6 +25,10 @@ export const mySchema = appSchema({
         { name: 'last_synced_at', type: 'number', isOptional: true },
         { name: 'sync_version', type: 'number', isOptional: true },
         { name: 'local_modified_at', type: 'number', isOptional: true },
+        // New patient profile fields
+        { name: 'year_of_birth', type: 'number', isOptional: true },
+        { name: 'gender', type: 'string', isOptional: true },
+        { name: 'active_treatment_plan', type: 'string', isOptional: true },
       ],
     }),
     tableSchema({

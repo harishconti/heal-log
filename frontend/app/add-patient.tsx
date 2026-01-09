@@ -23,7 +23,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { compressImage, shouldCompressImage } from '@/services/image_service';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { patientSchema, PatientFormData } from '@/lib/validation';
+import { patientSchema, PatientFormData, GENDER_OPTIONS } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
 import { PatientService } from '@/services/patient_service';
 import { addBreadcrumb } from '@/utils/monitoring';
@@ -56,8 +56,11 @@ export default function AddPatientScreen() {
   const [allGroups, setAllGroups] = useState<string[]>(MEDICAL_GROUPS);
   const [showGroupSelector, setShowGroupSelector] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [showGenderSelector, setShowGenderSelector] = useState(false);
 
   const LOCATION_OPTIONS = ['Clinic', 'Home Visit', 'Hospital', 'Emergency'];
+  const currentYear = new Date().getFullYear();
+  const YEAR_OPTIONS = Array.from({ length: 120 }, (_, i) => currentYear - i);
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -74,6 +77,8 @@ export default function AddPatientScreen() {
   const isFavorite = watch('is_favorite');
   const location = watch('location', 'Clinic');
   const medicalGroup = watch('group', 'general');
+  const gender = watch('gender');
+  const yearOfBirth = watch('year_of_birth');
 
   const fetchAllGroups = React.useCallback(async () => {
     try {
@@ -192,6 +197,9 @@ export default function AddPatientScreen() {
         group: medicalGroup || 'general',
         photo,
         is_favorite: isFavorite,
+        year_of_birth: yearOfBirth || null,
+        gender: gender || null,
+        active_treatment_plan: data.active_treatment_plan?.trim() || '',
       });
 
       Alert.alert('Success', 'Patient added successfully!', [
@@ -282,6 +290,61 @@ export default function AddPatientScreen() {
                 />
               </View>
             </View>
+
+            <View style={styles.inputRow}>
+              <View style={styles.inputHalf}>
+                <Text style={styles.inputLabel}>Year of Birth</Text>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => {
+                    Alert.alert(
+                      'Year of Birth',
+                      'Enter year of birth',
+                      [
+                        {
+                          text: 'Cancel',
+                          style: 'cancel',
+                        },
+                        {
+                          text: 'Clear',
+                          onPress: () => setValue('year_of_birth', null),
+                        },
+                      ]
+                    );
+                  }}
+                >
+                  <TextInput
+                    style={[styles.pickerText, { flex: 1 }]}
+                    placeholder="YYYY"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    value={yearOfBirth?.toString() || ''}
+                    onChangeText={(text) => {
+                      const year = parseInt(text, 10);
+                      if (!text) {
+                        setValue('year_of_birth', null);
+                      } else if (!isNaN(year) && year >= 1900 && year <= currentYear) {
+                        setValue('year_of_birth', year);
+                      }
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.inputHalf}>
+                <Text style={styles.inputLabel}>Gender</Text>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => setShowGenderSelector(true)}
+                >
+                  <Text style={[styles.pickerText, !gender && { color: theme.colors.textSecondary }]}>
+                    {gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : 'Select gender'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <ControlledInput
               control={control}
               name="address"
@@ -337,6 +400,16 @@ export default function AddPatientScreen() {
               name="initial_diagnosis"
               label="Initial Diagnosis"
               placeholder="Enter initial diagnosis or assessment..."
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            <ControlledInput
+              control={control}
+              name="active_treatment_plan"
+              label="Active Treatment Plan"
+              placeholder="Enter current treatment plan or monitoring notes..."
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -509,6 +582,51 @@ export default function AddPatientScreen() {
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setShowLocationSelector(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Gender Selector Modal */}
+      <Modal
+        visible={showGenderSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGenderSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Gender</Text>
+            <View style={styles.locationList}>
+              {GENDER_OPTIONS.map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[
+                    styles.groupOption,
+                    gender === g && styles.groupOptionSelected
+                  ]}
+                  onPress={() => {
+                    setValue('gender', g);
+                    setShowGenderSelector(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.groupOptionText,
+                    gender === g && styles.groupOptionTextSelected
+                  ]}>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </Text>
+                  {gender === g && (
+                    <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setShowGenderSelector(false)}
             >
               <Text style={styles.modalCancelText}>Cancel</Text>
             </TouchableOpacity>

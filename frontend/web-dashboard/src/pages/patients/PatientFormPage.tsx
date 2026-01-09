@@ -8,6 +8,8 @@ import { Card, Button, Input, Textarea, Spinner } from '../../components/ui';
 import { patientsApi, type CreatePatientData } from '../../api/patients';
 import { getErrorMessage } from '../../utils/errorUtils';
 
+const currentYear = new Date().getFullYear();
+
 const patientSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().optional(),
@@ -18,6 +20,10 @@ const patientSchema = z.object({
   initial_diagnosis: z.string().optional(),
   group: z.string().optional(),
   is_favorite: z.boolean().optional(),
+  // New patient profile fields
+  year_of_birth: z.number().min(1900).max(currentYear).optional().nullable(),
+  gender: z.enum(['male', 'female', 'other']).optional().nullable(),
+  active_treatment_plan: z.string().optional(),
 });
 
 type PatientFormData = z.infer<typeof patientSchema>;
@@ -68,6 +74,9 @@ export function PatientFormPage() {
             initial_diagnosis: patient.initial_diagnosis || '',
             group: patient.group || '',
             is_favorite: patient.is_favorite,
+            year_of_birth: patient.year_of_birth || null,
+            gender: patient.gender || null,
+            active_treatment_plan: patient.active_treatment_plan || '',
           });
         })
         .catch((err) => {
@@ -95,6 +104,9 @@ export function PatientFormPage() {
         initial_diagnosis: data.initial_diagnosis || undefined,
         group: data.group || undefined,
         is_favorite: data.is_favorite,
+        year_of_birth: data.year_of_birth || undefined,
+        gender: data.gender || undefined,
+        active_treatment_plan: data.active_treatment_plan || undefined,
       };
 
       if (isEditing && id) {
@@ -179,6 +191,31 @@ export function PatientFormPage() {
               {...register('location')}
             />
 
+            <Input
+              label="Year of Birth"
+              type="number"
+              placeholder="YYYY"
+              min={1900}
+              max={currentYear}
+              error={errors.year_of_birth?.message}
+              {...register('year_of_birth', { valueAsNumber: true })}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gender
+              </label>
+              <select
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                {...register('gender')}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Group/Category
@@ -217,6 +254,16 @@ export function PatientFormPage() {
                 rows={3}
                 error={errors.initial_diagnosis?.message}
                 {...register('initial_diagnosis')}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <Textarea
+                label="Active Treatment Plan"
+                placeholder="Current treatment plan or monitoring notes..."
+                rows={3}
+                error={errors.active_treatment_plan?.message}
+                {...register('active_treatment_plan')}
               />
             </div>
 

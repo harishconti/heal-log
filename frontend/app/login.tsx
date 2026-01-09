@@ -335,7 +335,7 @@ export default function LoginScreen() {
             <View style={styles.registerRow}>
               <Text style={styles.registerText}>Don't have an account? </Text>
               <TouchableOpacity onPress={navigateToRegister}>
-                <Text style={styles.registerLink}>Contact Admin</Text>
+                <Text style={styles.registerLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
 

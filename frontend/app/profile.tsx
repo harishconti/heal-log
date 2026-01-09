@@ -9,7 +9,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-  Switch,
   StatusBar,
   Platform,
 } from 'react-native';
@@ -22,6 +21,8 @@ import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import api from '@/services/api';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 
 interface SubscriptionInfo {
   plan: string;
@@ -36,11 +37,11 @@ interface Stats {
 }
 
 export default function ProfileScreen() {
-  const { theme, isDark } = useTheme();
+  const { theme, fontScale } = useTheme();
   const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
-  const { settings, updateSettings } = useAppStore(
-    (state) => ({ settings: state.settings, updateSettings: state.updateSettings })
+  const { settings } = useAppStore(
+    (state) => ({ settings: state.settings })
   );
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -48,14 +49,15 @@ export default function ProfileScreen() {
   const [userPhoto, setUserPhoto] = useState<string>('');
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
 
+  const styles = createStyles(theme, fontScale);
+
   useEffect(() => {
     loadProfileData();
     loadUserPhoto();
-  }, [user?.profile_photo]); // Re-run when user's profile_photo changes
+  }, [user?.profile_photo]);
 
   const loadProfileData = async () => {
     try {
-      // Set subscription info directly from user object
       if (user) {
         setSubscriptionInfo({
           plan: user.plan || 'basic',
@@ -64,20 +66,15 @@ export default function ProfileScreen() {
         });
       }
 
-      // Fetch stats from local database (source of truth)
-      // Using WatermelonDB's native count() for O(1) performance instead of fetching all records
       try {
         const patientCollection = database.collections.get<Patient>('patients');
         const { Q } = await import('@nozbe/watermelondb');
 
-        // Use native count queries for O(1) performance
         const totalCount = await patientCollection.query().fetchCount();
         const favoriteCount = await patientCollection.query(
           Q.where('is_favorite', true)
         ).fetchCount();
 
-        // For groups, we still need to fetch but only the group field
-        // Use a raw query to get distinct groups efficiently
         const allPatients = await patientCollection.query().fetch();
         const groupCounts = new Map<string, number>();
         for (const patient of allPatients) {
@@ -124,17 +121,11 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Starting logout process...');
               await logout();
-              console.log('Logout completed, navigating to login...');
-
-              // Use replace to completely reset navigation stack
               router.replace('/login');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Logout Error', error.message || 'Failed to logout completely');
-
-              // Force navigation even if logout partially failed
               router.replace('/login');
             }
           }
@@ -217,24 +208,21 @@ export default function ProfileScreen() {
       setUpdatingPhoto(true);
       setUserPhoto(photo);
 
-      // Save profile photo to server
       const response = await api.put('/api/users/me', {
         profile_photo: photo
       });
 
-      // Update local user state with the response
       if (response.data) {
         refreshUser();
       }
 
-      // Also save locally for faster loading
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
 
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
       console.error('Error saving profile photo:', error);
       Alert.alert('Error', 'Failed to save profile photo. Please try again.');
-      setUserPhoto(previousPhoto); // Revert to previous photo on error
+      setUserPhoto(previousPhoto);
     } finally {
       setUpdatingPhoto(false);
     }
@@ -246,22 +234,19 @@ export default function ProfileScreen() {
       setUpdatingPhoto(true);
       setUserPhoto('');
 
-      // Remove profile photo from server (set to null)
       await api.put('/api/users/me', {
         profile_photo: null
       });
 
-      // Update local user state
       refreshUser();
 
-      // Also remove from local storage
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
 
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
       console.error('Error removing profile photo:', error);
       Alert.alert('Error', 'Failed to remove profile photo');
-      setUserPhoto(previousPhoto); // Revert to previous photo on error
+      setUserPhoto(previousPhoto);
     } finally {
       setUpdatingPhoto(false);
     }
@@ -270,15 +255,12 @@ export default function ProfileScreen() {
   const loadUserPhoto = async () => {
     try {
       if (user?.id) {
-        // First, check if user has a profile photo from the server
         if (user.profile_photo) {
           setUserPhoto(user.profile_photo);
-          // Also cache it locally for faster loading next time
           await AsyncStorage.setItem(`user_photo_${user.id}`, user.profile_photo);
           return;
         }
 
-        // Fallback to locally cached photo (for faster loading before server sync)
         const savedPhoto = await AsyncStorage.getItem(`user_photo_${user.id}`);
         if (savedPhoto) {
           setUserPhoto(savedPhoto);
@@ -297,166 +279,196 @@ export default function ProfileScreen() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
-      case 'active': return theme.colors.success;
-      case 'trialing': return theme.colors.warning;
-      case 'canceled': return theme.colors.error;
-      case 'past_due': return theme.colors.warning;
-      default: return theme.colors.textSecondary;
+      case 'active': return 'success';
+      case 'trialing': return 'warning';
+      case 'canceled': return 'error';
+      case 'past_due': return 'warning';
+      default: return 'default';
     }
   };
 
-  const styles = createStyles(theme);
-
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading profile...</Text>
+          <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Ionicons name="log-out" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
+          <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* User Info */}
-        <View style={styles.userSection}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Profile Header */}
+        <View style={styles.profileHeader}>
           <TouchableOpacity
-            style={styles.userAvatarContainer}
+            style={styles.avatarContainer}
             onPress={updateProfilePhoto}
             disabled={updatingPhoto}
           >
             {userPhoto ? (
               <Image
                 source={{ uri: `data:image/jpeg;base64,${userPhoto}` }}
-                style={styles.userAvatarImage}
+                style={styles.avatar}
               />
             ) : (
-              <View style={styles.userAvatar}>
-                <Ionicons name="person" size={48} color={theme.colors.primary} />
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={48} color={theme.colors.textSecondary} />
               </View>
             )}
-            <View style={styles.photoEditOverlay}>
+            <View style={styles.cameraOverlay}>
               {updatingPhoto ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Ionicons name="camera" size={20} color="#fff" />
+                <Ionicons name="camera" size={16} color="#fff" />
               )}
             </View>
           </TouchableOpacity>
+
           <Text style={styles.userName}>{user?.full_name}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
-          <Text style={styles.userSpecialty}>
-            {user?.medical_specialty?.charAt(0).toUpperCase() + user?.medical_specialty?.slice(1)}
-          </Text>
+
+          <View style={styles.chipRow}>
+            {user?.medical_specialty && (
+              <Chip
+                label={user.medical_specialty.charAt(0).toUpperCase() + user.medical_specialty.slice(1)}
+                variant="soft"
+                color="primary"
+                size="small"
+              />
+            )}
+            {subscriptionInfo && (
+              <Chip
+                label={subscriptionInfo.plan.charAt(0).toUpperCase() + subscriptionInfo.plan.slice(1) + ' Plan'}
+                variant="outlined"
+                color="default"
+                size="small"
+              />
+            )}
+          </View>
         </View>
 
-        {/* Statistics */}
+        {/* Statistics Card */}
         {stats && (
-          <View style={styles.statsSection}>
-            <Text style={styles.sectionTitle}>Statistics</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Ionicons name="people" size={32} color={theme.colors.success} />
-                <Text style={styles.statNumber}>{stats.total_patients}</Text>
-                <Text style={styles.statLabel}>Total Patients</Text>
+          <Card style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="stats-chart-outline" size={18} color={theme.colors.primary} />
               </View>
-              <View style={styles.statCard}>
-                <Ionicons name="heart" size={32} color={theme.colors.error} />
+              <Text style={styles.sectionTitle}>Statistics</Text>
+            </View>
+
+            <View style={styles.statsGrid}>
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: theme.colors.primaryMuted }]}>
+                  <Ionicons name="people" size={24} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.statNumber}>{stats.total_patients}</Text>
+                <Text style={styles.statLabel}>Patients</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}>
+                  <Ionicons name="heart" size={24} color={theme.colors.error} />
+                </View>
                 <Text style={styles.statNumber}>{stats.favorite_patients}</Text>
                 <Text style={styles.statLabel}>Favorites</Text>
               </View>
-              <View style={styles.statCard}>
-                <Ionicons name="folder" size={32} color={theme.colors.primary} />
+
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(52, 199, 89, 0.1)' }]}>
+                  <Ionicons name="folder" size={24} color={theme.colors.success} />
+                </View>
                 <Text style={styles.statNumber}>{stats.groups.length}</Text>
                 <Text style={styles.statLabel}>Groups</Text>
               </View>
             </View>
-          </View>
+          </Card>
         )}
 
-        {/* Subscription Info */}
+        {/* Subscription Card */}
         {subscriptionInfo && (
-          <View style={styles.subscriptionSection}>
-            <Text style={styles.sectionTitle}>Subscription</Text>
-            <View style={styles.subscriptionCard}>
-              <View style={styles.subscriptionHeader}>
-                <Text style={styles.planName}>
-                  {subscriptionInfo.plan.charAt(0).toUpperCase() +
-                    subscriptionInfo.plan.slice(1)} Plan
+          <Card style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="card-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <Text style={styles.sectionTitle}>Subscription</Text>
+            </View>
+
+            <View style={styles.subscriptionInfo}>
+              <View style={styles.subscriptionRow}>
+                <Text style={styles.subscriptionPlan}>
+                  {subscriptionInfo.plan.charAt(0).toUpperCase() + subscriptionInfo.plan.slice(1)} Plan
                 </Text>
-                <View style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(subscriptionInfo.subscription_status) }
-                ]}>
-                  <Text style={styles.statusText}>
-                    {subscriptionInfo.subscription_status.charAt(0).toUpperCase() +
-                      subscriptionInfo.subscription_status.slice(1)}
-                  </Text>
-                </View>
+                <Chip
+                  label={subscriptionInfo.subscription_status.charAt(0).toUpperCase() + subscriptionInfo.subscription_status.slice(1)}
+                  variant="filled"
+                  color={getStatusColor(subscriptionInfo.subscription_status)}
+                  size="small"
+                />
               </View>
 
               {subscriptionInfo.subscription_status === 'trialing' && (
-                <Text style={styles.trialInfo}>
+                <Text style={styles.trialText}>
                   Trial ends: {formatDate(subscriptionInfo.subscription_end_date)}
                 </Text>
               )}
 
-              <View style={styles.planFeatures}>
-                <Text style={styles.featureTitle}>Current Features:</Text>
-                <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+              <View style={styles.featuresList}>
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                   <Text style={styles.featureText}>Android App Access</Text>
                 </View>
-                <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                   <Text style={styles.featureText}>Patient Management</Text>
                 </View>
-                <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                   <Text style={styles.featureText}>Medical Notes</Text>
                 </View>
 
                 {subscriptionInfo.plan === 'basic' && (
                   <>
-                    <View style={styles.feature}>
-                      <Ionicons name="close" size={16} color={theme.colors.error} />
-                      <Text style={[styles.featureText, styles.disabledFeature]}>Web Dashboard</Text>
+                    <View style={styles.featureItem}>
+                      <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+                      <Text style={[styles.featureText, styles.featureDisabled]}>Web Dashboard</Text>
                     </View>
-                    <View style={styles.feature}>
-                      <Ionicons name="close" size={16} color={theme.colors.error} />
-                      <Text style={[styles.featureText, styles.disabledFeature]}>Advanced Analytics</Text>
+                    <View style={styles.featureItem}>
+                      <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+                      <Text style={[styles.featureText, styles.featureDisabled]}>Advanced Analytics</Text>
                     </View>
                   </>
                 )}
 
                 {subscriptionInfo.plan === 'pro' && (
                   <>
-                    <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                    <View style={styles.featureItem}>
+                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                       <Text style={styles.featureText}>Web Dashboard</Text>
                     </View>
-                    <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                    <View style={styles.featureItem}>
+                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                       <Text style={styles.featureText}>Advanced Analytics</Text>
                     </View>
-                    <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                    <View style={styles.featureItem}>
+                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
                       <Text style={styles.featureText}>Priority Support</Text>
                     </View>
                   </>
@@ -468,71 +480,73 @@ export default function ProfileScreen() {
                   style={styles.upgradeButton}
                   onPress={() => router.push('/upgrade')}
                 >
-                  <Ionicons name="rocket" size={20} color="#fff" />
-                  <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
+                  <Ionicons name="rocket" size={18} color="#fff" />
+                  <Text style={styles.upgradeText}>Upgrade to Pro</Text>
                 </TouchableOpacity>
               )}
             </View>
-          </View>
+          </Card>
         )}
 
-        {/* Account Actions */}
-        <View style={styles.actionsSection}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/contacts-sync')}
-          >
-            <Ionicons name="phone-portrait" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>Contacts Integration</Text>
+        {/* Quick Actions Card */}
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="apps-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/contacts-sync')}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="phone-portrait-outline" size={22} color={theme.colors.primary} />
+              <Text style={styles.actionText}>Contacts Integration</Text>
+            </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/settings/feedback')}
-          >
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>Send Feedback</Text>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/(tabs)/settings/feedback')}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="chatbubble-ellipses-outline" size={22} color={theme.colors.primary} />
+              <Text style={styles.actionText}>Send Feedback</Text>
+            </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/settings')}
-          >
-            <Ionicons name="settings" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>Settings</Text>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/(tabs)/settings')}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="settings-outline" size={22} color={theme.colors.primary} />
+              <Text style={styles.actionText}>Settings</Text>
+            </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="help-circle" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>Help & Support</Text>
+          <TouchableOpacity style={styles.actionRow}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="help-circle-outline" size={22} color={theme.colors.primary} />
+              <Text style={styles.actionText}>Help & Support</Text>
+            </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="document-text" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>Privacy Policy</Text>
+          <TouchableOpacity style={[styles.actionRow, styles.actionRowLast]}>
+            <View style={styles.actionLeft}>
+              <Ionicons name="document-text-outline" size={22} color={theme.colors.primary} />
+              <Text style={styles.actionText}>Privacy Policy</Text>
+            </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
+        </Card>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/welcome')}
-          >
-            <Ionicons name="information-circle-outline" size={24} color={theme.colors.textSecondary} />
-            <Text style={styles.actionText}>View Beta Welcome Screen</Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
+        {/* App Version */}
+        <Text style={styles.versionText}>HEAL LOG v1.0.9</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -544,208 +558,215 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.textSecondary,
   },
-  scrollContent: {
-    paddingBottom: 32,
-  },
   header: {
-    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
-  backButton: {
+  headerButton: {
     padding: 8,
+    minWidth: 70,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 18 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
   },
-  logoutButton: {
-    padding: 8,
+  logoutText: {
+    fontSize: 16 * fontScale,
+    color: theme.colors.error,
+    fontWeight: '500',
+    textAlign: 'right',
   },
-  userSection: {
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  profileHeader: {
     alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: theme.colors.card,
-    marginBottom: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
   },
-  userAvatarContainer: {
+  avatarContainer: {
     position: 'relative',
     marginBottom: 16,
   },
-  userAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.surface,
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
   },
-  userAvatarImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  photoEditOverlay: {
+  cameraOverlay: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: 4,
+    right: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.card,
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 24 * fontScale,
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: 4,
   },
   userEmail: {
-    fontSize: 16,
+    fontSize: 14 * fontScale,
     color: theme.colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  userSpecialty: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    fontWeight: '500',
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  statsSection: {
-    backgroundColor: theme.colors.card,
-    padding: 16,
+  sectionCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
+    gap: 10,
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: theme.colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 16,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-around',
   },
-  statCard: {
+  statItem: {
+    alignItems: 'center',
     flex: 1,
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginVertical: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  subscriptionSection: {
-    backgroundColor: theme.colors.card,
-    padding: 16,
-    marginBottom: 16,
-  },
-  subscriptionCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    padding: 16,
-  },
-  subscriptionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  planName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: '500',
-  },
-  trialInfo: {
-    fontSize: 14,
-    color: theme.colors.warning,
-    marginBottom: 16,
-  },
-  planFeatures: {
-    marginBottom: 16,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.text,
-    marginBottom: 12,
-  },
-  feature: {
-    flexDirection: 'row',
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
-  featureText: {
-    fontSize: 14,
+  statNumber: {
+    fontSize: 24 * fontScale,
+    fontWeight: 'bold',
     color: theme.colors.text,
-    marginLeft: 8,
+    marginBottom: 2,
   },
-  disabledFeature: {
+  statLabel: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+  },
+  subscriptionInfo: {
+    gap: 12,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subscriptionPlan: {
+    fontSize: 18 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  trialText: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.warning,
+  },
+  featuresList: {
+    gap: 8,
+    paddingTop: 8,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  featureText: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.text,
+  },
+  featureDisabled: {
     color: theme.colors.textSecondary,
     textDecorationLine: 'line-through',
   },
   upgradeButton: {
-    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     borderRadius: 8,
     gap: 8,
+    marginTop: 8,
   },
-  upgradeButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  upgradeText: {
+    fontSize: 16 * fontScale,
     fontWeight: '600',
+    color: '#fff',
   },
-  actionsSection: {
-    backgroundColor: theme.colors.card,
-    marginBottom: 16,
-  },
-  actionButton: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
+  actionRowLast: {
+    borderBottomWidth: 0,
+  },
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   actionText: {
-    flex: 1,
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.text,
-    marginLeft: 12,
+  },
+  versionText: {
+    textAlign: 'center',
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+    marginTop: 24,
   },
 });
-
-

@@ -1,10 +1,41 @@
 import logging
 import sys
 import json
+from contextvars import ContextVar
 from logging.handlers import RotatingFileHandler
 from app.core.config import settings
 
+# Context variable for request-scoped data propagation
+# This allows the request ID to be accessed anywhere in the async call stack
+request_id_var: ContextVar[str] = ContextVar("request_id", default="")
+user_id_var: ContextVar[str] = ContextVar("user_id", default="")
+
+
+def get_request_id() -> str:
+    """Get the current request ID from context. Returns empty string if not set."""
+    return request_id_var.get()
+
+
+def set_request_id(request_id: str) -> None:
+    """Set the request ID in the current context."""
+    request_id_var.set(request_id)
+
+
+def get_context_user_id() -> str:
+    """Get the current user ID from context. Returns empty string if not set."""
+    return user_id_var.get()
+
+
+def set_context_user_id(user_id: str) -> None:
+    """Set the user ID in the current context."""
+    user_id_var.set(user_id)
+
+
 class JsonFormatter(logging.Formatter):
+    """
+    JSON log formatter that automatically includes request context.
+    Request ID and user ID are pulled from contextvars when available.
+    """
     def format(self, record):
         log_record = {
             "timestamp": self.formatTime(record, self.datefmt),
@@ -12,6 +43,15 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "name": record.name,
         }
+        # Include request context if available
+        request_id = get_request_id()
+        if request_id:
+            log_record["request_id"] = request_id
+
+        user_id = get_context_user_id()
+        if user_id and user_id not in ("anonymous", "invalid_token"):
+            log_record["user_id"] = user_id
+
         if record.exc_info:
             log_record['exc_info'] = self.formatException(record.exc_info)
         return json.dumps(log_record)

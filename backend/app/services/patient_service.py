@@ -4,13 +4,32 @@ from fastapi_cache.decorator import cache
 from app.schemas.patient import PatientCreate, PatientUpdate, Patient
 from app.schemas.clinical_note import NoteCreate, ClinicalNote
 from app.services import clinical_note_service
-from typing import List, Optional, Dict, Any, Literal
+from typing import List, Optional, Dict, Any, Literal, Callable
 import uuid
 from datetime import datetime, timezone
 from .base_service import BaseService
 from fastapi_cache import FastAPICache
 from app.db.session import get_database
 from pymongo.errors import DuplicateKeyError
+
+
+def user_scoped_key_builder(
+    func: Callable,
+    namespace: str = "",
+    *,
+    user_id: str = "",
+    **kwargs
+) -> str:
+    """
+    Custom cache key builder that includes user_id for user-scoped caching.
+    This ensures cache invalidation only affects the specific user's data.
+
+    Key format: {namespace}:{user_id}:{other_params_hash}
+    """
+    # Build a deterministic key from all parameters
+    param_parts = [f"{k}={v}" for k, v in sorted(kwargs.items()) if v is not None]
+    params_str = ":".join(param_parts) if param_parts else "default"
+    return f"{namespace}:{user_id}:{params_str}"
 
 
 def sanitize_regex_input(user_input: str, max_length: int = 100) -> str:
@@ -91,20 +110,31 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
         logging.warning(f"[PATIENT_SERVICE] Using UUID fallback patient ID: {fallback_id}")
         return fallback_id
 
-    async def _clear_patient_caches(self) -> None:
+    async def _clear_patient_caches(self, user_id: str) -> None:
         """
-        Clears patient-related caches with graceful error handling.
+        Clears patient-related caches for a specific user with graceful error handling.
+        Uses user-scoped cache keys to avoid invalidating other users' caches.
         Redis connection errors are logged but don't crash the operation.
+
+        Args:
+            user_id: The user ID whose caches should be invalidated
         """
         try:
-            if FastAPICache.get_backend():
-                await FastAPICache.clear(namespace="get_patients_by_user_id")
-                await FastAPICache.clear(namespace="get_patient_groups")
-                await FastAPICache.clear(namespace="get_user_stats")
-                await FastAPICache.clear(namespace="get_patient_growth_analytics")
+            backend = FastAPICache.get_backend()
+            if backend:
+                # Clear user-scoped cache entries
+                # Format: namespace:user_id:* - clears all cache variations for this user
+                user_namespaces = [
+                    f"get_patients_by_user_id:{user_id}",
+                    f"get_patient_groups:{user_id}",
+                    f"get_user_stats:{user_id}",
+                    f"get_patient_growth_analytics:{user_id}",
+                ]
+                for ns in user_namespaces:
+                    await FastAPICache.clear(namespace=ns)
         except Exception as e:
             # Log the error but don't crash - cache invalidation is non-critical
-            logging.warning(f"Failed to clear cache: {e}")
+            logging.warning(f"Failed to clear cache for user {user_id}: {e}")
 
     async def create(self, obj_in: PatientCreate, user_id: str) -> Patient:
         """
@@ -132,8 +162,8 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
                 raise ValueError("A patient with this name already exists.")
             raise
 
-        # Invalidate caches if a backend is available
-        await self._clear_patient_caches()
+        # Invalidate caches if a backend is available (user-scoped)
+        await self._clear_patient_caches(user_id)
 
         return db_obj
 
@@ -174,7 +204,7 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
             query.append(self.model.created_at <= date_to)
         return query
 
-    @cache(namespace="get_patients_by_user_id", expire=60)
+    @cache(namespace="get_patients_by_user_id", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_patients_by_user_id(
         self,
         user_id: str,
@@ -214,8 +244,8 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         updated_patient = await super().update(patient, patient_data)
 
-        # Invalidate caches if a backend is available
-        await self._clear_patient_caches()
+        # Invalidate caches if a backend is available (user-scoped)
+        await self._clear_patient_caches(user_id)
 
         return updated_patient
 
@@ -229,8 +259,8 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
 
         await super().delete(patient)
 
-        # Invalidate caches if a backend is available
-        await self._clear_patient_caches()
+        # Invalidate caches if a backend is available (user-scoped)
+        await self._clear_patient_caches(user_id)
 
         return True
 
@@ -280,14 +310,14 @@ class PatientService(BaseService[Patient, PatientCreate, PatientUpdate]):
             await patient.save()
         return deleted
 
-    @cache(namespace="get_patient_groups", expire=60)
+    @cache(namespace="get_patient_groups", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_patient_groups(self, user_id: str) -> List[str]:
         """
         Retrieves all unique patient groups for a user.
         """
         return await self.model.distinct(self.model.group, {"user_id": user_id})
 
-    @cache(namespace="get_user_stats", expire=60)
+    @cache(namespace="get_user_stats", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_user_stats(self, user_id: str) -> Dict[str, Any]:
         """
         Retrieve statistics for a user.

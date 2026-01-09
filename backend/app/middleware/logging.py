@@ -6,8 +6,17 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 import jwt
 from app.core.config import settings
+from app.core.logging_config import set_request_id, set_context_user_id
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Logging middleware that:
+    1. Generates a unique request ID for each request
+    2. Propagates request context via contextvars for use throughout the async call stack
+    3. Logs request/response details with timing information
+    4. Adds X-Request-ID header to responses for client-side correlation
+    """
     def __init__(self, app: ASGIApp):
         super().__init__(app)
         self.logger = structlog.get_logger(__name__)
@@ -16,7 +25,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
 
+        # Set request ID in context for propagation throughout the request lifecycle
+        set_request_id(request_id)
+
         user_id = await self.get_user_id(request)
+
+        # Set user ID in context for propagation
+        set_context_user_id(user_id)
 
         start_time = time.time()
 
@@ -43,10 +58,15 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         )
 
         response.headers["X-Request-ID"] = request_id
+
+        # Clear context after request completes
+        set_request_id("")
+        set_context_user_id("")
+
         return response
 
     async def get_user_id(self, request: Request) -> str:
-
+        """Extract user ID from JWT token in Authorization header."""
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]

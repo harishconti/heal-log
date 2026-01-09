@@ -291,6 +291,9 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
     Fetches changes from the database since the last pull time.
     Uses asyncio.gather() for parallel query execution and extracted serialization.
     """
+    import time
+    start_time = time.time()
+
     try:
         # Convert last_pulled_at from milliseconds timestamp to a timezone-aware datetime object
         last_pulled_at_dt = datetime.fromtimestamp(last_pulled_at / 1000.0, tz=timezone.utc) if last_pulled_at else datetime.min.replace(tzinfo=timezone.utc)
@@ -338,7 +341,21 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
         if len(created_notes) == MAX_SYNC_RECORDS or len(updated_notes) == MAX_SYNC_RECORDS:
             logging.warning(f"[SYNC] User {user_id} hit sync limit ({MAX_SYNC_RECORDS}) for notes - consider incremental sync")
 
-        await SyncEvent(user_id=user_id, success=True).insert()
+        # Calculate metrics
+        duration_ms = int((time.time() - start_time) * 1000)
+        records_synced = (
+            len(created_patients) + len(updated_patients) +
+            len(created_notes) + len(updated_notes) +
+            len(deleted_records["patients"]) + len(deleted_records["clinical_notes"])
+        )
+
+        await SyncEvent(
+            user_id=user_id,
+            success=True,
+            duration_ms=duration_ms,
+            records_synced=records_synced,
+            sync_mode="pull"
+        ).insert()
 
         return {
             "patients": {
@@ -353,7 +370,14 @@ async def pull_changes(last_pulled_at: int, user_id: str) -> Dict[str, Any]:
             }
         }
     except Exception as e:
-        await SyncEvent(user_id=user_id, success=False).insert()
+        duration_ms = int((time.time() - start_time) * 1000)
+        await SyncEvent(
+            user_id=user_id,
+            success=False,
+            duration_ms=duration_ms,
+            sync_mode="pull",
+            error_message=str(e)[:500]  # Truncate to avoid storing huge error messages
+        ).insert()
         raise e
 
 async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user_id: str) -> None:
@@ -361,6 +385,11 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
     Applies changes from the client to the database.
     Uses batch queries to avoid N+1 query problems.
     """
+    import time
+    start_time = time.time()
+    conflict_count = 0
+    records_processed = 0
+
     try:
         # Helper function to sanitize patient data
         def sanitize_patient_data(data: dict) -> dict:
@@ -455,6 +484,7 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                             client_updated_at = datetime.fromtimestamp(client_updated_at / 1000.0, tz=timezone.utc)
                         server_updated_at = patient.updated_at.astimezone(timezone.utc) if patient.updated_at.tzinfo else patient.updated_at.replace(tzinfo=timezone.utc)
                         if client_updated_at < server_updated_at:
+                            conflict_count += 1
                             raise SyncConflictException(f"Conflict detected for patient {patient_id}")
                         patient_data['updated_at'] = datetime.now(timezone.utc)
                         await patient.update({"$set": patient_data})
@@ -515,8 +545,35 @@ async def push_changes(changes: Dict[str, Dict[str, List[Dict[str, Any]]]], user
                 await ClinicalNote.find(
                     {"_id": {"$in": note_ids_to_delete}, "user_id": user_id}
                 ).update_many({"$set": {"deleted_at": current_time}})
+                records_processed += len(note_ids_to_delete)
 
-        await SyncEvent(user_id=user_id, success=True).insert()
+        # Count total records processed
+        if 'patients' in changes:
+            records_processed += len(changes['patients'].get('created', []))
+            records_processed += len(changes['patients'].get('updated', []))
+            records_processed += len(changes['patients'].get('deleted', []))
+        if 'clinical_notes' in changes:
+            records_processed += len(changes['clinical_notes'].get('created', []))
+            records_processed += len(changes['clinical_notes'].get('updated', []))
+
+        duration_ms = int((time.time() - start_time) * 1000)
+        await SyncEvent(
+            user_id=user_id,
+            success=True,
+            duration_ms=duration_ms,
+            records_synced=records_processed,
+            conflict_count=conflict_count,
+            sync_mode="push"
+        ).insert()
     except Exception as e:
-        await SyncEvent(user_id=user_id, success=False).insert()
+        duration_ms = int((time.time() - start_time) * 1000)
+        await SyncEvent(
+            user_id=user_id,
+            success=False,
+            duration_ms=duration_ms,
+            records_synced=records_processed,
+            conflict_count=conflict_count,
+            sync_mode="push",
+            error_message=str(e)[:500]
+        ).insert()
         raise e

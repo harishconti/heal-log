@@ -50,23 +50,40 @@ For beta releases, append `-beta.N`:
 
 ## Version Files
 
-HealLog maintains version information in two locations:
+HealLog maintains version information in the following locations:
+
+### Root (`VERSION`)
+```
+1.0.9
+```
 
 ### Frontend (`frontend/package.json`)
 ```json
 {
   "name": "frontend",
-  "version": "1.0.49"
+  "version": "1.0.9"
 }
 ```
 
 ### Backend (`backend/VERSION.json`)
 ```json
 {
-  "version": "1.0.49",
-  "build_date": "2026-01-01T23:37:00+05:30",
+  "version": "1.0.9",
+  "build_date": "2026-01-09T00:00:00Z",
   "features": ["..."],
   "fixes": ["..."]
+}
+```
+
+### Expo App (`frontend/app.json`)
+```json
+{
+  "expo": {
+    "version": "1.0.9",
+    "android": {
+      "versionCode": 16
+    }
+  }
 }
 ```
 
@@ -187,5 +204,7 @@ node scripts/bump-version.js release
 ```
 
 The script automatically updates:
+- `VERSION` (root version file)
+- `frontend/package.json` (version)
 - `frontend/app.json` (version and versionCode)
 - `backend/VERSION.json` (version and build_date)

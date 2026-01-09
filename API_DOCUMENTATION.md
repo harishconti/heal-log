@@ -3,7 +3,7 @@
 Complete API reference for the HealLog backend.
 
 **Base URL:** `https://your-domain.com/api`
-**API Version:** 1.0.49
+**API Version:** 1.0.9
 **Authentication:** JWT Bearer Token
 
 ---

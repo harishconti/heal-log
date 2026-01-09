@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "main": "expo-router/entry",
-  "version": "1.0.54",
+  "version": "1.0.8",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -45,6 +45,7 @@
     "expo-image-picker": "~17.0.10",
     "expo-linking": "~8.0.10",
     "expo-local-authentication": "~17.0.8",
+    "expo-notifications": "~0.32.16",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.12",

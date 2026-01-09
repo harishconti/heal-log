@@ -1,12 +1,30 @@
 from fastapi_cache.decorator import cache
 from datetime import datetime, timedelta, timezone
+from typing import Callable
 from app.schemas.user import User
 from app.schemas.patient import Patient
 from app.schemas.clinical_note import ClinicalNote
 from app.schemas.sync_event import SyncEvent
 
+
+def user_scoped_key_builder(
+    func: Callable,
+    namespace: str = "",
+    *,
+    user_id: str = "",
+    **kwargs
+) -> str:
+    """
+    Custom cache key builder that includes user_id for user-scoped caching.
+    Ensures cache invalidation only affects the specific user's data.
+    """
+    param_parts = [f"{k}={v}" for k, v in sorted(kwargs.items()) if v is not None]
+    params_str = ":".join(param_parts) if param_parts else "default"
+    return f"{namespace}:{user_id}:{params_str}"
+
+
 class AnalyticsService:
-    @cache(namespace="get_patient_growth_analytics", expire=60)
+    @cache(namespace="get_patient_growth_analytics", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_patient_growth_analytics(self, user_id: str):
         """
         Retrieves patient growth analytics (patients added per month).
@@ -38,7 +56,7 @@ class AnalyticsService:
             
         return formatted_data
 
-    @cache(namespace="get_notes_analytics", expire=60)
+    @cache(namespace="get_notes_analytics", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_notes_analytics(self, user_id: str):
         """
         Retrieves notes creation analytics (notes added per month).
@@ -69,7 +87,7 @@ class AnalyticsService:
             
         return formatted_data
 
-    @cache(namespace="get_activity_analytics", expire=60)
+    @cache(namespace="get_activity_analytics", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_activity_analytics(self, user_id: str):
         """
         Retrieves activity analytics (most active days of week).
@@ -97,7 +115,7 @@ class AnalyticsService:
             
         return formatted_data
 
-    @cache(namespace="get_demographics_analytics", expire=60)
+    @cache(namespace="get_demographics_analytics", expire=60, key_builder=lambda func, namespace, **kwargs: user_scoped_key_builder(func, namespace, **kwargs))
     async def get_demographics_analytics(self, user_id: str):
         """
         Retrieves patient demographics (by group).

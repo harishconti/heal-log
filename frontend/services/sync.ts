@@ -22,6 +22,7 @@ const prodLog = (message: string, ...args: unknown[]) => console.log('[SYNC-PROD
 // Sync configuration
 const BATCH_SIZE = 500;
 const LARGE_SYNC_THRESHOLD = 1000;
+const MAX_BATCHES = 20; // Safety limit to prevent infinite loops
 
 // Sync health tracking
 interface SyncHealth {
@@ -89,7 +90,7 @@ async function pullChangesBatched(lastPulledAt: number | null): Promise<{
 
   devLog('🔄 [Sync] Starting batched pull...');
 
-  while (hasMore && batchCount < 20) { // Max 20 batches to prevent infinite loops
+  while (hasMore && batchCount < MAX_BATCHES) {
     batchCount++;
     devLog(`📦 [Sync] Fetching batch ${batchCount}...`);
 
@@ -130,6 +131,15 @@ async function pullChangesBatched(lastPulledAt: number | null): Promise<{
   const totalRecords =
     allChanges.patients.created.length + allChanges.patients.updated.length +
     allChanges.clinical_notes.created.length + allChanges.clinical_notes.updated.length;
+
+  // Warn if batch limit was reached with more data remaining
+  if (hasMore && batchCount >= MAX_BATCHES) {
+    const warningMessage = `⚠️ [Sync] Batch limit reached (${MAX_BATCHES} batches, ${totalRecords} records). ` +
+      `Some data may not have been synced. Consider syncing more frequently to avoid large backlogs.`;
+    prodLog(warningMessage);
+    devWarn(warningMessage);
+    addBreadcrumb('sync', `Batch limit reached: ${MAX_BATCHES} batches, ${totalRecords} records`, 'warning');
+  }
 
   devLog(`✅ [Sync] Batched pull complete. Total records: ${totalRecords}`);
 

@@ -1,7 +1,7 @@
 # HealLog Architecture Improvements
 
 **Created:** January 9, 2026
-**Status:** All Critical Items Resolved
+**Status:** All Items Resolved
 
 This document tracks architecture improvements identified through code analysis.
 
@@ -13,7 +13,7 @@ This document tracks architecture improvements identified through code analysis.
 |----------|-------|----------|-----------|
 | Critical | 3 | 3 | 0 |
 | High | 6 | 6 | 0 |
-| Medium | 6 | 2 | 4 |
+| Medium | 6 | 6 | 0 |
 | Low | 1 | 1 | 0 |
 
 ---
@@ -133,17 +133,17 @@ MIN_BATCH_SIZE = getattr(settings, 'MIN_SYNC_BATCH_SIZE', 50)
 
 ## Medium Priority Issues
 
-### 10. Broad Cache Invalidation
+### 10. ~~Broad Cache Invalidation~~ ✅ RESOLVED
 
 **Location:** `backend/app/services/patient_service.py`
 **Issue:** `_clear_patient_caches()` clears all user caches, not just affected user
-**Status:** Deferred - acceptable for current scale, would benefit from user-scoped cache keys at scale
+**Resolution:** Implemented user-scoped cache keys
 
-**Recommendation:**
-```python
-# Future improvement: user-scoped cache keys
-await FastAPICache.clear(namespace=f"get_patients_by_user_id:{user_id}")
-```
+**Changes Made:**
+- Added `user_scoped_key_builder()` function for custom cache key generation
+- Cache keys now include user_id: `{namespace}:{user_id}:{params}`
+- Updated `_clear_patient_caches(user_id)` to clear only user-specific namespaces
+- Applied user-scoped caching to all cached methods in patient_service.py and analytics_service.py
 
 ---
 
@@ -160,39 +160,49 @@ await FastAPICache.clear(namespace=f"get_patients_by_user_id:{user_id}")
 
 ---
 
-### 12. No Request Context Propagation
+### 12. ~~No Request Context Propagation~~ ✅ RESOLVED
 
-**Location:** `backend/app/core/logging_config.py`
+**Location:** `backend/app/core/logging_config.py`, `backend/app/middleware/logging.py`
 **Issue:** Request IDs generated but not consistently propagated
-**Status:** Deferred - would benefit from contextvars implementation
+**Resolution:** Implemented contextvars for request ID propagation
 
-**Recommendation:**
-- Implement contextvars for request ID propagation
-- Include request ID in all error responses
-- Consider OpenTelemetry for distributed tracing
+**Changes Made:**
+- Added `request_id_var` and `user_id_var` context variables in logging_config.py
+- Added helper functions: `get_request_id()`, `set_request_id()`, `get_context_user_id()`, `set_context_user_id()`
+- Updated `JsonFormatter` to automatically include request_id and user_id in log output
+- Updated `LoggingMiddleware` to set context variables at request start and clear them after
+- Request ID is now available throughout the async call stack via contextvars
 
 ---
 
-### 13. Missing Sync Health Metrics
+### 13. ~~Missing Sync Health Metrics~~ ✅ RESOLVED
 
-**Location:** `backend/app/services/sync_service.py`, `frontend/services/sync.ts`
+**Location:** `backend/app/schemas/sync_event.py`, `backend/app/services/sync_service.py`
 **Issue:** SyncEvent only stores success/failure, no detailed metrics
-**Status:** Deferred - would benefit from expanded schema
+**Resolution:** Expanded SyncEvent schema with comprehensive metrics
 
-**Recommendation:**
-Expand SyncEvent to include:
-- `duration_ms`: How long sync took
-- `records_synced`: Count of records
-- `conflict_count`: Number of conflicts
-- `sync_mode`: 'batched' vs 'standard'
+**Changes Made:**
+- Added new fields to SyncEvent schema:
+  - `duration_ms`: Sync duration in milliseconds
+  - `records_synced`: Total records processed
+  - `conflict_count`: Number of conflicts encountered
+  - `sync_mode`: Type of sync ('pull', 'push', 'batched_pull')
+  - `error_message`: Error details for failed syncs
+- Updated `pull_changes()` to track and record metrics
+- Updated `push_changes()` to track conflicts and record metrics
 
 ---
 
-### 14. Frontend Pagination Limit Warning
+### 14. ~~Frontend Pagination Limit Warning~~ ✅ RESOLVED
 
-**Location:** `frontend/services/sync.ts` (line 92)
+**Location:** `frontend/services/sync.ts`
 **Issue:** Max 20 batches without warning when truncated
-**Status:** Deferred - current limit is reasonable for most users
+**Resolution:** Added warning when batch limit is reached
+
+**Changes Made:**
+- Added `MAX_BATCHES` constant (20) for clarity
+- Added warning log and breadcrumb when batch limit is reached with more data remaining
+- Warning includes batch count and total records synced to help users understand the situation
 
 ---
 
@@ -221,13 +231,14 @@ Expand SyncEvent to include:
 4. ✅ Token refresh race condition fix
 5. ✅ Extracted duplicate serialization logic
 6. ✅ Configurable sync limits
+7. ✅ User-scoped cache invalidation
+8. ✅ Request context propagation (contextvars)
+9. ✅ Expanded sync metrics
+10. ✅ Pagination truncation warnings
 
 ### Future Considerations
-- User-scoped cache invalidation
 - Enhanced conflict resolution (3-way merge)
-- Request context propagation
-- Expanded sync metrics
-- Pagination truncation warnings
+- OpenTelemetry for distributed tracing
 
 ---
 
@@ -235,9 +246,15 @@ Expand SyncEvent to include:
 
 | File | Changes |
 |------|---------|
-| `backend/app/services/sync_service.py` | Cursor pagination, parallel queries, serialization extraction |
+| `backend/app/services/sync_service.py` | Cursor pagination, parallel queries, serialization extraction, sync metrics |
 | `backend/app/api/auth.py` | Added logout endpoint |
 | `frontend/services/api.ts` | Token refresh fix, logout function |
+| `backend/app/services/patient_service.py` | User-scoped cache keys and invalidation |
+| `backend/app/services/analytics_service.py` | User-scoped cache keys |
+| `backend/app/core/logging_config.py` | Request context propagation via contextvars |
+| `backend/app/middleware/logging.py` | Set/clear context variables in middleware |
+| `backend/app/schemas/sync_event.py` | Expanded schema with metrics fields |
+| `frontend/services/sync.ts` | Pagination limit warning |
 
 ---
 
@@ -248,8 +265,12 @@ After these changes, test the following:
 2. **Token Refresh** - Open multiple tabs and trigger 401 simultaneously
 3. **Logout Flow** - Verify token cannot be reused after logout
 4. **Backward Compatibility** - Test legacy skip-based pagination still works
+5. **Cache Invalidation** - Verify cache is only cleared for the specific user
+6. **Request Context** - Check logs include request_id and user_id in JSON format
+7. **Sync Metrics** - Verify SyncEvent records include duration, records_synced, and sync_mode
+8. **Batch Limit Warning** - Test with large dataset to verify warning appears when 20 batch limit is reached
 
 ---
 
 *Last Updated: January 9, 2026*
-*All critical and high priority items resolved*
+*All priority items resolved*

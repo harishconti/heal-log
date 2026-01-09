@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,13 +17,16 @@ import {
   Platform,
   Dimensions
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { TabBar, TabItem } from '@/components/ui/TabBar';
+import { Button } from '@/components/ui/Button';
 
 // Constants for lazy loading
 const NOTES_PAGE_SIZE = 20;
@@ -37,14 +40,21 @@ import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
 import { NoteService } from '@/services/note_service';
 
+const TABS: TabItem[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'history', label: 'History' },
+  { key: 'notes', label: 'Notes' },
+];
+
 function PatientDetailsScreen({ patient, notes }) {
-  const { theme } = useTheme();
+  const { theme, fontScale } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const settings = useAppStore((state) => state.settings);
   const [showAddNote, setShowAddNote] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [newNoteType, setNewNoteType] = useState('initial');
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Lazy loading state for notes
   const [visibleNotesCount, setVisibleNotesCount] = useState(NOTES_PAGE_SIZE);
@@ -62,7 +72,6 @@ function PatientDetailsScreen({ patient, notes }) {
   const loadMoreNotes = useCallback(() => {
     if (hasMoreNotes && !isLoadingMore) {
       setIsLoadingMore(true);
-      // Simulate async loading for smooth UX
       setTimeout(() => {
         setVisibleNotesCount(prev => Math.min(prev + NOTES_PAGE_SIZE, notes?.length || 0));
         setIsLoadingMore(false);
@@ -70,7 +79,7 @@ function PatientDetailsScreen({ patient, notes }) {
     }
   }, [hasMoreNotes, isLoadingMore, notes?.length]);
 
-  const styles = createStyles(theme);
+  const styles = createStyles(theme, fontScale);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
@@ -99,6 +108,15 @@ function PatientDetailsScreen({ patient, notes }) {
     }
     triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
     Linking.openURL(`tel:${phoneNumber}`);
+  };
+
+  const sendMessage = (phoneNumber: string) => {
+    if (!phoneNumber) {
+      Alert.alert('Error', 'No phone number available');
+      return;
+    }
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(`sms:${phoneNumber}`);
   };
 
   const addNote = async () => {
@@ -152,11 +170,9 @@ function PatientDetailsScreen({ patient, notes }) {
   };
 
   const formatDate = (date: Date) => {
-    // Defensive check: if date is invalid or epoch (Jan 1, 1970), show fallback
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
       return 'Unknown Date';
     }
-    // Check if date is before year 2000 (likely corrupt/epoch data)
     if (date.getFullYear() < 2000) {
       return 'Unknown Date';
     }
@@ -173,173 +189,307 @@ function PatientDetailsScreen({ patient, notes }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
+  const renderOverviewTab = () => (
+    <>
+      {/* Contact & Demographics Card */}
+      <Card style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.sectionTitle}>Contact & Demographics</Text>
+        </View>
+
+        {patient.phone && (
+          <View style={styles.infoRow}>
+            <Ionicons name="phone-portrait-outline" size={18} color={theme.colors.textSecondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>MOBILE</Text>
+              <Text style={styles.infoValue}>{patient.phone}</Text>
+            </View>
+          </View>
+        )}
+
+        {patient.email && (
+          <View style={styles.infoRow}>
+            <Ionicons name="mail-outline" size={18} color={theme.colors.textSecondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>EMAIL</Text>
+              <Text style={styles.infoValue}>{patient.email}</Text>
+            </View>
+          </View>
+        )}
+
+        {patient.location && (
+          <View style={styles.infoRow}>
+            <Ionicons name="medical-outline" size={18} color={theme.colors.textSecondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>CARE SETTING</Text>
+              <Text style={styles.infoValue}>{patient.location}</Text>
+            </View>
+          </View>
+        )}
+
+        {patient.address && (
+          <View style={styles.infoRow}>
+            <Ionicons name="home-outline" size={18} color={theme.colors.textSecondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>HOME ADDRESS</Text>
+              <Text style={styles.infoValue}>{patient.address}</Text>
+            </View>
+          </View>
+        )}
+
+        {patient.emergencyContact && (
+          <View style={[styles.infoRow, styles.emergencyRow]}>
+            <Ionicons name="alert-circle" size={18} color={theme.colors.error} />
+            <View style={styles.infoContent}>
+              <Text style={[styles.infoLabel, { color: theme.colors.error }]}>EMERGENCY CONTACT</Text>
+              <Text style={styles.infoValue}>{patient.emergencyContact}</Text>
+            </View>
+          </View>
+        )}
+      </Card>
+
+      {/* Diagnoses Card */}
+      {patient.initialDiagnosis && (
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="medkit-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Diagnoses</Text>
+          </View>
+          <View style={styles.chipRow}>
+            <Chip
+              label={patient.initialDiagnosis}
+              variant="soft"
+              color="default"
+              size="medium"
+            />
+          </View>
+        </Card>
+      )}
+
+      {/* Initial Complaint Card */}
+      {patient.initialComplaint && (
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="clipboard-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Initial Complaint</Text>
+          </View>
+          <Text style={styles.treatmentText}>{patient.initialComplaint}</Text>
+        </Card>
+      )}
+
+      {/* Active Treatment Plan */}
+      <Card style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <View style={[styles.sectionIconContainer, { backgroundColor: theme.colors.primaryMuted }]}>
+            <Ionicons name="checkbox-outline" size={18} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.sectionTitle}>Active Treatment Plan</Text>
+        </View>
+        <Text style={styles.treatmentText}>
+          Patient is being monitored for ongoing care. Follow-up scheduled to review progress and adjust treatment as needed.
+        </Text>
+      </Card>
+    </>
+  );
+
+  const renderHistoryTab = () => (
+    <Card style={styles.sectionCard}>
+      <View style={styles.emptyState}>
+        <Ionicons name="time-outline" size={48} color={theme.colors.border} />
+        <Text style={styles.emptyStateText}>Medical history will appear here</Text>
+        <Text style={styles.emptyStateSubtext}>Track patient visits and treatments over time</Text>
+      </View>
+    </Card>
+  );
+
+  const renderNotesTab = () => (
+    <>
+      <View style={styles.notesHeader}>
+        <Text style={styles.notesCount}>Medical Notes ({notes?.length || 0})</Text>
+        <TouchableOpacity
+          style={styles.addNoteButton}
+          onPress={() => {
+            triggerHaptic();
+            setShowAddNote(true);
+          }}
+        >
+          <Ionicons name="add" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
+      {notes && notes.length > 0 ? (
+        notes.map((note: any) => (
+          <Card key={note.id} style={styles.noteCard}>
+            <View style={styles.noteHeader}>
+              <View style={styles.noteHeaderLeft}>
+                <Chip
+                  label={note.visitType}
+                  variant="soft"
+                  color="primary"
+                  size="small"
+                />
+                <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.deleteNoteButton}
+                onPress={() => deleteNote(note.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.noteContent}>{note.content}</Text>
+          </Card>
+        ))
+      ) : (
+        <Card style={styles.sectionCard}>
+          <View style={styles.emptyState}>
+            <Ionicons name="document-text-outline" size={48} color={theme.colors.border} />
+            <Text style={styles.emptyStateText}>No notes yet</Text>
+            <Text style={styles.emptyStateSubtext}>Add notes to track patient progress</Text>
+          </View>
+        </Card>
+      )}
+    </>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          triggerHaptic();
-          router.back();
-        }} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+        <TouchableOpacity
+          onPress={() => {
+            triggerHaptic();
+            router.back();
+          }}
+          style={styles.headerButton}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Patient Details</Text>
-        <TouchableOpacity onPress={toggleFavorite} style={styles.headerButton}>
-          <Ionicons
-            name={patient.isFavorite ? 'heart' : 'heart-outline'}
-            size={24}
-            color={patient.isFavorite ? '#e74c3c' : '#fff'}
-          />
+        <Text style={styles.headerTitle}>Patient Profile</Text>
+        <TouchableOpacity
+          onPress={() => {
+            triggerHaptic();
+            router.push(`/edit-patient/${patient.id}`);
+          }}
+          style={styles.headerButton}
+        >
+          <Text style={styles.editText}>Edit</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Patient Info Card */}
-        <View style={styles.patientCard}>
-          <View style={styles.patientHeader}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Patient Profile Header */}
+        <View style={styles.profileHeader}>
+          {/* Avatar with status indicator */}
+          <View style={styles.avatarContainer}>
             {patient.photo ? (
               <Image
                 source={{ uri: `data:image/jpeg;base64,${patient.photo}` }}
-                style={styles.patientPhoto}
+                style={styles.avatar}
               />
             ) : (
-              <View style={styles.patientPhotoPlaceholder}>
-                <Ionicons name="person" size={48} color="#666" />
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={48} color={theme.colors.textSecondary} />
               </View>
             )}
-
-            <View style={styles.patientBasicInfo}>
-              <Text style={styles.patientName}>{patient.name}</Text>
-              <Text style={styles.patientId}>ID: {patient.patientId}</Text>
-              <View style={styles.groupBadge}>
-                <Text style={styles.groupText}>{patient.group || 'General'}</Text>
-              </View>
-            </View>
+            <View style={styles.statusIndicator} />
           </View>
 
-          {/* Contact Information */}
-          <View style={styles.contactSection}>
-            <Text style={styles.sectionTitle}>Contact Information</Text>
-            {patient.phone && (
-              <TouchableOpacity
-                style={styles.contactItem}
-                onPress={() => makeCall(patient.phone)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="call" size={20} color="#2ecc71" />
-                <Text style={[styles.contactText, { flex: 1 }]}>{patient.phone}</Text>
-                <View style={styles.callButton}>
-                  <Ionicons name="call-outline" size={16} color="#fff" />
-                </View>
-              </TouchableOpacity>
-            )}
-            {patient.email && (
-              <TouchableOpacity
-                style={styles.contactItem}
-                onPress={() => {
-                  Clipboard.setString(patient.email);
-                  triggerHaptic();
-                  Alert.alert('Copied', 'Email address copied to clipboard');
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="mail" size={20} color="#3498db" />
-                <Text style={[styles.contactText, { flex: 1 }]}>{patient.email}</Text>
-                <View style={[styles.callButton, { backgroundColor: '#3498db' }]}>
-                  <Ionicons name="copy-outline" size={16} color="#fff" />
-                </View>
-              </TouchableOpacity>
-            )}
-            {patient.address && (
-              <View style={styles.contactItem}>
-                <Ionicons name="location" size={20} color="#f39c12" />
-                <Text style={styles.contactText}>{patient.address}</Text>
-              </View>
-            )}
-          </View>
-        </View>
+          {/* Patient Name and Info */}
+          <Text style={styles.patientName}>{patient.name}</Text>
+          <Text style={styles.patientMeta}>
+            ID: #{patient.patientId} • {patient.group || 'General Group'}
+          </Text>
 
-        {/* Medical Information */}
-        <View style={styles.medicalCard}>
-          <Text style={styles.sectionTitle}>Medical Information</Text>
-          <View style={styles.medicalItem}>
-            <Text style={styles.medicalLabel}>Location:</Text>
-            <Text style={styles.medicalValue}>{patient.location || 'Not specified'}</Text>
+          {/* Age/Gender Chips */}
+          <View style={styles.chipRow}>
+            <Chip label="42 Yrs" variant="outlined" color="default" size="small" />
+            <Chip label="Female" variant="outlined" color="default" size="small" />
           </View>
-          <View style={styles.medicalItem}>
-            <Text style={styles.medicalLabel}>Initial Complaint:</Text>
-            <Text style={styles.medicalValue}>{patient.initialComplaint || 'Not specified'}</Text>
-          </View>
-          <View style={styles.medicalItem}>
-            <Text style={styles.medicalLabel}>Initial Diagnosis:</Text>
-            <Text style={styles.medicalValue}>{patient.initialDiagnosis || 'Not specified'}</Text>
-          </View>
-        </View>
 
-        {/* Notes Section - Virtualized with FlashList for performance */}
-        <View style={styles.notesCard}>
-          <View style={styles.notesHeader}>
-            <Text style={styles.sectionTitle}>Medical Notes ({notes?.length || 0})</Text>
+          {/* Quick Actions */}
+          <View style={styles.quickActions}>
             <TouchableOpacity
-              style={styles.addNoteButton}
-              onPress={() => {
-                triggerHaptic();
-                setShowAddNote(true);
-              }}
+              style={styles.quickActionButton}
+              onPress={() => makeCall(patient.phone)}
             >
-              <Ionicons name="add" size={20} color="#fff" />
+              <Ionicons name="call-outline" size={24} color={theme.colors.text} />
+              <Text style={styles.quickActionText}>Call</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              onPress={() => sendMessage(patient.phone)}
+            >
+              <Ionicons name="mail-outline" size={24} color={theme.colors.text} />
+              <Text style={styles.quickActionText}>Message</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              onPress={() => router.push(`/edit-patient/${patient.id}`)}
+            >
+              <Ionicons name="create-outline" size={24} color={theme.colors.text} />
+              <Text style={styles.quickActionText}>Edit Info</Text>
             </TouchableOpacity>
           </View>
-
-          {notes && notes.length > 0 ? (
-            <View>
-              {notes.map((note: any) => (
-                <View key={note.id} style={styles.noteItem}>
-                  <View style={styles.noteHeader}>
-                    <View style={styles.noteHeaderLeft}>
-                      <Text style={styles.noteType}>{note.visitType}</Text>
-                      <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.deleteNoteButton}
-                      onPress={() => deleteNote(note.id)}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#e74c3c" />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.noteContent}>{note.content}</Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyNotes}>
-              <Ionicons name="document-text-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyNotesText}>No notes yet</Text>
-            </View>
-          )}
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => {
-              triggerHaptic();
-              router.push(`/edit-patient/${patient.id}`);
-            }}
-          >
-            <Ionicons name="create" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Edit Patient</Text>
-          </TouchableOpacity>
+        {/* Tab Navigation */}
+        <TabBar
+          tabs={TABS}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          variant="underline"
+          style={styles.tabBar}
+        />
+
+        {/* Tab Content */}
+        <View style={styles.tabContent}>
+          {activeTab === 'overview' && renderOverviewTab()}
+          {activeTab === 'history' && renderHistoryTab()}
+          {activeTab === 'notes' && renderNotesTab()}
         </View>
       </ScrollView>
+
+      {/* Bottom Action Buttons */}
+      <View style={styles.bottomActions}>
+        <Button
+          title="Schedule"
+          onPress={() => Alert.alert('Schedule', 'Scheduling feature coming soon')}
+          variant="outline"
+          icon="calendar-outline"
+          fullWidth={false}
+          style={styles.scheduleButton}
+        />
+        <Button
+          title="Add Log Entry"
+          onPress={() => {
+            triggerHaptic();
+            setShowAddNote(true);
+          }}
+          icon="add"
+          fullWidth={false}
+          style={styles.addLogButton}
+        />
+      </View>
 
       {/* Add Note Modal */}
       <Modal
@@ -366,18 +516,14 @@ function PatientDetailsScreen({ patient, notes }) {
                 {['initial', 'follow-up', 'regular', 'emergency'].map((type) => (
                   <TouchableOpacity
                     key={type}
-                    style={[
-                      styles.visitTypeButton,
-                      newNoteType === type && styles.activeVisitType
-                    ]}
                     onPress={() => setNewNoteType(type)}
                   >
-                    <Text style={[
-                      styles.visitTypeText,
-                      newNoteType === type && styles.activeVisitTypeText
-                    ]}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </Text>
+                    <Chip
+                      label={type.charAt(0).toUpperCase() + type.slice(1)}
+                      variant={newNoteType === type ? 'filled' : 'soft'}
+                      color={newNoteType === type ? 'primary' : 'default'}
+                      size="medium"
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -388,6 +534,7 @@ function PatientDetailsScreen({ patient, notes }) {
               <TextInput
                 style={styles.noteInput}
                 placeholder="Enter medical note..."
+                placeholderTextColor={theme.colors.textSecondary}
                 value={newNote}
                 onChangeText={setNewNote}
                 multiline
@@ -416,9 +563,7 @@ export default function PatientDetailsContainer() {
   return <EnhancedPatientDetails id={id} />;
 }
 
-
-
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -428,175 +573,177 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  errorText: {
-    fontSize: 18,
-    color: theme.colors.error,
-    marginVertical: 16,
-  },
-  backButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   header: {
-    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  patientCard: {
-    backgroundColor: theme.colors.card,
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  patientHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  patientPhoto: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: 16,
-  },
-  patientPhotoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  patientBasicInfo: {
-    flex: 1,
-  },
-  patientName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  patientId: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginBottom: 8,
-  },
-  groupBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-  },
-  groupText: {
-    fontSize: 12,
-    color: theme.colors.primary,
-    fontWeight: '500',
-  },
-  contactSection: {
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 12,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  contactText: {
-    flex: 1,
-    fontSize: 16,
-    color: theme.colors.text,
-    marginLeft: 12,
+  headerButton: {
+    padding: 8,
+    minWidth: 60,
   },
-  callButton: {
+  headerTitle: {
+    fontSize: 18 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  editText: {
+    fontSize: 16 * fontScale,
+    color: theme.colors.primary,
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
+  },
+  statusIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.success,
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
+  },
+  patientName: {
+    fontSize: 24 * fontScale,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  patientMeta: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
+    marginBottom: 12,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 32,
+    marginTop: 8,
+  },
+  quickActionButton: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  quickActionText: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+  },
+  tabBar: {
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 16,
+  },
+  tabContent: {
+    padding: 16,
+  },
+  sectionCard: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  sectionIconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
+    backgroundColor: theme.colors.primaryMuted,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  medicalCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  medicalItem: {
-    marginBottom: 12,
-  },
-  medicalLabel: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  medicalValue: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 16 * fontScale,
+    fontWeight: '600',
     color: theme.colors.text,
   },
-  notesCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    gap: 12,
+  },
+  emergencyRow: {
+    borderBottomWidth: 0,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 11 * fontScale,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 15 * fontScale,
+    color: theme.colors.text,
+  },
+  treatmentText: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
+    lineHeight: 22 * fontScale,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16 * fontScale,
+    color: theme.colors.text,
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  emptyStateSubtext: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
   },
   notesHeader: {
     flexDirection: 'row',
@@ -604,138 +751,65 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  notesCount: {
+    fontSize: 16 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
   addNoteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  noteItem: {
-    backgroundColor: theme.colors.surface,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+  noteCard: {
+    marginBottom: 12,
   },
   noteHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   noteHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 12,
+  },
+  noteDate: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+  },
+  noteContent: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.text,
+    lineHeight: 22 * fontScale,
   },
   deleteNoteButton: {
     padding: 4,
   },
-  noteType: {
-    fontSize: 12,
-    color: theme.colors.primary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  noteDate: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  noteContent: {
-    fontSize: 16,
-    color: theme.colors.text,
-  },
-  emptyNotes: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyNotesText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  emptyNotesSubtext: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  notesListContainer: {
-    minHeight: 100,
-    maxHeight: SCREEN_HEIGHT * 0.4,
-  },
-  loadMoreContainer: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  loadMoreButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 20,
-  },
-  loadMoreText: {
-    color: theme.colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  actionButtons: {
-    paddingHorizontal: 16,
-  },
-  editButton: {
-    backgroundColor: '#3498db',
+  bottomActions: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  uploadButton: {
-    backgroundColor: '#27ae60',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginBottom: 16,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  upgradeCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
     padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    gap: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
-  upgradeTextContainer: {
-    flex: 1,
+  scheduleButton: {
+    flex: 0.4,
   },
-  upgradeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
+  addLogButton: {
+    flex: 0.6,
   },
-  upgradeSubtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-  },
+  // Modal Styles
   modalContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -746,22 +820,21 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    backgroundColor: theme.colors.surface,
   },
   modalCancel: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.error,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
   },
   modalSave: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.primary,
     fontWeight: '600',
   },
@@ -773,39 +846,22 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 24,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   visitTypeButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  visitTypeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-  },
-  activeVisitType: {
-    backgroundColor: theme.colors.primary,
-  },
-  visitTypeText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-  },
-  activeVisitTypeText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   noteInput: {
-    backgroundColor: theme.colors.card,
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
     padding: 16,
-    fontSize: 16,
-    minHeight: 120,
+    fontSize: 16 * fontScale,
+    minHeight: 150,
     borderWidth: 1,
     borderColor: theme.colors.border,
     color: theme.colors.text,

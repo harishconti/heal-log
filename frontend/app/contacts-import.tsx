@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/contexts/ThemeContext';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import * as Haptics from 'expo-haptics';
@@ -30,6 +31,7 @@ interface DeviceContact {
 
 export default function ContactsImportScreen() {
     const router = useRouter();
+    const { theme } = useTheme();
     const settings = useAppStore((state) => state.settings);
 
     const [contacts, setContacts] = useState<DeviceContact[]>([]);
@@ -142,11 +144,13 @@ export default function ContactsImportScreen() {
         contact.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const styles = createStyles(theme);
+
     if (loading) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#2ecc71" />
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
                     <Text style={styles.loadingText}>Loading contacts...</Text>
                 </View>
             </SafeAreaView>
@@ -158,7 +162,7 @@ export default function ContactsImportScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.surface} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Import Contacts</Text>
                 <TouchableOpacity
@@ -167,12 +171,12 @@ export default function ContactsImportScreen() {
                     style={styles.headerButton}
                 >
                     {importing ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <ActivityIndicator size="small" color={theme.colors.surface} />
                     ) : (
                         <Ionicons
                             name="checkmark"
                             size={24}
-                            color={selectedContacts.size > 0 ? "#fff" : "#666"}
+                            color={selectedContacts.size > 0 ? theme.colors.surface : theme.colors.textSecondary}
                         />
                     )}
                 </TouchableOpacity>
@@ -180,10 +184,11 @@ export default function ContactsImportScreen() {
 
             {/* Search */}
             <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#666" />
+                <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
                 <TextInput
                     style={styles.searchInput}
                     placeholder="Search contacts..."
+                    placeholderTextColor={theme.colors.textSecondary}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
@@ -231,7 +236,7 @@ export default function ContactsImportScreen() {
                 )}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="person-outline" size={48} color="#ccc" />
+                        <Ionicons name="person-outline" size={48} color={theme.colors.textSecondary} />
                         <Text style={styles.emptyText}>No contacts found</Text>
                     </View>
                 }
@@ -259,10 +264,10 @@ export default function ContactsImportScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.background,
     },
     loadingContainer: {
         flex: 1,
@@ -272,10 +277,10 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#666',
+        color: theme.colors.textSecondary,
     },
     header: {
-        backgroundColor: '#2ecc71',
+        backgroundColor: theme.colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -290,12 +295,12 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#fff',
+        color: theme.colors.surface,
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.surface,
         marginHorizontal: 16,
         marginVertical: 12,
         paddingHorizontal: 12,
@@ -307,7 +312,7 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 8,
         fontSize: 16,
-        color: '#333',
+        color: theme.colors.text,
     },
     selectionInfo: {
         flexDirection: 'row',
@@ -318,7 +323,7 @@ const styles = StyleSheet.create({
     },
     selectionText: {
         fontSize: 14,
-        color: '#666',
+        color: theme.colors.textSecondary,
     },
     clearButton: {
         paddingHorizontal: 12,
@@ -326,25 +331,25 @@ const styles = StyleSheet.create({
     },
     clearButtonText: {
         fontSize: 14,
-        color: '#2ecc71',
+        color: theme.colors.primary,
         fontWeight: '600',
     },
     contactItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.surface,
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: theme.colors.border,
     },
     checkbox: {
         width: 24,
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#2ecc71',
-        backgroundColor: '#2ecc71',
+        borderColor: theme.colors.primary,
+        backgroundColor: theme.colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -355,12 +360,12 @@ const styles = StyleSheet.create({
     contactName: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#333',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     contactPhone: {
         fontSize: 14,
-        color: '#666',
+        color: theme.colors.textSecondary,
     },
     emptyContainer: {
         flex: 1,
@@ -370,17 +375,17 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#666',
+        color: theme.colors.textSecondary,
         marginTop: 12,
     },
     footer: {
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.surface,
         borderTopWidth: 1,
-        borderTopColor: '#e9ecef',
+        borderTopColor: theme.colors.border,
     },
     importButton: {
-        backgroundColor: '#2ecc71',
+        backgroundColor: theme.colors.primary,
         paddingVertical: 16,
         borderRadius: 8,
         alignItems: 'center',
@@ -389,7 +394,7 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     importButtonText: {
-        color: '#fff',
+        color: theme.colors.surface,
         fontSize: 16,
         fontWeight: '600',
     },

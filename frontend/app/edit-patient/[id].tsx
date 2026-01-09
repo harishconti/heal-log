@@ -193,7 +193,7 @@ function EditPatientScreen({ patient }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading patient data...</Text>
         </View>
       </SafeAreaView>
@@ -205,7 +205,7 @@ function EditPatientScreen({ patient }) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoid}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-            <Ionicons name="close" size={24} color="#fff" />
+            <Ionicons name="close" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Patient</Text>
           <TouchableOpacity
@@ -224,7 +224,7 @@ function EditPatientScreen({ patient }) {
                 <Image source={{ uri: `data:image/jpeg;base64,${photo}` }} style={styles.patientPhoto} />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={32} color="#666" />
+                  <Ionicons name="camera" size={32} color={theme.colors.textSecondary} />
                   <Text style={styles.photoText}>Update Photo</Text>
                 </View>
               )}
@@ -261,14 +261,14 @@ function EditPatientScreen({ patient }) {
                   { text: 'Emergency', onPress: () => setValue('location', 'Emergency', { shouldDirty: true }) },
                 ])}>
                   <Text style={styles.pickerText}>{location || 'Select location'}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Medical Group</Text>
                 <TouchableOpacity style={styles.pickerButton} onPress={() => setShowGroupSelector(true)}>
                   <Text style={styles.pickerText}>{medicalGroup ? medicalGroup.charAt(0).toUpperCase() + medicalGroup.slice(1).replace('_', ' ') : 'Select'}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -280,7 +280,7 @@ function EditPatientScreen({ patient }) {
             <Text style={styles.sectionTitle}>Options</Text>
             <TouchableOpacity style={styles.favoriteOption} onPress={() => setValue('is_favorite', !isFavorite, { shouldDirty: true })}>
               <View style={styles.favoriteLeft}>
-                <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} color={isFavorite ? '#e74c3c' : '#666'} />
+                <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={24} color={isFavorite ? theme.colors.error : theme.colors.textSecondary} />
                 <Text style={styles.favoriteText}>Mark as Favorite</Text>
               </View>
               <Text style={styles.favoriteSubtext}>Favorites appear at the top of your list</Text>
@@ -290,7 +290,7 @@ function EditPatientScreen({ patient }) {
           <View style={styles.dangerSection}>
             <Text style={styles.dangerTitle}>Danger Zone</Text>
             <TouchableOpacity style={styles.deleteButton} onPress={deletePatient}>
-              <Ionicons name="trash" size={20} color="#e74c3c" />
+              <Ionicons name="trash" size={20} color={theme.colors.error} />
               <Text style={styles.deleteText}>Delete Patient</Text>
             </TouchableOpacity>
           </View>

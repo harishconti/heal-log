@@ -217,7 +217,7 @@ export default function AddPatientScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-            <Ionicons name="close" size={24} color="#fff" />
+            <Ionicons name="close" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Patient</Text>
           <TouchableOpacity
@@ -240,7 +240,7 @@ export default function AddPatientScreen() {
                 />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={32} color="#666" />
+                  <Ionicons name="camera" size={32} color={theme.colors.textSecondary} />
                   <Text style={styles.photoText}>Add Photo</Text>
                 </View>
               )}
@@ -304,7 +304,7 @@ export default function AddPatientScreen() {
                   onPress={() => setShowLocationSelector(true)}
                 >
                   <Text style={styles.pickerText}>{location}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -317,7 +317,7 @@ export default function AddPatientScreen() {
                   <Text style={styles.pickerText}>
                     {medicalGroup.charAt(0).toUpperCase() + medicalGroup.slice(1).replace('_', ' ')}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color="#666" />
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -356,7 +356,7 @@ export default function AddPatientScreen() {
                 <Ionicons
                   name={isFavorite ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={isFavorite ? '#e74c3c' : '#666'}
+                  color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
                 />
                 <Text style={styles.favoriteText}>Mark as Favorite</Text>
               </View>

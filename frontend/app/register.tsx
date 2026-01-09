@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -20,11 +19,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterFormData, getPasswordStrength } from '@/lib/validation';
 import { ControlledInput } from '@/components/forms/ControlledInput';
+import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getErrorMessage, isDuplicateEmailError } from '@/utils/errorMessages';
 
 const SPECIALTIES = [
-  // Therapy & frequent session professions (most likely to use app)
   'physiotherapy',
   'acupuncture',
   'nursing',
@@ -81,7 +80,6 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Sanitize inputs before submission
       const sanitizedData = {
         ...data,
         full_name: data.full_name.trim(),
@@ -94,21 +92,17 @@ export default function RegisterScreen() {
         medical_specialty: medicalSpecialty,
       });
 
-      // Check if OTP verification is required
       if (response?.requires_verification) {
-        // Redirect to OTP verification screen
         router.push({
           pathname: '/verify-otp',
           params: { email: sanitizedData.email }
         });
       } else {
-        // Legacy flow (if backend doesn't require verification)
         router.replace('/');
       }
     } catch (error: any) {
       const errorMessage = error.message || 'An unexpected error occurred.';
 
-      // Smart redirect for duplicate email
       if (isDuplicateEmailError(errorMessage)) {
         Alert.alert(
           'Account Exists',
@@ -139,14 +133,22 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Back Button */}
+          <TouchableOpacity onPress={navigateToLogin} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={navigateToLogin} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
+            <View style={styles.iconContainer}>
+              <Ionicons name="person-add-outline" size={40} color={theme.colors.primary} />
+            </View>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join HealLog today</Text>
+            <Text style={styles.subtitle}>Join HealLog to manage your patient logs securely</Text>
           </View>
 
           {/* Registration Form */}
@@ -154,53 +156,58 @@ export default function RegisterScreen() {
             <ControlledInput
               control={control}
               name="full_name"
-              placeholder="Full Name *"
-              iconName="person"
+              label="Full Name"
+              placeholder="Enter your full name"
+              iconName="person-outline"
               autoCapitalize="words"
-              placeholderTextColor="#999"
               error={errors.full_name?.message}
             />
+
             <ControlledInput
               control={control}
               name="email"
-              placeholder="Email Address *"
-              iconName="mail"
+              label="Email Address"
+              placeholder="Enter your email"
+              iconName="mail-outline"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              placeholderTextColor="#999"
               error={errors.email?.message}
             />
+
             <ControlledInput
               control={control}
               name="phone"
-              placeholder="Phone Number"
-              iconName="call"
+              label="Phone Number (Optional)"
+              placeholder="Enter phone number"
+              iconName="call-outline"
               keyboardType="phone-pad"
-              placeholderTextColor="#999"
               error={errors.phone?.message}
             />
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="medical" size={20} color="#666" style={styles.inputIcon} />
+            {/* Department/Specialty Picker */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Medical Department</Text>
               <TouchableOpacity
-                style={styles.pickerContainer}
+                style={styles.pickerButton}
                 onPress={() => setShowSpecialtyModal(true)}
               >
+                <Ionicons name="medical-outline" size={20} color={theme.colors.textSecondary} />
                 <Text style={styles.pickerText}>
                   {medicalSpecialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#666" />
+                <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ControlledInput
               control={control}
               name="password"
-              placeholder="Password * (min 8 chars, upper/lower/number/special)"
-              iconName="lock-closed"
+              label="Password"
+              placeholder="Create a strong password"
+              iconName="lock-closed-outline"
               isPassword
-              placeholderTextColor="#999"
+              helperText="Min 8 chars with upper, lower, number & special"
               error={errors.password?.message}
             />
 
@@ -208,10 +215,15 @@ export default function RegisterScreen() {
             {password && password.length > 0 && (
               <View style={styles.strengthContainer}>
                 <View style={styles.strengthBar}>
-                  <View style={[
-                    styles.strengthFill,
-                    { width: `${(passwordStrength.score / 6) * 100}%`, backgroundColor: passwordStrength.color }
-                  ]} />
+                  <View
+                    style={[
+                      styles.strengthFill,
+                      {
+                        width: `${(passwordStrength.score / 6) * 100}%`,
+                        backgroundColor: passwordStrength.color
+                      }
+                    ]}
+                  />
                 </View>
                 <Text style={[styles.strengthText, { color: passwordStrength.color }]}>
                   {passwordStrength.label}
@@ -222,10 +234,10 @@ export default function RegisterScreen() {
             <ControlledInput
               control={control}
               name="confirmPassword"
-              placeholder="Confirm Password *"
-              iconName="lock-closed"
+              label="Confirm Password"
+              placeholder="Re-enter your password"
+              iconName="lock-closed-outline"
               isPassword
-              placeholderTextColor="#999"
               error={errors.confirmPassword?.message}
             />
 
@@ -235,36 +247,32 @@ export default function RegisterScreen() {
                 <Ionicons
                   name={passwordsMatch ? "checkmark-circle" : "close-circle"}
                   size={16}
-                  color={passwordsMatch ? "#2ecc71" : "#e74c3c"}
+                  color={passwordsMatch ? theme.colors.success : theme.colors.error}
                 />
-                <Text style={[styles.matchText, { color: passwordsMatch ? "#2ecc71" : "#e74c3c" }]}>
+                <Text style={[styles.matchText, { color: passwordsMatch ? theme.colors.success : theme.colors.error }]}>
                   {passwordsMatch ? "Passwords match" : "Passwords don't match"}
                 </Text>
               </View>
             )}
 
-            <TouchableOpacity
-              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
+            <Button
+              title="Create Account"
               onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.registerButtonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.loginLink}
-              onPress={navigateToLogin}
-            >
-              <Text style={styles.loginLinkText}>
-                Already have an account? <Text style={styles.loginLinkBold}>Sign In</Text>
-              </Text>
-            </TouchableOpacity>
+              icon="person-add-outline"
+              iconPosition="right"
+              size="large"
+            />
           </View>
 
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={navigateToLogin}>
+              <Text style={styles.footerLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -279,7 +287,10 @@ export default function RegisterScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Department</Text>
-              <TouchableOpacity onPress={() => setShowSpecialtyModal(false)}>
+              <TouchableOpacity
+                onPress={() => setShowSpecialtyModal(false)}
+                style={styles.modalCloseButton}
+              >
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
@@ -287,6 +298,7 @@ export default function RegisterScreen() {
               data={SPECIALTIES}
               keyExtractor={(item) => item}
               style={styles.specialtyList}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
@@ -305,7 +317,7 @@ export default function RegisterScreen() {
                     {item.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </Text>
                   {medicalSpecialty === item && (
-                    <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                    <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
                   )}
                 </TouchableOpacity>
               )}
@@ -328,18 +340,28 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-    position: 'relative',
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   backButton: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    padding: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  header: {
+    alignItems: 'flex-start',
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
+    backgroundColor: theme.colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
     fontSize: 28 * fontScale,
@@ -350,35 +372,44 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   subtitle: {
     fontSize: 16 * fontScale,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
+    lineHeight: 24 * fontScale,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  inputContainer: {
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14 * fontScale,
+    fontWeight: '500',
+    color: theme.colors.text,
+    marginBottom: 8,
+  },
+  pickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.lg,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  pickerContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   pickerText: {
+    flex: 1,
     fontSize: 16 * fontScale,
     color: theme.colors.text,
   },
@@ -415,37 +446,22 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     fontSize: 12 * fontScale,
     fontWeight: '500',
   },
-  registerButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    marginTop: 'auto',
   },
-  registerButtonDisabled: {
-    backgroundColor: '#95a5a6',
-  },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
-  },
-  loginLink: {
-    alignItems: 'center',
-  },
-  loginLinkText: {
-    fontSize: 16 * fontScale,
+  footerText: {
+    fontSize: 14 * fontScale,
     color: theme.colors.textSecondary,
   },
-  loginLinkBold: {
+  footerLink: {
+    fontSize: 14 * fontScale,
     color: theme.colors.primary,
     fontWeight: '600',
   },
+  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -453,8 +469,8 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     maxHeight: '70%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
@@ -462,7 +478,7 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
@@ -470,6 +486,9 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     fontSize: 18 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
+  },
+  modalCloseButton: {
+    padding: 4,
   },
   specialtyList: {
     paddingHorizontal: 16,
@@ -479,12 +498,12 @@ const getStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: theme.borderRadius.md,
     marginVertical: 2,
   },
   specialtyItemSelected: {
-    backgroundColor: theme.colors.primaryMuted || `${theme.colors.primary}15`,
+    backgroundColor: theme.colors.primaryMuted,
   },
   specialtyText: {
     fontSize: 16 * fontScale,

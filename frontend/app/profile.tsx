@@ -299,11 +299,11 @@ export default function ProfileScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return '#2ecc71';
-      case 'trialing': return '#f39c12';
-      case 'canceled': return '#e74c3c';
-      case 'past_due': return '#e67e22';
-      default: return '#95a5a6';
+      case 'active': return theme.colors.success;
+      case 'trialing': return theme.colors.warning;
+      case 'canceled': return theme.colors.error;
+      case 'past_due': return theme.colors.warning;
+      default: return theme.colors.textSecondary;
     }
   };
 
@@ -348,7 +348,7 @@ export default function ProfileScreen() {
               />
             ) : (
               <View style={styles.userAvatar}>
-                <Ionicons name="person" size={48} color="#2ecc71" />
+                <Ionicons name="person" size={48} color={theme.colors.primary} />
               </View>
             )}
             <View style={styles.photoEditOverlay}>
@@ -372,17 +372,17 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Statistics</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <Ionicons name="people" size={32} color="#2ecc71" />
+                <Ionicons name="people" size={32} color={theme.colors.success} />
                 <Text style={styles.statNumber}>{stats.total_patients}</Text>
                 <Text style={styles.statLabel}>Total Patients</Text>
               </View>
               <View style={styles.statCard}>
-                <Ionicons name="heart" size={32} color="#e74c3c" />
+                <Ionicons name="heart" size={32} color={theme.colors.error} />
                 <Text style={styles.statNumber}>{stats.favorite_patients}</Text>
                 <Text style={styles.statLabel}>Favorites</Text>
               </View>
               <View style={styles.statCard}>
-                <Ionicons name="folder" size={32} color="#3498db" />
+                <Ionicons name="folder" size={32} color={theme.colors.primary} />
                 <Text style={styles.statNumber}>{stats.groups.length}</Text>
                 <Text style={styles.statLabel}>Groups</Text>
               </View>
@@ -420,26 +420,26 @@ export default function ProfileScreen() {
               <View style={styles.planFeatures}>
                 <Text style={styles.featureTitle}>Current Features:</Text>
                 <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                   <Text style={styles.featureText}>Android App Access</Text>
                 </View>
                 <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                   <Text style={styles.featureText}>Patient Management</Text>
                 </View>
                 <View style={styles.feature}>
-                  <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                  <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                   <Text style={styles.featureText}>Medical Notes</Text>
                 </View>
 
                 {subscriptionInfo.plan === 'basic' && (
                   <>
                     <View style={styles.feature}>
-                      <Ionicons name="close" size={16} color="#e74c3c" />
+                      <Ionicons name="close" size={16} color={theme.colors.error} />
                       <Text style={[styles.featureText, styles.disabledFeature]}>Web Dashboard</Text>
                     </View>
                     <View style={styles.feature}>
-                      <Ionicons name="close" size={16} color="#e74c3c" />
+                      <Ionicons name="close" size={16} color={theme.colors.error} />
                       <Text style={[styles.featureText, styles.disabledFeature]}>Advanced Analytics</Text>
                     </View>
                   </>
@@ -448,15 +448,15 @@ export default function ProfileScreen() {
                 {subscriptionInfo.plan === 'pro' && (
                   <>
                     <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                       <Text style={styles.featureText}>Web Dashboard</Text>
                     </View>
                     <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                       <Text style={styles.featureText}>Advanced Analytics</Text>
                     </View>
                     <View style={styles.feature}>
-                      <Ionicons name="checkmark" size={16} color="#2ecc71" />
+                      <Ionicons name="checkmark" size={16} color={theme.colors.success} />
                       <Text style={styles.featureText}>Priority Support</Text>
                     </View>
                   </>
@@ -482,48 +482,48 @@ export default function ProfileScreen() {
             style={styles.actionButton}
             onPress={() => router.push('/contacts-sync')}
           >
-            <Ionicons name="phone-portrait" size={24} color="#666" />
+            <Ionicons name="phone-portrait" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>Contacts Integration</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/(tabs)/settings/feedback')}
           >
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#666" />
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>Send Feedback</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/(tabs)/settings')}
           >
-            <Ionicons name="settings" size={24} color="#666" />
+            <Ionicons name="settings" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>Settings</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="help-circle" size={24} color="#666" />
+            <Ionicons name="help-circle" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>Help & Support</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="document-text" size={24} color="#666" />
+            <Ionicons name="document-text" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/welcome')}
           >
-            <Ionicons name="information-circle-outline" size={24} color="#666" />
+            <Ionicons name="information-circle-outline" size={24} color={theme.colors.textSecondary} />
             <Text style={styles.actionText}>View Beta Welcome Screen</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </ScrollView>

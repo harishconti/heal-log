@@ -47,26 +47,27 @@ export interface Theme {
     md: number;
     lg: number;
     xl: number;
+    full: number;
   };
 }
 
-// Minimalistic indigo/slate color palette
+// Healthcare-focused design system - clean, professional, trustworthy
 const lightTheme: Theme = {
   colors: {
-    primary: '#5b7cf9',
-    primaryMuted: '#a3b8fc',
-    secondary: '#6b7280',
-    background: '#f9fafb',
-    surface: '#ffffff',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    success: '#10b981',
-    text: '#1f2937',
-    textSecondary: '#6b7280',
-    border: '#e5e7eb',
-    shadow: '#000000',
-    card: '#ffffff',
-    notification: '#5b7cf9',
+    primary: '#1A8CFF',        // Bright healthcare blue
+    primaryMuted: '#E8F4FF',   // Light blue tint for backgrounds
+    secondary: '#6B7280',      // Neutral gray
+    background: '#F0F4F8',     // Soft blue-gray background
+    surface: '#FFFFFF',        // Pure white for cards/inputs
+    error: '#EF4444',          // Red for errors
+    warning: '#F59E0B',        // Amber for warnings
+    success: '#10B981',        // Green for success states
+    text: '#111827',           // Near-black for primary text
+    textSecondary: '#6B7280',  // Medium gray for secondary text
+    border: '#E5E7EB',         // Light gray for borders
+    shadow: '#1A8CFF',         // Blue tint shadow
+    card: '#FFFFFF',           // White cards
+    notification: '#1A8CFF',   // Blue notifications
   },
   spacing: {
     xs: 4,
@@ -92,30 +93,31 @@ const lightTheme: Theme = {
     },
   },
   borderRadius: {
-    sm: 6,
+    sm: 8,
     md: 12,
     lg: 16,
     xl: 24,
+    full: 9999,  // For pills and fully rounded elements
   },
 };
 
 const darkTheme: Theme = {
   ...lightTheme,
   colors: {
-    primary: '#7c9dff',
-    primaryMuted: '#4a6bcc',
-    secondary: '#9ca3af',
-    background: '#0f1115',
-    surface: '#1a1d24',
-    error: '#f87171',
-    warning: '#fbbf24',
-    success: '#34d399',
-    text: '#f9fafb',
-    textSecondary: '#9ca3af',
-    border: '#2d3139',
-    shadow: '#000000',
-    card: '#1a1d24',
-    notification: '#7c9dff',
+    primary: '#4DA8FF',        // Lighter blue for dark mode
+    primaryMuted: '#1E3A5F',   // Dark blue tint
+    secondary: '#9CA3AF',      // Light gray
+    background: '#0F1419',     // Deep dark blue-gray
+    surface: '#1A2332',        // Elevated dark surface
+    error: '#F87171',          // Lighter red
+    warning: '#FBBF24',        // Brighter amber
+    success: '#34D399',        // Brighter green
+    text: '#F9FAFB',           // Off-white text
+    textSecondary: '#9CA3AF',  // Light gray secondary
+    border: '#2D3B4E',         // Dark blue-gray border
+    shadow: '#000000',         // Pure black shadow
+    card: '#1A2332',           // Dark card background
+    notification: '#4DA8FF',   // Light blue
   },
 };
 

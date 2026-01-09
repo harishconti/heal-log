@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -8,15 +7,18 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme, fontScale } = useTheme();
 
   const handleGetStarted = async () => {
     try {
@@ -24,7 +26,6 @@ export default function WelcomeScreen() {
       router.replace('/');
     } catch (error) {
       console.error('Failed to save to async storage', error);
-      // Still navigate the user away
       router.replace('/');
     }
   };
@@ -33,67 +34,117 @@ export default function WelcomeScreen() {
     router.push('/(tabs)/settings/known-issues');
   };
 
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, fontScale);
+
+  const features = [
+    {
+      icon: 'cloud-offline-outline' as keyof typeof Ionicons.glyphMap,
+      title: 'Offline-First',
+      description: 'Access patient data anytime, even without internet',
+    },
+    {
+      icon: 'sync-circle-outline' as keyof typeof Ionicons.glyphMap,
+      title: 'Secure Sync',
+      description: 'Your data is encrypted and synced safely',
+    },
+    {
+      icon: 'moon-outline' as keyof typeof Ionicons.glyphMap,
+      title: 'Dark Mode',
+      description: 'Easy on your eyes during night shifts',
+    },
+    {
+      icon: 'document-text-outline' as keyof typeof Ionicons.glyphMap,
+      title: 'Clinical Notes',
+      description: 'Track patient progress with detailed notes',
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
         <View style={styles.header}>
-          <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-          <Text style={styles.title}>Welcome to the Beta!</Text>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('@/assets/images/icon.png')}
+              style={styles.logo}
+            />
+          </View>
+          <Text style={styles.title}>Welcome to HealLog Beta</Text>
           <Text style={styles.subtitle}>
-            Thank you for helping us test and improve HealLog.
+            Thank you for helping us test and improve the app
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key Features</Text>
-          <View style={styles.featureItem}>
-            <Ionicons name="cloud-offline-outline" size={24} color={theme.colors.primary} />
-            <Text style={styles.featureText}>Offline-first patient management</Text>
+        {/* Key Features */}
+        <Card style={styles.featureCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="sparkles" size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Key Features</Text>
           </View>
-          <View style={styles.featureItem}>
-            <Ionicons name="sync-circle-outline" size={24} color={theme.colors.primary} />
-            <Text style={styles.featureText}>Secure data synchronization</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Ionicons name="contrast-outline" size={24} color={theme.colors.primary} />
-            <Text style={styles.featureText}>Dark mode support</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Ionicons name="document-text-outline" size={24} color={theme.colors.primary} />
-            <Text style={styles.featureText}>Clinical notes tracking</Text>
-          </View>
-        </View>
+          {features.map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <View style={styles.featureIconContainer}>
+                <Ionicons name={feature.icon} size={24} color={theme.colors.primary} />
+              </View>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
+              </View>
+            </View>
+          ))}
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Known Issues</Text>
-          <Text style={styles.paragraph}>
-            As a beta, you might encounter some bugs. We are actively working to fix them.
-            You can see a list of known issues here:
+        {/* Known Issues Section */}
+        <Card style={styles.infoCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="warning-outline" size={20} color={theme.colors.warning} />
+            <Text style={styles.sectionTitle}>Beta Notice</Text>
+          </View>
+          <Text style={styles.infoText}>
+            As a beta version, you might encounter some bugs. We're actively working to fix them.
           </Text>
-          <TouchableOpacity onPress={navigateToKnownIssues}>
-            <Text style={styles.link}>View Known Issues</Text>
+          <TouchableOpacity onPress={navigateToKnownIssues} style={styles.linkButton}>
+            <Text style={styles.linkText}>View Known Issues</Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
           </TouchableOpacity>
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Feedback</Text>
-          <Text style={styles.paragraph}>
-            Your feedback is invaluable. Please report any issues or suggestions via the
-            'Feedback' option in the app's settings menu.
+        {/* Feedback Section */}
+        <Card style={styles.infoCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.colors.success} />
+            <Text style={styles.sectionTitle}>Your Feedback Matters</Text>
+          </View>
+          <Text style={styles.infoText}>
+            Help us make HealLog better! Report any issues or suggestions through the Feedback option in Settings.
           </Text>
-        </View>
+        </Card>
 
-        <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
-          <Text style={styles.getStartedButtonText}>Get Started</Text>
-        </TouchableOpacity>
+        {/* Get Started Button */}
+        <Button
+          title="Get Started"
+          onPress={handleGetStarted}
+          icon="arrow-forward"
+          iconPosition="right"
+          size="large"
+          style={styles.getStartedButton}
+        />
+
+        {/* HIPAA Compliance Badge */}
+        <View style={styles.complianceBadge}>
+          <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} />
+          <Text style={styles.complianceText}>HIPAA Compliant & Secure</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const getStyles = (theme) =>
+const getStyles = (theme: any, fontScale: number) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -108,67 +159,122 @@ const getStyles = (theme) =>
       alignItems: 'center',
       marginBottom: 32,
     },
+    logoContainer: {
+      width: 100,
+      height: 100,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: 4,
+        },
+      }),
+    },
     logo: {
-      width: 80,
-      height: 80,
-      marginBottom: 16,
+      width: 64,
+      height: 64,
     },
     title: {
-      fontSize: 28,
+      fontSize: 26 * fontScale,
       fontWeight: 'bold',
       color: theme.colors.text,
       textAlign: 'center',
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: 16 * fontScale,
       color: theme.colors.textSecondary,
       textAlign: 'center',
+      lineHeight: 24 * fontScale,
     },
-    section: {
-      marginBottom: 24,
-      backgroundColor: theme.colors.surface,
-      borderRadius: 12,
-      padding: 16,
+    featureCard: {
+      marginBottom: 16,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      gap: 8,
     },
     sectionTitle: {
-      fontSize: 20,
+      fontSize: 18 * fontScale,
       fontWeight: '600',
       color: theme.colors.text,
-      marginBottom: 16,
     },
     featureItem: {
       flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
+      alignItems: 'flex-start',
+      marginBottom: 16,
+      gap: 12,
     },
-    featureText: {
-      fontSize: 16,
-      color: theme.colors.text,
-      marginLeft: 12,
+    featureIconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: theme.colors.primaryMuted,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    featureContent: {
       flex: 1,
     },
-    paragraph: {
-      fontSize: 16,
-      color: theme.colors.textSecondary,
-      lineHeight: 24,
+    featureTitle: {
+      fontSize: 16 * fontScale,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 2,
     },
-    link: {
-      fontSize: 16,
+    featureDescription: {
+      fontSize: 14 * fontScale,
+      color: theme.colors.textSecondary,
+      lineHeight: 20 * fontScale,
+    },
+    infoCard: {
+      marginBottom: 16,
+    },
+    infoText: {
+      fontSize: 14 * fontScale,
+      color: theme.colors.textSecondary,
+      lineHeight: 22 * fontScale,
+      marginBottom: 12,
+    },
+    linkButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    linkText: {
+      fontSize: 14 * fontScale,
       color: theme.colors.primary,
-      textDecorationLine: 'underline',
-      marginTop: 8,
+      fontWeight: '600',
     },
     getStartedButton: {
-      backgroundColor: theme.colors.primary,
-      paddingVertical: 16,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 16,
+      marginTop: 8,
+      marginBottom: 24,
     },
-    getStartedButtonText: {
-      color: '#fff',
-      fontSize: 18,
-      fontWeight: '600',
+    complianceBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 20,
+      alignSelf: 'center',
+    },
+    complianceText: {
+      fontSize: 12 * fontScale,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
     },
   });

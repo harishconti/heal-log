@@ -28,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { trackScreenView, trackFeatureAdoption } from '@/services/analytics';
 import { sync } from '@/services/sync';
+import { triggerChangeBasedSync } from '@/services/backgroundSync';
 import { map } from 'rxjs/operators';
 import { FlashList } from '@shopify/flash-list';
 import { useAppStore } from '@/store/useAppStore';
@@ -155,13 +156,16 @@ function Index({ patients, groups, totalPatientCount }) {
   }, [isAuthenticated, handleSync]);
 
   const handleToggleFavorite = async (patient: Patient) => {
+    // Trigger haptic immediately for responsive feedback
+    triggerHaptic();
     try {
       await database.write(async () => {
         await patient.update(p => {
           p.isFavorite = !p.isFavorite;
         });
       });
-      triggerHaptic();
+      // Trigger immediate sync after favorite toggle
+      triggerChangeBasedSync();
     } catch (error) {
       Alert.alert('Update Failed', 'Failed to update favorite status.');
       console.error('Failed to update favorite status:', error);
@@ -182,6 +186,8 @@ function Index({ patients, groups, totalPatientCount }) {
               await database.write(async () => {
                 await patient.markAsDeleted();
               });
+              // Trigger immediate sync after patient deletion
+              triggerChangeBasedSync();
               triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
             } catch (error) {
               Alert.alert('Delete Failed', 'Failed to delete patient.');
@@ -684,7 +690,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 8,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16,
   },
   headerLeft: {
     flex: 1,

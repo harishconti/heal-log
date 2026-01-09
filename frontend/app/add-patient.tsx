@@ -30,6 +30,7 @@ import { addBreadcrumb } from '@/utils/monitoring';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import { getErrorMessage } from '@/utils/errorMessages';
+import { triggerChangeBasedSync } from '@/services/backgroundSync';
 
 const MEDICAL_GROUPS = [
   'general',
@@ -201,6 +202,9 @@ export default function AddPatientScreen() {
         gender: gender || null,
         active_treatment_plan: data.active_treatment_plan?.trim() || '',
       });
+
+      // Trigger immediate sync after patient creation
+      triggerChangeBasedSync();
 
       Alert.alert('Success', 'Patient added successfully!', [
         { text: 'OK', onPress: () => router.back() },
@@ -641,7 +645,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 60,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16,
   },
   headerButton: {
     padding: 8,

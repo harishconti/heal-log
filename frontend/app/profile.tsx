@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import api from '@/services/api';
+import { triggerChangeBasedSync } from '@/services/backgroundSync';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 
@@ -218,6 +219,8 @@ export default function ProfileScreen() {
 
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
 
+      // Trigger immediate sync after profile update
+      triggerChangeBasedSync();
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
       console.error('Error saving profile photo:', error);
@@ -242,6 +245,8 @@ export default function ProfileScreen() {
 
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
 
+      // Trigger immediate sync after profile update
+      triggerChangeBasedSync();
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
       console.error('Error removing profile photo:', error);
@@ -567,6 +572,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 12,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,

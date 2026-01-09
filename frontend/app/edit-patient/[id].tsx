@@ -27,6 +27,7 @@ import { ControlledInput } from '@/components/forms/ControlledInput';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import withObservables from '@nozbe/with-observables';
+import { triggerChangeBasedSync } from '@/services/backgroundSync';
 
 const MEDICAL_GROUPS = [
   'general', 'cardiology', 'physiotherapy', 'orthopedics', 'neurology',
@@ -165,6 +166,8 @@ function EditPatientScreen({ patient }) {
           p.activeTreatmentPlan = data.active_treatment_plan || '';
         });
       });
+      // Trigger immediate sync after patient update
+      triggerChangeBasedSync();
       Alert.alert('Success', 'Patient updated successfully!', [
         { text: 'OK', onPress: () => router.back() },
       ]);
@@ -189,6 +192,8 @@ function EditPatientScreen({ patient }) {
             await database.write(async () => {
               await patient.destroyPermanently();
             });
+            // Trigger immediate sync after patient deletion
+            triggerChangeBasedSync();
             Alert.alert('Deleted', 'Patient removed successfully.', [
               { text: 'OK', onPress: () => router.replace('/') },
             ]);
@@ -267,11 +272,17 @@ function EditPatientScreen({ patient }) {
                     placeholderTextColor={theme.colors.textSecondary}
                     value={yearOfBirth?.toString() || ''}
                     onChangeText={(text) => {
-                      const year = parseInt(text, 10);
                       if (!text) {
                         setValue('year_of_birth', null, { shouldDirty: true });
-                      } else if (!isNaN(year) && year >= 1900 && year <= currentYear) {
-                        setValue('year_of_birth', year, { shouldDirty: true });
+                      } else {
+                        // Only allow numeric input, store partial years while typing
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        if (numericText.length <= 4) {
+                          const year = parseInt(numericText, 10);
+                          if (!isNaN(year)) {
+                            setValue('year_of_birth', year, { shouldDirty: true });
+                          }
+                        }
                       }
                     }}
                     keyboardType="number-pad"
@@ -454,7 +465,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontSize: 16 * fontScale, color: theme.colors.textSecondary },
   keyboardAvoid: { flex: 1 },
-  header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 60 },
+  header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16 },
   headerButton: { padding: 8 },
   headerTitle: { fontSize: 20 * fontScale, fontWeight: 'bold', color: '#fff' },
   saveText: { fontSize: 16 * fontScale, fontWeight: '600', color: '#fff' },

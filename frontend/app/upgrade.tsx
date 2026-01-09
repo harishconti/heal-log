@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -43,7 +44,10 @@ const ProFeatures = [
 export default function UpgradeScreen() {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const { theme } = useTheme();
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const styles = createStyles(theme);
 
   const handleUpgrade = async () => {
     setIsUpgrading(true);
@@ -78,13 +82,13 @@ export default function UpgradeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Upgrade to Pro</Text>
         </View>
 
         <View style={styles.pitch}>
-          <Ionicons name="rocket" size={48} color="#2ecc71" />
+          <Ionicons name="rocket" size={48} color={theme.colors.primary} />
           <Text style={styles.pitchTitle}>Unlock Your Full Potential</Text>
           <Text style={styles.pitchSubtitle}>
             Supercharge your practice with our Pro features, designed for professionals who need more power and flexibility.
@@ -94,7 +98,7 @@ export default function UpgradeScreen() {
         <View style={styles.featuresList}>
           {ProFeatures.map((feature, index) => (
             <View key={index} style={styles.featureItem}>
-              <Ionicons name={feature.icon} size={24} color="#2ecc71" style={styles.featureIcon} />
+              <Ionicons name={feature.icon} size={24} color={theme.colors.primary} style={styles.featureIcon} />
               <View style={styles.featureTextContainer}>
                 <Text style={styles.featureTitle}>{feature.title}</Text>
                 <Text style={styles.featureDescription}>{feature.description}</Text>
@@ -123,10 +127,10 @@ export default function UpgradeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -137,7 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: theme.colors.border,
   },
   backButton: {
     padding: 8,
@@ -145,25 +149,25 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 16,
   },
   pitch: {
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.primaryMuted,
   },
   pitchTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
   pitchSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 16,
   },
@@ -184,15 +188,15 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   upgradeButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     marginHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 12,
@@ -204,16 +208,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   upgradeButtonDisabled: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: theme.colors.textSecondary,
   },
   upgradeButtonText: {
-    color: '#fff',
+    color: theme.colors.surface,
     fontSize: 18,
     fontWeight: '600',
   },
   footerText: {
     fontSize: 12,
-    color: '#999',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 16,
   },

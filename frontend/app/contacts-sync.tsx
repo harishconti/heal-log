@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PatientService } from '@/services/patient_service';
@@ -30,6 +31,7 @@ interface PatientContactData {
 
 export default function ContactsSyncScreen() {
   const { isAuthenticated } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
 
   // Local state for patients loaded from database
@@ -251,11 +253,13 @@ export default function ContactsSyncScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   if (patientsLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading contacts data...</Text>
         </View>
       </SafeAreaView>
@@ -267,7 +271,7 @@ export default function ContactsSyncScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contacts Integration</Text>
         <View style={styles.headerButton} />
@@ -277,7 +281,7 @@ export default function ContactsSyncScreen() {
         {/* Status Card */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
-            <Ionicons name="phone-portrait" size={32} color="#2ecc71" />
+            <Ionicons name="phone-portrait" size={32} color={theme.colors.primary} />
             <View style={styles.statusInfo}>
               <Text style={styles.statusTitle}>Device Integration</Text>
               <Text style={styles.statusSubtitle}>
@@ -286,7 +290,7 @@ export default function ContactsSyncScreen() {
             </View>
             <View style={[
               styles.statusIndicator,
-              { backgroundColor: syncEnabled ? '#2ecc71' : '#e74c3c' }
+              { backgroundColor: syncEnabled ? theme.colors.success : theme.colors.error }
             ]} />
           </View>
 
@@ -302,7 +306,7 @@ export default function ContactsSyncScreen() {
           <Text style={styles.sectionTitle}>Sync Management</Text>
 
           <View style={styles.syncInfo}>
-            <Ionicons name="information-circle" size={20} color="#3498db" />
+            <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
             <Text style={styles.syncInfoText}>
               Syncing adds your medical patients to your device contacts, enabling caller ID when they call.
             </Text>
@@ -349,7 +353,7 @@ export default function ContactsSyncScreen() {
             <Ionicons
               name={phoneSupported ? 'checkmark-circle' : 'close-circle'}
               size={24}
-              color={phoneSupported ? '#2ecc71' : '#e74c3c'}
+              color={phoneSupported ? theme.colors.success : theme.colors.error}
             />
             <Text style={styles.capabilityText}>Phone Calls</Text>
           </View>
@@ -358,7 +362,7 @@ export default function ContactsSyncScreen() {
             <Ionicons
               name={smsSupported ? 'checkmark-circle' : 'close-circle'}
               size={24}
-              color={smsSupported ? '#2ecc71' : '#e74c3c'}
+              color={smsSupported ? theme.colors.success : theme.colors.error}
             />
             <Text style={styles.capabilityText}>SMS Messages</Text>
           </View>
@@ -372,7 +376,7 @@ export default function ContactsSyncScreen() {
             {callLogs.map((call, index) => (
               <View key={index} style={styles.callLogItem}>
                 <View style={styles.callInfo}>
-                  <Ionicons name="call-outline" size={20} color="#2ecc71" />
+                  <Ionicons name="call-outline" size={20} color={theme.colors.success} />
                   <View style={styles.callDetails}>
                     <Text style={styles.callPatient}>{call.patientName}</Text>
                     <Text style={styles.callPhone}>{call.phone}</Text>
@@ -414,10 +418,10 @@ export default function ContactsSyncScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -427,10 +431,10 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   header: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -445,13 +449,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: theme.colors.surface,
   },
   scrollContent: {
     paddingBottom: 32,
   },
   statusCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     margin: 16,
     padding: 16,
     borderRadius: 12,
@@ -473,11 +477,11 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
   },
   statusSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   statusIndicator: {
@@ -487,11 +491,11 @@ const styles = StyleSheet.create({
   },
   lastSyncText: {
     fontSize: 12,
-    color: '#999',
+    color: theme.colors.textSecondary,
     marginTop: 8,
   },
   syncCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -505,20 +509,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   syncInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#e3f2fd',
+    backgroundColor: theme.colors.primaryMuted,
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   syncInfoText: {
     fontSize: 14,
-    color: '#1976d2',
+    color: theme.colors.primary,
     marginLeft: 8,
     flex: 1,
   },
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   syncButton: {
-    backgroundColor: '#2ecc71',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -536,7 +540,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   removeButton: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: theme.colors.error,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -548,17 +552,17 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: theme.colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
   syncCount: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   capabilitiesCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -576,11 +580,11 @@ const styles = StyleSheet.create({
   },
   capabilityText: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     marginLeft: 12,
   },
   callLogsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -597,7 +601,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.border,
   },
   callInfo: {
     flexDirection: 'row',
@@ -611,18 +615,18 @@ const styles = StyleSheet.create({
   callPatient: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: theme.colors.text,
   },
   callPhone: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   callTime: {
     fontSize: 12,
-    color: '#999',
+    color: theme.colors.textSecondary,
   },
   instructionsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -642,8 +646,8 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#2ecc71',
-    color: '#fff',
+    backgroundColor: theme.colors.primary,
+    color: theme.colors.surface,
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -652,7 +656,7 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     flex: 1,
     lineHeight: 20,
   },

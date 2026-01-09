@@ -10,8 +10,9 @@ const devLog = __DEV__
   : () => {};
 
 // Sync configuration
-const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const MIN_SYNC_INTERVAL_MS = 30 * 1000; // 30 seconds minimum between syncs
+const SYNC_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes - periodic background sync
+const MIN_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes - minimum between auto syncs (foreground)
+const CHANGE_SYNC_DEBOUNCE_MS = 5 * 1000; // 5 seconds - debounce for change-based sync
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 5000; // 5 seconds
 
@@ -24,6 +25,7 @@ class BackgroundSyncService {
   private appStateSubscription: { remove: () => void } | null = null;
   private netInfoSubscription: (() => void) | null = null;
   private isSyncing: boolean = false;
+  private changeSyncDebounceTimer: NodeJS.Timeout | null = null;
 
   private constructor() {}
 
@@ -74,6 +76,11 @@ class BackgroundSyncService {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
+    }
+
+    if (this.changeSyncDebounceTimer) {
+      clearTimeout(this.changeSyncDebounceTimer);
+      this.changeSyncDebounceTimer = null;
     }
 
     if (this.appStateSubscription) {
@@ -154,7 +161,7 @@ class BackgroundSyncService {
       await this.performSync('periodic');
     }, SYNC_INTERVAL_MS);
 
-    devLog('[BackgroundSync] Periodic sync started (interval: 5 min)');
+    devLog('[BackgroundSync] Periodic sync started (interval: 30 min)');
   }
 
   /**
@@ -171,7 +178,7 @@ class BackgroundSyncService {
   /**
    * Perform the actual sync operation
    */
-  private async performSync(trigger: 'app_active' | 'network_restored' | 'periodic' | 'manual'): Promise<boolean> {
+  private async performSync(trigger: 'app_active' | 'network_restored' | 'periodic' | 'manual' | 'change'): Promise<boolean> {
     if (this.isSyncing) {
       devLog('[BackgroundSync] Sync already in progress, skipping');
       return false;
@@ -239,6 +246,47 @@ class BackgroundSyncService {
   }
 
   /**
+   * Trigger sync after data changes (debounced)
+   * Called when local data is mutated (create, update, delete)
+   * Debounces multiple rapid changes into a single sync
+   */
+  triggerChangeSync(): void {
+    const settings = useAppStore.getState().settings;
+
+    if (!settings.backgroundSyncEnabled) {
+      devLog('[BackgroundSync] Change sync skipped - background sync disabled');
+      return;
+    }
+
+    // Clear any existing debounce timer
+    if (this.changeSyncDebounceTimer) {
+      clearTimeout(this.changeSyncDebounceTimer);
+    }
+
+    devLog('[BackgroundSync] Change detected, scheduling sync in 5s...');
+    addBreadcrumb('backgroundSync', 'Change-based sync scheduled');
+
+    // Debounce: wait 5 seconds after last change before syncing
+    this.changeSyncDebounceTimer = setTimeout(async () => {
+      devLog('[BackgroundSync] Executing debounced change sync');
+      this.changeSyncDebounceTimer = null;
+      await this.performSync('change');
+    }, CHANGE_SYNC_DEBOUNCE_MS);
+  }
+
+  /**
+   * Cancel any pending change-based sync
+   * Useful when navigating away or when manual sync is triggered
+   */
+  cancelPendingChangeSync(): void {
+    if (this.changeSyncDebounceTimer) {
+      clearTimeout(this.changeSyncDebounceTimer);
+      this.changeSyncDebounceTimer = null;
+      devLog('[BackgroundSync] Pending change sync cancelled');
+    }
+  }
+
+  /**
    * Check if sync is currently in progress
    */
   isSyncInProgress(): boolean {
@@ -271,4 +319,6 @@ export const backgroundSyncService = BackgroundSyncService.getInstance();
 export const initializeBackgroundSync = () => backgroundSyncService.initialize();
 export const cleanupBackgroundSync = () => backgroundSyncService.cleanup();
 export const triggerBackgroundSync = () => backgroundSyncService.triggerSync();
+export const triggerChangeBasedSync = () => backgroundSyncService.triggerChangeSync();
+export const cancelPendingSync = () => backgroundSyncService.cancelPendingChangeSync();
 export const isBackgroundSyncInProgress = () => backgroundSyncService.isSyncInProgress();

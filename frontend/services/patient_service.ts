@@ -5,6 +5,7 @@ import uuid from 'react-native-uuid';
 import { addBreadcrumb } from '@/utils/monitoring';
 import { Q } from '@nozbe/watermelondb';
 import { generatePatientId } from '@/utils/patientIdGenerator';
+import { triggerChangeBasedSync } from './backgroundSync';
 
 export interface PatientFilter {
     search?: string;
@@ -60,7 +61,7 @@ export const PatientService = {
         try {
             const patientId = await generatePatientId('PAT');
 
-            return await database.write(async () => {
+            const patient = await database.write(async () => {
                 return await database.collections.get<Patient>('patients').create(patient => {
                     patient.patientId = patientId;
                     patient.name = data.full_name;
@@ -79,6 +80,11 @@ export const PatientService = {
                     patient.activeTreatmentPlan = data.active_treatment_plan || '';
                 });
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
+
+            return patient;
         } catch (error) {
             console.error('Error creating patient:', error);
             throw error;
@@ -88,7 +94,7 @@ export const PatientService = {
     async updatePatient(patientId: string, data: Partial<PatientFormData>) {
         addBreadcrumb('patient_service', `Updating patient: ${patientId}`);
         try {
-            return await database.write(async () => {
+            const patient = await database.write(async () => {
                 const patient = await database.collections.get<Patient>('patients').find(patientId);
                 await patient.update(p => {
                     if (data.full_name !== undefined) p.name = data.full_name;
@@ -108,6 +114,11 @@ export const PatientService = {
                 });
                 return patient;
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
+
+            return patient;
         } catch (error) {
             console.error('Error updating patient:', error);
             throw error;
@@ -121,6 +132,9 @@ export const PatientService = {
                 const patient = await database.collections.get<Patient>('patients').find(patientId);
                 await patient.markAsDeleted(); // Syncable delete
             });
+
+            // Trigger change-based sync (debounced)
+            triggerChangeBasedSync();
         } catch (error) {
             console.error('Error deleting patient:', error);
             throw error;

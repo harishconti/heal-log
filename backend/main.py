@@ -131,6 +131,22 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
         if request.url.path in ["/health", "/api", "/api/health"]:
             return await call_next(request)
 
+        # Skip for authentication endpoints (public endpoints that mobile apps need without auth)
+        # These are rate-limited separately and don't require CSRF protection since:
+        # 1. They're public endpoints users access before having a token
+        # 2. Mobile apps don't use browser cookies, so no CSRF attack vector
+        auth_endpoints = [
+            "/api/auth/register",
+            "/api/auth/login",
+            "/api/auth/verify-otp",
+            "/api/auth/resend-otp",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password",
+            "/api/auth/refresh",
+        ]
+        if request.url.path in auth_endpoints:
+            return await call_next(request)
+
         # Get allowed origins from settings
         allowed_origins = (
             settings.ALLOWED_ORIGINS.split(',')

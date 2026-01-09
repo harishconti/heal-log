@@ -9,10 +9,14 @@ from app.services.user_service import user_service
 from app.services.otp_service import otp_service
 from app.services.password_reset_service import password_reset_service
 from app.services.account_lockout_service import account_lockout
-from app.core.security import create_access_token, create_refresh_token, get_current_user
+from app.core.security import create_access_token, create_refresh_token, get_current_user, revoke_token
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import logging
 from app.core.config import settings
+
+# Bearer token dependency for logout
+bearer_scheme = HTTPBearer()
 
 logger = logging.getLogger(__name__)
 
@@ -387,3 +391,45 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
     so current_user is guaranteed to be valid at this point.
     """
     return {"success": True, "user": UserResponse(**current_user.model_dump())}
+
+
+@router.post("/logout", response_model=dict)
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+):
+    """
+    Logout the current user by revoking their access token.
+
+    This endpoint blacklists the current access token to prevent further use.
+    The client should also clear local token storage after calling this endpoint.
+
+    Note: The refresh token should also be discarded by the client.
+    For enhanced security, both tokens could be revoked, but the access token
+    is the primary concern as it's used for API access.
+    """
+    token = credentials.credentials
+
+    try:
+        # Revoke the access token
+        success = revoke_token(token)
+
+        if success:
+            logger.info("[LOGOUT] Token successfully revoked")
+            return {
+                "success": True,
+                "message": "Successfully logged out. Token has been revoked."
+            }
+        else:
+            # Token couldn't be revoked (likely missing jti), but still log out client-side
+            logger.warning("[LOGOUT] Token revocation failed, but allowing logout")
+            return {
+                "success": True,
+                "message": "Logged out. Please clear your local tokens."
+            }
+    except Exception as e:
+        logger.error(f"[LOGOUT] Error during logout: {e}")
+        # Even on error, we should allow the client to clear tokens
+        return {
+            "success": True,
+            "message": "Logged out. Please clear your local tokens."
+        }

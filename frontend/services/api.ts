@@ -11,8 +11,8 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://doctor-log-p
 const ACCESS_TOKEN_KEY = 'token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
-// Token refresh state
-let isRefreshing = false;
+// Token refresh state - using promise-based singleton pattern to prevent race conditions
+let refreshPromise: Promise<string | null> | null = null;
 let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: any) => void;
@@ -101,45 +101,70 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Refresh the access token
+/**
+ * Refresh the access token using a singleton promise pattern.
+ * This prevents race conditions when multiple concurrent requests trigger refresh.
+ *
+ * The pattern ensures:
+ * 1. Only one refresh request is made at a time
+ * 2. All concurrent requests wait for the same refresh to complete
+ * 3. The promise is cleared after completion for future refreshes
+ */
 const refreshAccessToken = async (): Promise<string | null> => {
-  try {
-    const refreshToken = await TokenStorage.getRefreshToken();
+  // If a refresh is already in progress, return the existing promise
+  // This is the key to preventing race conditions
+  if (refreshPromise) {
+    if (__DEV__) {
+      console.log('🔄 [API] Token refresh already in progress, waiting...');
+    }
+    return refreshPromise;
+  }
 
-    if (!refreshToken) {
+  // Create a new refresh promise
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = await TokenStorage.getRefreshToken();
+
+      if (!refreshToken) {
+        if (__DEV__) {
+          console.log('🔐 [API] No refresh token available');
+        }
+        return null;
+      }
+
       if (__DEV__) {
-        console.log('🔐 [API] No refresh token available');
+        console.log('🔄 [API] Attempting to refresh access token...');
+      }
+
+      // Use a fresh axios instance to avoid interceptor loops
+      const response = await axios.post(
+        `${BACKEND_URL}/api/auth/refresh`,
+        { refresh_token: refreshToken },
+        { timeout: 10000 }
+      );
+
+      const { access_token, refresh_token: newRefreshToken } = response.data;
+
+      // Save new tokens
+      await TokenStorage.saveTokens(access_token, newRefreshToken);
+
+      if (__DEV__) {
+        console.log('✅ [API] Token refreshed successfully');
+      }
+
+      return access_token;
+    } catch (error: any) {
+      if (__DEV__) {
+        console.error('❌ [API] Token refresh failed:', error.message);
       }
       return null;
+    } finally {
+      // Clear the promise so future refreshes can occur
+      refreshPromise = null;
     }
+  })();
 
-    if (__DEV__) {
-      console.log('🔄 [API] Attempting to refresh access token...');
-    }
-
-    // Use a fresh axios instance to avoid interceptor loops
-    const response = await axios.post(
-      `${BACKEND_URL}/api/auth/refresh`,
-      { refresh_token: refreshToken },
-      { timeout: 10000 }
-    );
-
-    const { access_token, refresh_token: newRefreshToken } = response.data;
-
-    // Save new tokens
-    await TokenStorage.saveTokens(access_token, newRefreshToken);
-
-    if (__DEV__) {
-      console.log('✅ [API] Token refreshed successfully');
-    }
-
-    return access_token;
-  } catch (error: any) {
-    if (__DEV__) {
-      console.error('❌ [API] Token refresh failed:', error.message);
-    }
-    return null;
-  }
+  return refreshPromise;
 };
 
 // Request interceptor to add token to every request
@@ -185,33 +210,21 @@ api.interceptors.response.use(
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Skip refresh for auth endpoints
-      const authEndpoints = ['/api/auth/login', '/api/auth/refresh', '/api/auth/register'];
+      const authEndpoints = ['/api/auth/login', '/api/auth/refresh', '/api/auth/register', '/api/auth/logout'];
       if (authEndpoints.some((endpoint) => originalRequest.url?.includes(endpoint))) {
         return Promise.reject(error);
       }
 
-      if (isRefreshing) {
-        // Token refresh in progress, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
+      // Mark request as retried to prevent infinite loops
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
+        // Use the singleton promise pattern - this handles race conditions automatically
+        // Multiple concurrent requests will all wait for the same refresh promise
         const newToken = await refreshAccessToken();
 
         if (newToken) {
-          // Process queued requests with new token
+          // Process any queued requests with new token
           processQueue(null, newToken);
 
           // Retry the original request with new token
@@ -229,8 +242,6 @@ api.interceptors.response.use(
         await TokenStorage.clearTokens();
         authEvents.emit('auth:logout');
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
@@ -401,6 +412,38 @@ export const resetPassword = async (token: string, new_password: string) => {
     const message =
       error.response?.data?.error?.message || error.response?.data?.detail || 'Failed to reset password';
     throw new Error(message);
+  }
+};
+
+/**
+ * Logout the current user.
+ *
+ * This function:
+ * 1. Calls the backend to revoke the current access token (prevents reuse)
+ * 2. Clears local token storage
+ * 3. Emits logout event
+ *
+ * Even if the backend call fails, tokens are cleared locally for security.
+ */
+export const logout = async (): Promise<void> => {
+  try {
+    // Try to revoke token on backend
+    await api.post('/api/auth/logout');
+    if (__DEV__) {
+      console.log('✅ [API] Token revoked on server');
+    }
+  } catch (error: any) {
+    // Log but don't throw - we still want to clear local tokens
+    if (__DEV__) {
+      console.warn('⚠️ [API] Failed to revoke token on server:', error.message);
+    }
+  } finally {
+    // Always clear local tokens
+    await TokenStorage.clearTokens();
+    authEvents.emit('auth:logout');
+    if (__DEV__) {
+      console.log('✅ [API] Local tokens cleared, logout complete');
+    }
   }
 };
 

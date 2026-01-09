@@ -295,13 +295,20 @@ function Index({ patients, groups, totalPatientCount }) {
               <View style={styles.patientDetails}>
                 <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
                 <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                {item.phone ? <Text style={[styles.patientContact, { color: theme.colors.primary }]}>{item.phone}</Text> : null}
                 {item.initialComplaint ? (
                   <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                     {item.initialComplaint}
                   </Text>
                 ) : null}
               </View>
+              {item.phone ? (
+                <TouchableOpacity
+                  style={[styles.callButton, { backgroundColor: theme.colors.success }]}
+                  onPress={() => handleCallPatient(item)}
+                >
+                  <Ionicons name="call" size={18} color="#fff" />
+                </TouchableOpacity>
+              ) : null}
             </View>
             <View style={styles.cardActions}>
               <TouchableOpacity
@@ -843,6 +850,14 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   },
   favoriteButton: {
     padding: 4,
+  },
+  callButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   groupBadge: {
     paddingHorizontal: 8,

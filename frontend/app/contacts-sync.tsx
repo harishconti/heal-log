@@ -8,7 +8,6 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
-  Switch,
   StatusBar,
   Platform,
 } from 'react-native';
@@ -18,8 +17,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PatientService } from '@/services/patient_service';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
 
-// Type for patient data used in contacts sync
 interface PatientContactData {
   id: string;
   name: string;
@@ -31,19 +31,19 @@ interface PatientContactData {
 
 export default function ContactsSyncScreen() {
   const { isAuthenticated } = useAuth();
-  const { theme } = useTheme();
+  const { theme, fontScale } = useTheme();
   const router = useRouter();
 
-  // Local state for patients loaded from database
   const [patients, setPatients] = useState<PatientContactData[]>([]);
   const [patientsLoading, setPatientsLoading] = useState(true);
-
   const [syncing, setSyncing] = useState(false);
   const [syncEnabled, setSyncEnabled] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [callLogs, setCallLogs] = useState([]);
   const [phoneSupported, setPhoneSupported] = useState(false);
   const [smsSupported, setSmsSupported] = useState(false);
+
+  const styles = createStyles(theme, fontScale);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -60,7 +60,6 @@ export default function ContactsSyncScreen() {
     try {
       setPatientsLoading(true);
       const fetchedPatients = await PatientService.getPatients();
-      // Map WatermelonDB patient model to our contact data interface
       const patientData: PatientContactData[] = fetchedPatients.map(p => ({
         id: p.id,
         name: p.name,
@@ -80,24 +79,19 @@ export default function ContactsSyncScreen() {
 
   const loadScreenData = async () => {
     try {
-      // Load sync settings
       const syncSetting = await AsyncStorage.getItem('contacts_sync_enabled');
       setSyncEnabled(syncSetting === 'true');
 
-      // Load last sync time
       const lastSync = await AsyncStorage.getItem('medical_contacts_synced');
       setLastSyncTime(lastSync);
 
-      // Load call logs with error handling for dynamic import
       try {
         const { PhoneIntegration } = await import('@/utils/phoneIntegration');
         const logs = await PhoneIntegration.getCallLogs();
-        setCallLogs(logs.slice(0, 10)); // Show last 10 calls
+        setCallLogs(logs.slice(0, 10));
       } catch (phoneError) {
         console.error('Error loading phone integration module:', phoneError);
-        // Phone integration not available, continue without call logs
       }
-
     } catch (error) {
       console.error('Error loading screen-specific data:', error);
     }
@@ -116,7 +110,6 @@ export default function ContactsSyncScreen() {
       setSmsSupported(canSMS);
     } catch (error) {
       console.error('Error checking phone capabilities:', error);
-      // Phone integration not available on this platform
       setPhoneSupported(false);
       setSmsSupported(false);
     }
@@ -126,7 +119,6 @@ export default function ContactsSyncScreen() {
     try {
       setSyncing(true);
 
-      // Dynamic import with error handling
       let PhoneIntegration;
       try {
         const module = await import('../utils/phoneIntegration');
@@ -137,7 +129,6 @@ export default function ContactsSyncScreen() {
         return;
       }
 
-      // Convert patients to contact format
       const contactData = patients
         .filter(p => p.phone)
         .map(p => ({
@@ -160,7 +151,7 @@ export default function ContactsSyncScreen() {
 
         await AsyncStorage.setItem('contacts_sync_enabled', 'true');
         setSyncEnabled(true);
-        await loadScreenData(); // Refresh data
+        await loadScreenData();
       } else {
         Alert.alert(
           'Sync Failed',
@@ -188,7 +179,6 @@ export default function ContactsSyncScreen() {
             try {
               setSyncing(true);
 
-              // Dynamic import with error handling
               let PhoneIntegration;
               try {
                 const module = await import('@/utils/phoneIntegration');
@@ -221,21 +211,6 @@ export default function ContactsSyncScreen() {
     );
   };
 
-  const toggleAutoSync = async (enabled: boolean) => {
-    try {
-      await AsyncStorage.setItem('auto_sync_enabled', enabled.toString());
-
-      if (enabled) {
-        Alert.alert(
-          'Auto Sync Enabled',
-          'Medical contacts will be automatically synced to your device when you add new patients.'
-        );
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update auto sync setting');
-    }
-  };
-
   const formatCallTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -253,8 +228,6 @@ export default function ContactsSyncScreen() {
     }
   };
 
-  const styles = createStyles(theme);
-
   if (patientsLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -266,32 +239,38 @@ export default function ContactsSyncScreen() {
     );
   }
 
+  const patientsWithPhone = patients.filter(p => p.phone).length;
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.surface} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contacts Integration</Text>
-        <View style={styles.headerButton} />
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Status Card */}
-        <View style={styles.statusCard}>
-          <View style={styles.statusHeader}>
-            <Ionicons name="phone-portrait" size={32} color={theme.colors.primary} />
+        <Card style={styles.sectionCard}>
+          <View style={styles.statusRow}>
+            <View style={styles.statusIconContainer}>
+              <Ionicons name="phone-portrait-outline" size={24} color={theme.colors.primary} />
+            </View>
             <View style={styles.statusInfo}>
               <Text style={styles.statusTitle}>Device Integration</Text>
               <Text style={styles.statusSubtitle}>
                 {syncEnabled ? 'Medical contacts synced' : 'Contacts not synced'}
               </Text>
             </View>
-            <View style={[
-              styles.statusIndicator,
-              { backgroundColor: syncEnabled ? theme.colors.success : theme.colors.error }
-            ]} />
+            <Chip
+              label={syncEnabled ? 'Active' : 'Inactive'}
+              variant="filled"
+              color={syncEnabled ? 'success' : 'error'}
+              size="small"
+            />
           </View>
 
           {lastSyncTime && (
@@ -299,57 +278,65 @@ export default function ContactsSyncScreen() {
               Last synced: {new Date(lastSyncTime).toLocaleString()}
             </Text>
           )}
-        </View>
+        </Card>
 
-        {/* Sync Controls */}
-        <View style={styles.syncCard}>
-          <Text style={styles.sectionTitle}>Sync Management</Text>
+        {/* Sync Management Card */}
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="sync-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Sync Management</Text>
+          </View>
 
-          <View style={styles.syncInfo}>
+          <View style={styles.infoBox}>
             <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-            <Text style={styles.syncInfoText}>
+            <Text style={styles.infoText}>
               Syncing adds your medical patients to your device contacts, enabling caller ID when they call.
             </Text>
           </View>
 
-          <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.syncButton, syncing && styles.disabledButton]}
+            onPress={handleSyncContacts}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="sync" size={20} color="#fff" />
+            )}
+            <Text style={styles.buttonText}>
+              {syncing ? 'Syncing...' : 'Sync Contacts'}
+            </Text>
+          </TouchableOpacity>
+
+          {syncEnabled && (
             <TouchableOpacity
-              style={[styles.syncButton, syncing && styles.disabledButton]}
-              onPress={handleSyncContacts}
+              style={[styles.removeButton, syncing && styles.disabledButton]}
+              onPress={handleRemoveContacts}
               disabled={syncing}
             >
-              {syncing ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Ionicons name="sync" size={20} color="#fff" />
-              )}
-              <Text style={styles.buttonText}>
-                {syncing ? 'Syncing...' : 'Sync Contacts'}
-              </Text>
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.buttonText}>Remove Contacts</Text>
             </TouchableOpacity>
-
-            {syncEnabled && (
-              <TouchableOpacity
-                style={[styles.removeButton, syncing && styles.disabledButton]}
-                onPress={handleRemoveContacts}
-                disabled={syncing}
-              >
-                <Ionicons name="trash" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Remove Contacts</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
 
           <Text style={styles.syncCount}>
-            {patients.filter(p => p.phone).length} patients with phone numbers
+            {patientsWithPhone} patients with phone numbers
           </Text>
-        </View>
+        </Card>
 
-        {/* Device Capabilities */}
-        <View style={styles.capabilitiesCard}>
-          <Text style={styles.sectionTitle}>Device Capabilities</Text>
+        {/* Device Capabilities Card */}
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="hardware-chip-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Device Capabilities</Text>
+          </View>
 
-          <View style={styles.capabilityItem}>
+          <View style={styles.capabilityRow}>
             <Ionicons
               name={phoneSupported ? 'checkmark-circle' : 'close-circle'}
               size={24}
@@ -358,7 +345,7 @@ export default function ContactsSyncScreen() {
             <Text style={styles.capabilityText}>Phone Calls</Text>
           </View>
 
-          <View style={styles.capabilityItem}>
+          <View style={[styles.capabilityRow, styles.capabilityRowLast]}>
             <Ionicons
               name={smsSupported ? 'checkmark-circle' : 'close-circle'}
               size={24}
@@ -366,15 +353,20 @@ export default function ContactsSyncScreen() {
             />
             <Text style={styles.capabilityText}>SMS Messages</Text>
           </View>
-        </View>
+        </Card>
 
-        {/* Recent Calls */}
+        {/* Recent Calls Card */}
         {callLogs.length > 0 && (
-          <View style={styles.callLogsCard}>
-            <Text style={styles.sectionTitle}>Recent Patient Calls</Text>
+          <Card style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Ionicons name="call-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <Text style={styles.sectionTitle}>Recent Patient Calls</Text>
+            </View>
 
             {callLogs.map((call, index) => (
-              <View key={index} style={styles.callLogItem}>
+              <View key={index} style={[styles.callLogItem, index === callLogs.length - 1 && styles.callLogItemLast]}>
                 <View style={styles.callInfo}>
                   <Ionicons name="call-outline" size={20} color={theme.colors.success} />
                   <View style={styles.callDetails}>
@@ -385,40 +377,51 @@ export default function ContactsSyncScreen() {
                 <Text style={styles.callTime}>{formatCallTime(call.timestamp)}</Text>
               </View>
             ))}
-          </View>
+          </Card>
         )}
 
-        {/* Instructions */}
-        <View style={styles.instructionsCard}>
-          <Text style={styles.sectionTitle}>How It Works</Text>
+        {/* Instructions Card */}
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons name="help-circle-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>How It Works</Text>
+          </View>
 
-          <View style={styles.instruction}>
-            <Text style={styles.instructionNumber}>1</Text>
+          <View style={styles.instructionItem}>
+            <View style={styles.instructionNumber}>
+              <Text style={styles.instructionNumberText}>1</Text>
+            </View>
             <Text style={styles.instructionText}>
               Tap "Sync Contacts" to add your medical patients to your device contacts
             </Text>
           </View>
 
-          <View style={styles.instruction}>
-            <Text style={styles.instructionNumber}>2</Text>
+          <View style={styles.instructionItem}>
+            <View style={styles.instructionNumber}>
+              <Text style={styles.instructionNumberText}>2</Text>
+            </View>
             <Text style={styles.instructionText}>
               When patients call, you'll see their name and patient ID on caller ID
             </Text>
           </View>
 
-          <View style={styles.instruction}>
-            <Text style={styles.instructionNumber}>3</Text>
+          <View style={[styles.instructionItem, styles.instructionItemLast]}>
+            <View style={styles.instructionNumber}>
+              <Text style={styles.instructionNumberText}>3</Text>
+            </View>
             <Text style={styles.instructionText}>
               Use "Remove Contacts" if you want to clear medical contacts from your device
             </Text>
           </View>
-        </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -430,105 +433,97 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.textSecondary,
   },
   header: {
-    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   headerButton: {
     padding: 8,
-    width: 40,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.surface,
+    fontSize: 18 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.text,
   },
   scrollContent: {
+    padding: 16,
     paddingBottom: 32,
   },
-  statusCard: {
-    backgroundColor: theme.colors.card,
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+  sectionCard: {
+    marginBottom: 16,
   },
-  statusHeader: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+  },
+  statusIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   statusInfo: {
     flex: 1,
-    marginLeft: 12,
   },
   statusTitle: {
-    fontSize: 18,
+    fontSize: 18 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
   },
   statusSubtitle: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
   lastSyncText: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     color: theme.colors.textSecondary,
-    marginTop: 8,
+    marginTop: 12,
   },
-  syncCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    gap: 10,
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: theme.colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 12,
   },
-  syncInfo: {
+  infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: theme.colors.primaryMuted,
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
+    gap: 8,
   },
-  syncInfoText: {
-    fontSize: 14,
+  infoText: {
+    fontSize: 14 * fontScale,
     color: theme.colors.primary,
-    marginLeft: 8,
     flex: 1,
-  },
-  actionButtons: {
-    gap: 12,
-    marginBottom: 12,
   },
   syncButton: {
     backgroundColor: theme.colors.primary,
@@ -538,6 +533,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     gap: 8,
+    marginBottom: 12,
   },
   removeButton: {
     backgroundColor: theme.colors.error,
@@ -547,117 +543,95 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     gap: 8,
+    marginBottom: 12,
   },
   disabledButton: {
     opacity: 0.6,
   },
   buttonText: {
-    color: theme.colors.surface,
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 16 * fontScale,
     fontWeight: '600',
   },
   syncCount: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  capabilitiesCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  capabilityItem: {
+  capabilityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  capabilityRowLast: {
+    borderBottomWidth: 0,
   },
   capabilityText: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     color: theme.colors.text,
-    marginLeft: 12,
-  },
-  callLogsCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   callLogItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+  },
+  callLogItemLast: {
+    borderBottomWidth: 0,
   },
   callInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: 12,
   },
   callDetails: {
-    marginLeft: 12,
     flex: 1,
   },
   callPatient: {
-    fontSize: 16,
+    fontSize: 16 * fontScale,
     fontWeight: '500',
     color: theme.colors.text,
   },
   callPhone: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     color: theme.colors.textSecondary,
   },
   callTime: {
-    fontSize: 12,
+    fontSize: 12 * fontScale,
     color: theme.colors.textSecondary,
   },
-  instructionsCard: {
-    backgroundColor: theme.colors.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  instruction: {
+  instructionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 12,
+  },
+  instructionItemLast: {
+    marginBottom: 0,
   },
   instructionNumber: {
     width: 24,
     height: 24,
     borderRadius: 12,
     backgroundColor: theme.colors.primary,
-    color: theme.colors.surface,
-    fontSize: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instructionNumberText: {
+    color: '#fff',
+    fontSize: 14 * fontScale,
     fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginRight: 12,
   },
   instructionText: {
-    fontSize: 14,
+    fontSize: 14 * fontScale,
     color: theme.colors.textSecondary,
     flex: 1,
-    lineHeight: 20,
+    lineHeight: 20 * fontScale,
   },
 });

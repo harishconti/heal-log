@@ -21,6 +21,10 @@ export interface CreatePatientData {
   initial_diagnosis?: string;
   group?: string;
   is_favorite?: boolean;
+  // New patient profile fields
+  year_of_birth?: number;
+  gender?: 'male' | 'female' | 'other';
+  active_treatment_plan?: string;
 }
 
 export interface CreateNoteData {

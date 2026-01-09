@@ -27,6 +27,10 @@ export interface Patient {
   photo?: string;
   group?: string;
   is_favorite: boolean;
+  // New patient profile fields
+  year_of_birth?: number;
+  gender?: 'male' | 'female' | 'other';
+  active_treatment_plan?: string;
   created_at: string;
   updated_at: string;
 }

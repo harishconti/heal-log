@@ -22,6 +22,11 @@ export default class Patient extends Model {
   @readonly @date('created_at') createdAt;
   @readonly @date('updated_at') updatedAt;
 
+  // New patient profile fields
+  @field('year_of_birth') yearOfBirth;
+  @text('gender') gender;
+  @text('active_treatment_plan') activeTreatmentPlan;
+
   // Source tracking for Google Contacts sync
   @text('source') source;
   @text('external_id') externalId;

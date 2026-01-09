@@ -73,6 +73,10 @@ export const PatientService = {
                     patient.photo = data.photo || '';
                     patient.group = data.group || 'general';
                     patient.isFavorite = data.is_favorite || false;
+                    // New patient profile fields
+                    patient.yearOfBirth = data.year_of_birth || null;
+                    patient.gender = data.gender || '';
+                    patient.activeTreatmentPlan = data.active_treatment_plan || '';
                 });
             });
         } catch (error) {
@@ -97,6 +101,10 @@ export const PatientService = {
                     if (data.photo !== undefined) p.photo = data.photo;
                     if (data.group !== undefined) p.group = data.group;
                     if (data.is_favorite !== undefined) p.isFavorite = data.is_favorite;
+                    // New patient profile fields
+                    if (data.year_of_birth !== undefined) p.yearOfBirth = data.year_of_birth;
+                    if (data.gender !== undefined) p.gender = data.gender;
+                    if (data.active_treatment_plan !== undefined) p.activeTreatmentPlan = data.active_treatment_plan;
                 });
                 return patient;
             });

@@ -28,6 +28,10 @@ const isValidDate = (dateString: string): boolean => {
   return true;
 };
 
+// Gender options
+export const GENDER_OPTIONS = ['male', 'female', 'other'] as const;
+export type GenderType = typeof GENDER_OPTIONS[number];
+
 export const patientSchema = z.object({
   full_name: z.string()
     .min(2, "Name must be at least 2 characters")
@@ -59,6 +63,14 @@ export const patientSchema = z.object({
   group: z.string().optional(),
   photo: z.string().optional(),
   is_favorite: z.boolean().optional(),
+  // New patient profile fields
+  year_of_birth: z.number()
+    .min(1900, "Year must be after 1900")
+    .max(new Date().getFullYear(), "Year cannot be in the future")
+    .optional()
+    .nullable(),
+  gender: z.enum(['male', 'female', 'other']).optional().nullable(),
+  active_treatment_plan: z.string().max(5000, "Treatment plan too long (max 5000 chars)").optional(),
 });
 
 export type PatientFormData = z.infer<typeof patientSchema>;

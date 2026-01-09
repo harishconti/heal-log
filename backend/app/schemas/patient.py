@@ -15,6 +15,10 @@ MAX_DIAGNOSIS_LENGTH = 5000
 MAX_GROUP_LENGTH = 50
 MAX_SOURCE_LENGTH = 50
 MAX_EXTERNAL_ID_LENGTH = 255
+MAX_TREATMENT_PLAN_LENGTH = 5000
+
+# Gender choices
+GENDER_CHOICES = ["male", "female", "other"]
 
 
 class PatientSource(str):
@@ -39,6 +43,10 @@ class Patient(Document):
     photo: Optional[str] = None
     group: Optional[str] = Field(default="general", max_length=MAX_GROUP_LENGTH)
     is_favorite: bool = False
+    # New patient profile fields
+    year_of_birth: Optional[int] = Field(default=None, ge=1900, le=2100)
+    gender: Optional[str] = Field(default=None)
+    active_treatment_plan: Optional[str] = Field(default="", max_length=MAX_TREATMENT_PLAN_LENGTH)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -76,6 +84,10 @@ class PatientCreate(BaseModel):
     photo: Optional[str] = None
     group: Optional[str] = Field(default="general", max_length=MAX_GROUP_LENGTH)
     is_favorite: bool = False
+    # New patient profile fields
+    year_of_birth: Optional[int] = Field(default=None, ge=1900, le=2100)
+    gender: Optional[str] = Field(default=None)
+    active_treatment_plan: Optional[str] = Field(default="", max_length=MAX_TREATMENT_PLAN_LENGTH)
     # Source tracking (optional - defaults to manual if not specified)
     source: Optional[str] = Field(default="manual", max_length=MAX_SOURCE_LENGTH)
     external_id: Optional[str] = Field(default=None, max_length=MAX_EXTERNAL_ID_LENGTH)
@@ -91,6 +103,9 @@ class PatientUpdate(BaseModel):
     photo: Optional[str] = None
     group: Optional[str] = None
     is_favorite: Optional[bool] = None
+    year_of_birth: Optional[int] = None
+    gender: Optional[str] = None
+    active_treatment_plan: Optional[str] = None
 
 class PatientResponse(BaseModel):
     id: str
@@ -106,6 +121,10 @@ class PatientResponse(BaseModel):
     photo: Optional[str]
     group: Optional[str]
     is_favorite: bool
+    # New patient profile fields
+    year_of_birth: Optional[int] = None
+    gender: Optional[str] = None
+    active_treatment_plan: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     # Source tracking fields

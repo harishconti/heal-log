@@ -57,5 +57,19 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 5,
+      steps: [
+        // Add new patient profile fields: year_of_birth, gender, active_treatment_plan
+        addColumns({
+          table: 'patients',
+          columns: [
+            { name: 'year_of_birth', type: 'number', isOptional: true },
+            { name: 'gender', type: 'string', isOptional: true },
+            { name: 'active_treatment_plan', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

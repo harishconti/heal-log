@@ -299,7 +299,7 @@ function PatientDetailsScreen({ patient, notes }) {
           <Text style={styles.sectionTitle}>Active Treatment Plan</Text>
         </View>
         <Text style={styles.treatmentText}>
-          Patient is being monitored for ongoing care. Follow-up scheduled to review progress and adjust treatment as needed.
+          {patient.activeTreatmentPlan || 'No active treatment plan specified.'}
         </Text>
       </Card>
     </>
@@ -332,27 +332,28 @@ function PatientDetailsScreen({ patient, notes }) {
 
       {notes && notes.length > 0 ? (
         notes.map((note: any) => (
-          <Card key={note.id} style={styles.noteCard}>
-            <View style={styles.noteHeader}>
-              <View style={styles.noteHeaderLeft}>
-                <Chip
-                  label={note.visitType}
-                  variant="soft"
-                  color="primary"
-                  size="small"
-                />
-                <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+          <TouchableOpacity
+            key={note.id}
+            activeOpacity={0.7}
+            onLongPress={() => deleteNote(note.id)}
+            delayLongPress={500}
+          >
+            <Card style={styles.noteCard}>
+              <View style={styles.noteHeader}>
+                <View style={styles.noteHeaderLeft}>
+                  <Chip
+                    label={note.visitType}
+                    variant="soft"
+                    color="primary"
+                    size="small"
+                  />
+                  <Text style={styles.noteDate}>{formatDate(note.createdAt)}</Text>
+                </View>
               </View>
-              <TouchableOpacity
-                style={styles.deleteNoteButton}
-                onPress={() => deleteNote(note.id)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.noteContent}>{note.content}</Text>
-          </Card>
+              <Text style={styles.noteContent}>{note.content}</Text>
+              <Text style={styles.longPressHint}>Long press to delete</Text>
+            </Card>
+          </TouchableOpacity>
         ))
       ) : (
         <Card style={styles.sectionCard}>
@@ -420,8 +421,22 @@ function PatientDetailsScreen({ patient, notes }) {
 
           {/* Age/Gender Chips */}
           <View style={styles.chipRow}>
-            <Chip label="42 Yrs" variant="outlined" color="default" size="small" />
-            <Chip label="Female" variant="outlined" color="default" size="small" />
+            {patient.yearOfBirth && (
+              <Chip
+                label={`${new Date().getFullYear() - patient.yearOfBirth} Yrs`}
+                variant="outlined"
+                color="default"
+                size="small"
+              />
+            )}
+            {patient.gender && (
+              <Chip
+                label={patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)}
+                variant="outlined"
+                color="default"
+                size="small"
+              />
+            )}
           </View>
 
           {/* Quick Actions */}
@@ -552,7 +567,8 @@ function PatientDetailsScreen({ patient, notes }) {
 const enhance = withObservables(['id'], ({ id }) => ({
   patient: database.collections.get<Patient>('patients').findAndObserve(id),
   notes: database.collections.get<PatientNote>('clinical_notes').query(
-    Q.where('patient_id', id)
+    Q.where('patient_id', id),
+    Q.sortBy('created_at', Q.desc)
   ).observe(),
 }));
 
@@ -787,8 +803,12 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     color: theme.colors.text,
     lineHeight: 22 * fontScale,
   },
-  deleteNoteButton: {
-    padding: 4,
+  longPressHint: {
+    fontSize: 11 * fontScale,
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+    fontStyle: 'italic',
+    opacity: 0.7,
   },
   bottomActions: {
     position: 'absolute',

@@ -1,12 +1,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <!-- Network permissions -->
   <uses-permission android:name="android.permission.INTERNET"/>
+
+  <!-- Contacts permissions for caller ID and medical contacts sync -->
   <uses-permission android:name="android.permission.READ_CONTACTS"/>
+  <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+
+  <!-- Storage permissions for photo handling -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+  <!-- Camera permission for taking patient/profile photos -->
+  <uses-permission android:name="android.permission.CAMERA"/>
+
+  <!-- Notification permission for Android 13+ (API 33+) -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+  <!-- System permissions -->
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
-  <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+  <!-- Biometric hardware feature declaration -->
+  <uses-feature android:name="android.hardware.fingerprint" android:required="false"/>
+  <uses-feature android:name="android.hardware.camera" android:required="false"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>

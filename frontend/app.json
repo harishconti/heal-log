@@ -10,7 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.heallog.app"
+      "bundleIdentifier": "com.heallog.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "HealLog needs camera access to take photos of patients and update your profile picture.",
+        "NSPhotoLibraryUsageDescription": "HealLog needs photo library access to select patient photos and profile pictures.",
+        "NSContactsUsageDescription": "HealLog needs access to your contacts to import patients and sync medical contacts for caller ID.",
+        "NSFaceIDUsageDescription": "HealLog uses Face ID for secure authentication to protect your medical data."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +47,34 @@
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HealLog needs photo library access to select patient photos and profile pictures.",
+          "cameraPermission": "HealLog needs camera access to take photos of patients and update your profile picture."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "HealLog needs access to your contacts to import patients and sync medical contacts for caller ID."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#4A90D9",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "HealLog uses Face ID for secure authentication to protect your medical data."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -4,7 +4,7 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Current Version: 1.0.49
+## Current Version: 1.0.9
 
 ### Released Features
 - User registration and authentication with JWT
@@ -23,12 +23,15 @@ This document outlines the planned features and improvements for HealLog. Items 
 - Stripe payment integration
 - Rate limiting and security headers
 - Input sanitization (NoSQL injection prevention)
+- Google Contacts sync integration with duplicate detection
+- Biometric authentication (fingerprint/Face ID)
+- Push notifications support
 
 ---
 
 ## Phase 1: Beta Release (Current)
 
-**Status:** Complete (v1.0.49)
+**Status:** Complete (v1.0.9)
 
 ### Critical (Must Have)
 - [x] Core authentication flow
@@ -38,7 +41,9 @@ This document outlines the planned features and improvements for HealLog. Items 
 - [x] Enhanced error handling
 - [x] Security hardening
 - [x] 48 backend tests passing
-- [ ] Push notifications
+- [x] Push notifications
+- [x] Biometric authentication
+- [x] Google Contacts sync integration
 - [ ] Device compatibility testing
 - [ ] Play Store submission
 
@@ -72,7 +77,7 @@ This document outlines the planned features and improvements for HealLog. Items 
   - Visit summary reports
   - Prescription printing
 
-- [ ] **Biometric Login**
+- [x] **Biometric Login** (Implemented)
   - Fingerprint authentication
   - Face unlock support
 
@@ -102,6 +107,12 @@ This document outlines the planned features and improvements for HealLog. Items 
 - [x] **Document Management**
   - Medical document upload
   - Patient file attachments
+
+- [x] **Google Contacts Integration**
+  - OAuth flow for connecting Google accounts
+  - Initial and incremental sync
+  - Duplicate detection with manual resolution
+  - Background sync with progress tracking
 
 - [ ] **Templates** (Planned)
   - Note templates
@@ -139,6 +150,7 @@ This document outlines the planned features and improvements for HealLog. Items 
   - Appointment calendar
 
 ### Integrations
+- [x] Google Contacts sync (Implemented in v1.0.9)
 - [ ] Calendar sync (Google, Apple)
 - [ ] SMS notifications
 - [ ] Lab system integration
@@ -214,7 +226,7 @@ Have a feature idea? Here's how to submit it:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.49 | Jan 2026 | Current stable release - Web dashboard, sync fixes, integration fixes |
+| 1.0.9 | Jan 2026 | Current stable release - Web dashboard, sync fixes, Google Contacts integration |
 | 1.0.0 | Dec 2025 | Initial release with core features |
 | 1.5.0 | Q2 2026 | Pro features (planned) |
 | 2.0.0 | Q3 2026 | Clinic edition (planned) |

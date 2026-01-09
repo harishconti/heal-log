@@ -294,42 +294,30 @@ export default function AddPatientScreen() {
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Year of Birth</Text>
-                <TouchableOpacity
-                  style={styles.pickerButton}
-                  onPress={() => {
-                    Alert.alert(
-                      'Year of Birth',
-                      'Enter year of birth',
-                      [
-                        {
-                          text: 'Cancel',
-                          style: 'cancel',
-                        },
-                        {
-                          text: 'Clear',
-                          onPress: () => setValue('year_of_birth', null),
-                        },
-                      ]
-                    );
-                  }}
-                >
+                <View style={styles.pickerButton}>
                   <TextInput
                     style={[styles.pickerText, { flex: 1 }]}
                     placeholder="YYYY"
                     placeholderTextColor={theme.colors.textSecondary}
                     value={yearOfBirth?.toString() || ''}
                     onChangeText={(text) => {
-                      const year = parseInt(text, 10);
                       if (!text) {
                         setValue('year_of_birth', null);
-                      } else if (!isNaN(year) && year >= 1900 && year <= currentYear) {
-                        setValue('year_of_birth', year);
+                      } else {
+                        // Only allow numeric input
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        if (numericText.length <= 4) {
+                          const year = parseInt(numericText, 10);
+                          if (!isNaN(year)) {
+                            setValue('year_of_birth', year);
+                          }
+                        }
                       }
                     }}
                     keyboardType="number-pad"
                     maxLength={4}
                   />
-                </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Gender</Text>
@@ -653,7 +641,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 60,
   },
   headerButton: {
     padding: 8,

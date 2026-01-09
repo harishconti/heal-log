@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.49] - 2026-01-01 (Current)
+## [1.0.9] - 2026-01-09 (Current)
 
 ### Fixed
 - **Critical:** Fixed 'Unknown Date' issue - backend now correctly serializes datetimes to milliseconds for WatermelonDB sync
@@ -109,5 +109,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.49 | 2026-01-01 | Sync fixes, web dashboard, integration fixes |
+| 1.0.9 | 2026-01-09 | Sync fixes, web dashboard, Google Contacts integration |
 | 1.0.0 | 2025-12-01 | Initial release with full feature set |

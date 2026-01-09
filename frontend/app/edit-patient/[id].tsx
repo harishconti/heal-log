@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -453,7 +454,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontSize: 16 * fontScale, color: theme.colors.textSecondary },
   keyboardAvoid: { flex: 1 },
-  header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: 48 },
+  header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 60 },
   headerButton: { padding: 8 },
   headerTitle: { fontSize: 20 * fontScale, fontWeight: 'bold', color: '#fff' },
   saveText: { fontSize: 16 * fontScale, fontWeight: '600', color: '#fff' },

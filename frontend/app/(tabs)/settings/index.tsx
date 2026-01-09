@@ -11,9 +11,10 @@ import {
     BiometricCapabilities,
 } from '@/services/biometricAuth';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/Card';
 
 const SettingsScreen = () => {
-    const { theme, isDark, setTheme } = useTheme();
+    const { theme, fontScale } = useTheme();
     const { settings, updateSettings } = useAppStore();
     const { token } = useAuth();
     const router = useRouter();
@@ -22,7 +23,6 @@ const SettingsScreen = () => {
     const [biometricLoading, setBiometricLoading] = useState(false);
     const [checkingBiometrics, setCheckingBiometrics] = useState(true);
 
-    // Check biometric capabilities on mount
     useEffect(() => {
         const checkBiometrics = async () => {
             try {
@@ -98,12 +98,13 @@ const SettingsScreen = () => {
         { value: 'large', label: 'Large', sample: 18 },
     ] as const;
 
-    const styles = createStyles(theme);
+    const styles = createStyles(theme, fontScale);
 
     return (
         <View style={styles.container}>
+            {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
                     <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.title}>Settings</Text>
@@ -112,103 +113,107 @@ const SettingsScreen = () => {
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Appearance Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Appearance</Text>
-
-                    <View style={styles.card}>
-                        <Text style={styles.optionLabel}>Theme</Text>
-                        <View style={styles.themeOptions}>
-                            {themeOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option.value}
-                                    style={[
-                                        styles.themeButton,
-                                        settings.theme === option.value && styles.themeButtonActive
-                                    ]}
-                                    onPress={() => updateSettings({ theme: option.value })}
-                                >
-                                    <Ionicons
-                                        name={option.icon as any}
-                                        size={22}
-                                        color={settings.theme === option.value ? '#fff' : theme.colors.textSecondary}
-                                    />
-                                    <Text style={[
-                                        styles.themeButtonText,
-                                        settings.theme === option.value && styles.themeButtonTextActive
-                                    ]}>
-                                        {option.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
+                <Card style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name="color-palette-outline" size={18} color={theme.colors.primary} />
                         </View>
+                        <Text style={styles.sectionTitle}>Appearance</Text>
                     </View>
 
-                    <View style={styles.card}>
-                        <Text style={styles.optionLabel}>Font Size</Text>
-                        <View style={styles.fontSizeOptions}>
-                            {fontSizeOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option.value}
-                                    style={[
-                                        styles.fontSizeButton,
-                                        settings.fontSize === option.value && styles.fontSizeButtonActive
-                                    ]}
-                                    onPress={() => updateSettings({ fontSize: option.value })}
-                                >
-                                    <Text style={[
-                                        styles.fontSizeSample,
-                                        { fontSize: option.sample },
-                                        settings.fontSize === option.value && styles.fontSizeButtonTextActive
-                                    ]}>
-                                        Aa
-                                    </Text>
-                                    <Text style={[
-                                        styles.fontSizeLabel,
-                                        settings.fontSize === option.value && styles.fontSizeButtonTextActive
-                                    ]}>
-                                        {option.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                    <Text style={styles.optionLabel}>Theme</Text>
+                    <View style={styles.themeOptions}>
+                        {themeOptions.map((option) => (
+                            <TouchableOpacity
+                                key={option.value}
+                                style={[
+                                    styles.themeButton,
+                                    settings.theme === option.value && styles.themeButtonActive
+                                ]}
+                                onPress={() => updateSettings({ theme: option.value })}
+                            >
+                                <Ionicons
+                                    name={option.icon as any}
+                                    size={22}
+                                    color={settings.theme === option.value ? '#fff' : theme.colors.textSecondary}
+                                />
+                                <Text style={[
+                                    styles.themeButtonText,
+                                    settings.theme === option.value && styles.themeButtonTextActive
+                                ]}>
+                                    {option.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                </View>
+
+                    <Text style={[styles.optionLabel, { marginTop: 20 }]}>Font Size</Text>
+                    <View style={styles.fontSizeOptions}>
+                        {fontSizeOptions.map((option) => (
+                            <TouchableOpacity
+                                key={option.value}
+                                style={[
+                                    styles.fontSizeButton,
+                                    settings.fontSize === option.value && styles.fontSizeButtonActive
+                                ]}
+                                onPress={() => updateSettings({ fontSize: option.value })}
+                            >
+                                <Text style={[
+                                    styles.fontSizeSample,
+                                    { fontSize: option.sample },
+                                    settings.fontSize === option.value && styles.fontSizeButtonTextActive
+                                ]}>
+                                    Aa
+                                </Text>
+                                <Text style={[
+                                    styles.fontSizeLabel,
+                                    settings.fontSize === option.value && styles.fontSizeButtonTextActive
+                                ]}>
+                                    {option.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </Card>
 
                 {/* Security Section */}
                 {biometricCapabilities?.isAvailable && biometricCapabilities?.isEnrolled && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Security</Text>
-
-                        <View style={styles.card}>
-                            <View style={styles.toggleRow}>
-                                <View style={styles.biometricInfo}>
-                                    <View style={styles.biometricIconContainer}>
-                                        <Ionicons
-                                            name={getBiometricIcon()}
-                                            size={24}
-                                            color={settings.biometricEnabled ? theme.colors.primary : theme.colors.textSecondary}
-                                        />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.toggleLabel}>{getBiometricLabel()} Login</Text>
-                                        <Text style={styles.toggleDescription}>
-                                            {settings.biometricEnabled
-                                                ? 'Quick sign-in enabled'
-                                                : 'Sign in faster with biometrics'}
-                                        </Text>
-                                    </View>
-                                </View>
-                                {biometricLoading ? (
-                                    <ActivityIndicator color={theme.colors.primary} />
-                                ) : (
-                                    <Switch
-                                        value={settings.biometricEnabled}
-                                        onValueChange={handleBiometricToggle}
-                                        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                                        thumbColor="#fff"
-                                    />
-                                )}
+                    <Card style={styles.sectionCard}>
+                        <View style={styles.sectionHeader}>
+                            <View style={styles.sectionIconContainer}>
+                                <Ionicons name="shield-checkmark-outline" size={18} color={theme.colors.primary} />
                             </View>
+                            <Text style={styles.sectionTitle}>Security</Text>
+                        </View>
+
+                        <View style={styles.toggleRow}>
+                            <View style={styles.biometricInfo}>
+                                <View style={styles.biometricIconContainer}>
+                                    <Ionicons
+                                        name={getBiometricIcon()}
+                                        size={24}
+                                        color={settings.biometricEnabled ? theme.colors.primary : theme.colors.textSecondary}
+                                    />
+                                </View>
+                                <View>
+                                    <Text style={styles.toggleLabel}>{getBiometricLabel()} Login</Text>
+                                    <Text style={styles.toggleDescription}>
+                                        {settings.biometricEnabled
+                                            ? 'Quick sign-in enabled'
+                                            : 'Sign in faster with biometrics'}
+                                    </Text>
+                                </View>
+                            </View>
+                            {biometricLoading ? (
+                                <ActivityIndicator color={theme.colors.primary} />
+                            ) : (
+                                <Switch
+                                    value={settings.biometricEnabled}
+                                    onValueChange={handleBiometricToggle}
+                                    trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                                    thumbColor="#fff"
+                                />
+                            )}
                         </View>
 
                         {settings.biometricEnabled && (
@@ -219,85 +224,92 @@ const SettingsScreen = () => {
                                 </Text>
                             </View>
                         )}
-                    </View>
+                    </Card>
                 )}
 
                 {/* Preferences Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Preferences</Text>
-
-                    <View style={styles.card}>
-                        <View style={styles.toggleRow}>
-                            <View>
-                                <Text style={styles.toggleLabel}>Haptic Feedback</Text>
-                                <Text style={styles.toggleDescription}>Vibrate on interactions</Text>
-                            </View>
-                            <Switch
-                                value={settings.hapticEnabled}
-                                onValueChange={(value) => updateSettings({ hapticEnabled: value })}
-                                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                                thumbColor="#fff"
-                            />
+                <Card style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name="options-outline" size={18} color={theme.colors.primary} />
                         </View>
+                        <Text style={styles.sectionTitle}>Preferences</Text>
                     </View>
 
-                    <View style={styles.card}>
-                        <View style={styles.toggleRow}>
-                            <View>
-                                <Text style={styles.toggleLabel}>Auto Sync</Text>
-                                <Text style={styles.toggleDescription}>Sync data automatically</Text>
-                            </View>
-                            <Switch
-                                value={settings.autoSync}
-                                onValueChange={(value) => updateSettings({ autoSync: value })}
-                                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                                thumbColor="#fff"
-                            />
+                    <View style={styles.toggleRow}>
+                        <View>
+                            <Text style={styles.toggleLabel}>Haptic Feedback</Text>
+                            <Text style={styles.toggleDescription}>Vibrate on interactions</Text>
                         </View>
+                        <Switch
+                            value={settings.hapticEnabled}
+                            onValueChange={(value) => updateSettings({ hapticEnabled: value })}
+                            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                            thumbColor="#fff"
+                        />
                     </View>
 
-                    <View style={styles.card}>
-                        <View style={styles.toggleRow}>
-                            <View>
-                                <Text style={styles.toggleLabel}>Offline Mode</Text>
-                                <Text style={styles.toggleDescription}>Work without internet</Text>
-                            </View>
-                            <Switch
-                                value={settings.offlineMode}
-                                onValueChange={(value) => updateSettings({ offlineMode: value })}
-                                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                                thumbColor="#fff"
-                            />
+                    <View style={[styles.toggleRow, styles.toggleRowBorder]}>
+                        <View>
+                            <Text style={styles.toggleLabel}>Auto Sync</Text>
+                            <Text style={styles.toggleDescription}>Sync data automatically</Text>
                         </View>
+                        <Switch
+                            value={settings.autoSync}
+                            onValueChange={(value) => updateSettings({ autoSync: value })}
+                            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                            thumbColor="#fff"
+                        />
                     </View>
-                </View>
+
+                    <View style={styles.toggleRow}>
+                        <View>
+                            <Text style={styles.toggleLabel}>Offline Mode</Text>
+                            <Text style={styles.toggleDescription}>Work without internet</Text>
+                        </View>
+                        <Switch
+                            value={settings.offlineMode}
+                            onValueChange={(value) => updateSettings({ offlineMode: value })}
+                            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                            thumbColor="#fff"
+                        />
+                    </View>
+                </Card>
 
                 {/* Help Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Help & Info</Text>
+                <Card style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name="help-circle-outline" size={18} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.sectionTitle}>Help & Info</Text>
+                    </View>
 
                     <TouchableOpacity
-                        style={styles.card}
+                        style={styles.linkRow}
                         onPress={() => router.push('/(tabs)/settings/known-issues')}
                     >
-                        <View style={styles.linkRow}>
-                            <Ionicons name="bug-outline" size={22} color={theme.colors.textSecondary} />
+                        <View style={styles.linkLeft}>
+                            <Ionicons name="bug-outline" size={22} color={theme.colors.primary} />
                             <Text style={styles.linkText}>Known Issues</Text>
-                            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                         </View>
+                        <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={styles.card}
+                        style={[styles.linkRow, styles.linkRowLast]}
                         onPress={() => router.push('/(tabs)/settings/feedback')}
                     >
-                        <View style={styles.linkRow}>
-                            <Ionicons name="chatbubble-outline" size={22} color={theme.colors.textSecondary} />
+                        <View style={styles.linkLeft}>
+                            <Ionicons name="chatbubble-outline" size={22} color={theme.colors.primary} />
                             <Text style={styles.linkText}>Submit Feedback</Text>
-                            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                         </View>
+                        <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                     </TouchableOpacity>
-                </View>
+                </Card>
+
+                {/* Version */}
+                <Text style={styles.versionText}>HEAL LOG v1.0.9</Text>
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -305,7 +317,7 @@ const SettingsScreen = () => {
     );
 };
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
@@ -314,45 +326,50 @@ const createStyles = (theme: any) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.surface,
         paddingHorizontal: 16,
-        paddingVertical: 16,
-        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 48,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
     },
-    backButton: {
+    headerButton: {
         padding: 8,
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#fff',
+        fontSize: 18 * fontScale,
+        fontWeight: '600',
+        color: theme.colors.text,
     },
     content: {
         flex: 1,
         padding: 16,
     },
-    section: {
-        marginBottom: 24,
+    sectionCard: {
+        marginBottom: 16,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 10,
+    },
+    sectionIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        backgroundColor: theme.colors.primaryMuted,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: theme.colors.textSecondary,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginBottom: 12,
-        marginLeft: 4,
-    },
-    card: {
-        backgroundColor: theme.colors.card,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 8,
-    },
-    optionLabel: {
-        fontSize: 16,
+        fontSize: 16 * fontScale,
         fontWeight: '600',
         color: theme.colors.text,
+    },
+    optionLabel: {
+        fontSize: 14 * fontScale,
+        fontWeight: '500',
+        color: theme.colors.textSecondary,
         marginBottom: 12,
     },
     themeOptions: {
@@ -376,7 +393,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         borderColor: theme.colors.primary,
     },
     themeButtonText: {
-        fontSize: 14,
+        fontSize: 14 * fontScale,
         color: theme.colors.textSecondary,
     },
     themeButtonTextActive: {
@@ -407,7 +424,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         marginBottom: 4,
     },
     fontSizeLabel: {
-        fontSize: 12,
+        fontSize: 12 * fontScale,
         color: theme.colors.textSecondary,
     },
     fontSizeButtonTextActive: {
@@ -417,14 +434,21 @@ const createStyles = (theme: any) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        paddingVertical: 12,
+    },
+    toggleRowBorder: {
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
     },
     toggleLabel: {
-        fontSize: 16,
+        fontSize: 16 * fontScale,
         fontWeight: '500',
         color: theme.colors.text,
     },
     toggleDescription: {
-        fontSize: 13,
+        fontSize: 13 * fontScale,
         color: theme.colors.textSecondary,
         marginTop: 2,
     },
@@ -449,22 +473,38 @@ const createStyles = (theme: any) => StyleSheet.create({
         borderRadius: 8,
         padding: 12,
         gap: 8,
-        marginTop: 8,
+        marginTop: 12,
     },
     infoText: {
-        fontSize: 13,
+        fontSize: 13 * fontScale,
         color: theme.colors.success,
         flex: 1,
     },
     linkRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
+    },
+    linkRowLast: {
+        borderBottomWidth: 0,
+    },
+    linkLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 12,
     },
     linkText: {
-        flex: 1,
-        fontSize: 16,
+        fontSize: 16 * fontScale,
         color: theme.colors.text,
+    },
+    versionText: {
+        textAlign: 'center',
+        fontSize: 12 * fontScale,
+        color: theme.colors.textSecondary,
+        marginTop: 8,
     },
 });
 

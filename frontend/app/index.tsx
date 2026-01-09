@@ -43,7 +43,6 @@ import { Q } from '@nozbe/watermelondb';
 import { CachedImage } from '@/components/ui/CachedImage';
 import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
-import ConnectionStatusBar from '@/components/core/ConnectionStatusBar';
 import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
 
 // The raw UI component
@@ -296,13 +295,20 @@ function Index({ patients, groups, totalPatientCount }) {
               <View style={styles.patientDetails}>
                 <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
                 <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                {item.phone ? <Text style={[styles.patientContact, { color: theme.colors.primary }]}>{item.phone}</Text> : null}
                 {item.initialComplaint ? (
                   <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                     {item.initialComplaint}
                   </Text>
                 ) : null}
               </View>
+              {item.phone ? (
+                <TouchableOpacity
+                  style={[styles.callButton, { backgroundColor: theme.colors.success }]}
+                  onPress={() => handleCallPatient(item)}
+                >
+                  <Ionicons name="call" size={18} color="#fff" />
+                </TouchableOpacity>
+              ) : null}
             </View>
             <View style={styles.cardActions}>
               <TouchableOpacity
@@ -473,27 +479,21 @@ function Index({ patients, groups, totalPatientCount }) {
       {/* Header, Offline Banner, Search, Filters */}
       <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Medical Contacts</Text>
+          <Text style={styles.headerTitle}>HEAL LOG</Text>
           <Text style={styles.headerSubtitle}>Welcome, {user?.full_name?.split(' ')[0]}</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.syncButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
-            <Ionicons name={refreshing || loading.sync ? "sync-circle" : "sync"} size={24} color={theme.colors.surface} />
+          <TouchableOpacity style={styles.headerButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
+            <Ionicons name={refreshing || loading.sync ? "sync-circle" : isOffline ? "cloud-offline" : "cloud-done"} size={24} color={isOffline ? theme.colors.warning : theme.colors.surface} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.profileButton} onPress={navigateToProfile}>
-            <Ionicons name="person-circle" size={32} color={theme.colors.surface} />
+          <TouchableOpacity style={styles.headerButton} onPress={navigateToProfile}>
+            <Ionicons name="person-circle-outline" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton} onPress={addNewPatient}>
+          <TouchableOpacity style={styles.headerButton} onPress={addNewPatient}>
             <Ionicons name="add" size={24} color={theme.colors.surface} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.debugButton} onPress={() => router.push('/debug-console')}>
-            <Ionicons name="bug" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Enhanced Connection Status Bar */}
-      <ConnectionStatusBar onSyncPress={() => handleSync(true)} />
 
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
@@ -701,28 +701,14 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     alignItems: 'center',
   },
-  syncButton: {
-    padding: 4,
-  },
-  profileButton: {
-    padding: 4,
-  },
-  addButton: {
+  headerButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  debugButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -864,6 +850,14 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   },
   favoriteButton: {
     padding: 4,
+  },
+  callButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   groupBadge: {
     paddingHorizontal: 8,

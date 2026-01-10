@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  /* Minimalistic Indigo/Slate color palette */
-  --color-primary-50: #f5f7ff;
-  --color-primary-100: #ebf0ff;
-  --color-primary-200: #d4e0ff;
-  --color-primary-300: #a8bfff;
-  --color-primary-400: #7c9dff;
-  --color-primary-500: #5b7cf9;
-  --color-primary-600: #4f65e8;
-  --color-primary-700: #4150d4;
-  --color-primary-800: #3641ab;
-  --color-primary-900: #2f3988;
+  /* Modern Indigo/Blue color palette */
+  --color-primary-50: #f0f4ff;
+  --color-primary-100: #e0e9ff;
+  --color-primary-200: #c7d7fe;
+  --color-primary-300: #a4bcfd;
+  --color-primary-400: #8098f9;
+  --color-primary-500: #6172f3;
+  --color-primary-600: #4e5ce8;
+  --color-primary-700: #4149cd;
+  --color-primary-800: #363fa6;
+  --color-primary-900: #313a83;
 
   /* Refined semantic colors */
-  --color-success-50: #f0fdf6;
-  --color-success-100: #dcfce9;
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
   --color-success-500: #10b981;
   --color-success-600: #059669;
 
@@ -29,7 +29,7 @@
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
 
-  /* Neutral grays with subtle warmth */
+  /* Neutral grays */
   --color-gray-25: #fcfcfd;
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -49,6 +49,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -56,6 +60,7 @@ body {
   background-color: var(--color-gray-50);
   color: var(--color-gray-800);
   letter-spacing: -0.01em;
+  line-height: 1.5;
 }
 
 #root {
@@ -64,13 +69,13 @@ body {
 
 /* Smooth transitions for all interactive elements */
 button, a, input, select, textarea {
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -79,7 +84,7 @@ button, a, input, select, textarea {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-gray-300);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -104,12 +109,14 @@ button, a, input, select, textarea {
 
 .animate-shimmer {
   animation: shimmer 2s infinite linear;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
 }
 
 /* Slide animations */
 @keyframes slideInFromBottom {
   from {
-    transform: translateY(100%);
+    transform: translateY(20px);
     opacity: 0;
   }
   to {
@@ -120,7 +127,18 @@ button, a, input, select, textarea {
 
 @keyframes slideInFromRight {
   from {
-    transform: translateX(100%);
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-20px);
     opacity: 0;
   }
   to {
@@ -138,6 +156,17 @@ button, a, input, select, textarea {
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes scaleIn {
   from {
     transform: scale(0.95);
@@ -149,6 +178,35 @@ button, a, input, select, textarea {
   }
 }
 
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Animation utilities */
 .animate-in {
   animation-fill-mode: both;
@@ -156,6 +214,10 @@ button, a, input, select, textarea {
 
 .fade-in-0 {
   animation: fadeIn 0.2s ease-out;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
 }
 
 .zoom-in-95 {
@@ -170,6 +232,22 @@ button, a, input, select, textarea {
   animation: slideInFromRight 0.3s ease-out;
 }
 
+.slide-in-from-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Improved transitions for interactive elements */
 .transition-transform {
   transition-property: transform;
@@ -181,4 +259,71 @@ button, a, input, select, textarea {
 ::selection {
   background-color: var(--color-primary-100);
   color: var(--color-primary-900);
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Card hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Smooth image loading */
+img {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+img.loaded,
+img[src] {
+  opacity: 1;
+}
+
+/* Better text rendering */
+h1, h2, h3, h4, h5, h6 {
+  text-rendering: optimizeLegibility;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Input autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: var(--color-gray-900) !important;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

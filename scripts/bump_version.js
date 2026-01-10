@@ -33,11 +33,14 @@ function bumpVersion() {
         process.exit(1);
     }
 
-    const [major, minor, patch] = versionMatch.map((v, i) => i === 0 ? v : parseInt(v));
+    // Skip index 0 (full match), use capture groups [1, 2, 3]
+    const major = parseInt(versionMatch[1]);
+    const minor = parseInt(versionMatch[2]);
+    const patch = parseInt(versionMatch[3]);
 
-    let newMajor = parseInt(major);
-    let newMinor = parseInt(minor);
-    let newPatch = parseInt(patch) + 1;
+    let newMajor = major;
+    let newMinor = minor;
+    let newPatch = patch + 1;
 
     if (newPatch > 9) {
         newPatch = 0;

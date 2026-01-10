@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, Lock, Eye, EyeOff } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
 import { Button, Input } from '../../components/ui';
@@ -22,6 +22,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -40,7 +41,7 @@ export function LoginPage() {
       });
 
       if (response.user.plan !== 'pro') {
-        setError('Web dashboard is only available for Pro users. Please upgrade your plan.');
+        setError('Web dashboard is only available for Pro users. Please upgrade your plan in the mobile app.');
         return;
       }
 
@@ -61,18 +62,18 @@ export function LoginPage() {
 
   if (needsVerification) {
     return (
-      <div className="text-center py-4">
-        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Mail className="h-7 w-7 text-primary-600" />
+      <div className="text-center py-2">
+        <div className="w-16 h-16 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-primary-100">
+          <Mail className="h-8 w-8 text-primary-600" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Verify Your Email</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h2>
+        <p className="text-gray-500 mb-8 leading-relaxed">
           Please verify your email address to continue. A verification code has been sent to{' '}
-          <span className="font-medium text-gray-700">{verificationEmail}</span>
+          <span className="font-semibold text-gray-700">{verificationEmail}</span>
         </p>
         <Link
           to={`/verify-otp?email=${encodeURIComponent(verificationEmail)}`}
-          className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
+          className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-all duration-200 shadow-lg shadow-primary-500/25"
         >
           Enter verification code
           <ArrowRight className="h-4 w-4" />
@@ -83,59 +84,87 @@ export function LoginPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h2>
-      <p className="text-sm text-gray-500 mb-6">Sign in to your account to continue</p>
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h2>
+        <p className="text-gray-500">Sign in to your account to continue</p>
+      </div>
 
+      {/* Error message */}
       {error && (
-        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-          {error}
+        <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100 rounded-xl">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
         </div>
       )}
 
+      {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <Input
-          label="Email address"
-          type="email"
-          autoComplete="email"
-          placeholder="doctor@example.com"
-          error={errors.email?.message}
-          {...register('email')}
-        />
+        <div className="space-y-4">
+          <div className="relative">
+            <Input
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              placeholder="doctor@example.com"
+              error={errors.email?.message}
+              {...register('email')}
+            />
+          </div>
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Enter your password"
-          error={errors.password?.message}
-          {...register('password')}
-        />
+          <div className="relative">
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              error={errors.password?.message}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
 
         <div className="flex items-center justify-end">
           <Link
             to="/forgot-password"
-            className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
+            className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
           >
             Forgot password?
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
+          isLoading={isSubmitting}
+        >
           Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      {/* Register link */}
+      <p className="mt-8 text-center text-gray-500">
         Don't have an account?{' '}
-        <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+        <Link
+          to="/register"
+          className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+        >
           Create account
         </Link>
       </p>
 
+      {/* Pro subscription notice */}
       <div className="mt-6 pt-6 border-t border-gray-100">
-        <p className="text-xs text-center text-gray-400">
-          Web dashboard requires a Pro subscription
-        </p>
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+          <Lock className="h-3.5 w-3.5" />
+          <span>Web dashboard requires a Pro subscription</span>
+        </div>
       </div>
     </div>
   );

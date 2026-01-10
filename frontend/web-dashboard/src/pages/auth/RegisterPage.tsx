@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { authApi } from '../../api';
 import { Button, Input, Select } from '../../components/ui';
 import { SPECIALTY_OPTIONS } from '../../constants';
@@ -30,17 +31,31 @@ const registerSchema = z
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+// Password strength requirements
+const passwordRequirements = [
+  { regex: /.{12,}/, label: '12+ characters' },
+  { regex: /[A-Z]/, label: 'Uppercase letter' },
+  { regex: /[a-z]/, label: 'Lowercase letter' },
+  { regex: /[0-9]/, label: 'Number' },
+  { regex: /[^A-Za-z0-9]/, label: 'Special character' },
+];
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
+
+  const password = watch('password', '');
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null);
@@ -60,16 +75,21 @@ export function RegisterPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-1">Create your account</h2>
-      <p className="text-sm text-gray-500 mb-6">Start managing your patients today</p>
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h2>
+        <p className="text-gray-500">Start managing your patients today</p>
+      </div>
 
+      {/* Error message */}
       {error && (
-        <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-          {error}
+        <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100 rounded-xl">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input
           label="Full name"
           type="text"
@@ -106,33 +126,79 @@ export function RegisterPage() {
           />
         </div>
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Create a strong password"
-          error={errors.password?.message}
-          helperText="Min 12 chars with uppercase, lowercase, number & symbol"
-          {...register('password')}
-        />
+        <div className="relative">
+          <Input
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            placeholder="Create a strong password"
+            error={errors.password?.message}
+            {...register('password')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
 
-        <Input
-          label="Confirm password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Confirm your password"
-          error={errors.confirmPassword?.message}
-          {...register('confirmPassword')}
-        />
+        {/* Password strength indicator */}
+        {password && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {passwordRequirements.map((req, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center gap-1.5 text-xs ${
+                  req.regex.test(password) ? 'text-emerald-600' : 'text-gray-400'
+                }`}
+              >
+                <CheckCircle2
+                  className={`h-3.5 w-3.5 ${
+                    req.regex.test(password) ? 'text-emerald-500' : 'text-gray-300'
+                  }`}
+                />
+                {req.label}
+              </div>
+            ))}
+          </div>
+        )}
 
-        <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
+        <div className="relative">
+          <Input
+            label="Confirm password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            placeholder="Confirm your password"
+            error={errors.confirmPassword?.message}
+            {...register('confirmPassword')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
+          isLoading={isSubmitting}
+        >
           Create account
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      {/* Login link */}
+      <p className="mt-8 text-center text-gray-500">
         Already have an account?{' '}
-        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+        <Link
+          to="/login"
+          className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+        >
           Sign in
         </Link>
       </p>

@@ -16,3 +16,10 @@ export { CachedImage } from './CachedImage';
 export { SkeletonLoader } from './SkeletonLoader';
 export { SwipeableRow } from './SwipeableRow';
 export { LongPressMenu } from './LongPressMenu';
+
+// New UI components
+export { BottomSheet } from './BottomSheet';
+export type { BottomSheetProps } from './BottomSheet';
+
+export { Breadcrumb } from './Breadcrumb';
+export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb';

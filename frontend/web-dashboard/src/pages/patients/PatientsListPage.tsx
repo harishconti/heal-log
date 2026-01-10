@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Star, ChevronLeft, ChevronRight, Users } from 'lucide-react';
-import { Card, Button, Input, Badge, Spinner } from '../../components/ui';
+import { Card, Button, Input, Badge, SkeletonTable, EmptyState, TruncatedText } from '../../components/ui';
 import { usePatients } from '../../hooks';
 import { patientsApi } from '../../api/patients';
 
@@ -133,37 +133,43 @@ export function PatientsListPage() {
       </Card>
 
       {/* Patients List */}
-      <Card padding="none">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <Spinner size="lg" />
-            <p className="text-sm text-gray-500">Loading patients...</p>
-          </div>
-        ) : patients.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              {filters.search || filters.group ? (
-                <Search className="h-7 w-7 text-gray-400" />
-              ) : (
-                <Users className="h-7 w-7 text-gray-400" />
-              )}
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No patients found</h3>
-            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-              {filters.search || filters.group
+      {isLoading ? (
+        <SkeletonTable rows={8} columns={5} />
+      ) : patients.length === 0 ? (
+        <Card padding="none">
+          <EmptyState
+            icon={filters.search || filters.group ? Search : Users}
+            title="No patients found"
+            description={
+              filters.search || filters.group
                 ? 'Try adjusting your search or filter criteria'
-                : 'Get started by adding your first patient'}
-            </p>
-            {!filters.search && !filters.group && (
-              <Link to="/patients/new">
-                <Button>
-                  <Plus className="h-4 w-4" />
-                  Add Patient
-                </Button>
-              </Link>
-            )}
-          </div>
-        ) : (
+                : 'Get started by adding your first patient to the system'
+            }
+            action={
+              !filters.search && !filters.group
+                ? {
+                    label: 'Add Patient',
+                    onClick: () => window.location.href = '/patients/new',
+                    icon: Plus,
+                  }
+                : undefined
+            }
+            secondaryAction={
+              filters.search || filters.group
+                ? {
+                    label: 'Clear filters',
+                    onClick: () => {
+                      setSearchInput('');
+                      updateFilters({ search: undefined, group: undefined });
+                      setSearchParams(new URLSearchParams());
+                    },
+                  }
+                : undefined
+            }
+          />
+        </Card>
+      ) : (
+        <Card padding="none">
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -224,9 +230,15 @@ export function PatientsListPage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-600 max-w-xs truncate">
-                          {patient.initial_complaint || '-'}
-                        </p>
+                        {patient.initial_complaint ? (
+                          <TruncatedText
+                            text={patient.initial_complaint}
+                            maxWidth={200}
+                            className="text-sm text-gray-600"
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-3">
@@ -282,8 +294,8 @@ export function PatientsListPage() {
               </div>
             )}
           </>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

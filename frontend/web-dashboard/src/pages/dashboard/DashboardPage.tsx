@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Star, FolderOpen, FileText, TrendingUp, ArrowRight, Plus, User, Sparkles, AlertCircle } from 'lucide-react';
-import { Card, CardHeader, Spinner, Button } from '../../components/ui';
+import { Card, CardHeader, Button, SkeletonStats, SkeletonChart, SkeletonCard, EmptyState } from '../../components/ui';
 import { LineChart } from '../../components/charts';
 import { patientsApi } from '../../api/patients';
 import { analyticsApi } from '../../api/analytics';
@@ -72,9 +72,22 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Spinner size="lg" />
-        <p className="text-sm text-gray-500">Loading dashboard...</p>
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-gray-200 rounded-lg animate-pulse" />
+            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse" />
+        </div>
+        {/* Stats Skeleton */}
+        <SkeletonStats />
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonCard />
+        </div>
       </div>
     );
   }
@@ -227,18 +240,17 @@ export function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10">
-              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="h-7 w-7 text-gray-400" />
-              </div>
-              <p className="text-gray-500 mb-3">No patients yet</p>
-              <Link
-                to="/patients/new"
-                className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-              >
-                Add your first patient
-              </Link>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No patients yet"
+              description="Get started by adding your first patient to the system."
+              action={{
+                label: 'Add Patient',
+                onClick: () => window.location.href = '/patients/new',
+                icon: Plus,
+              }}
+              size="sm"
+            />
           )}
         </Card>
       </div>

@@ -14,7 +14,7 @@ import {
   ProfilePage,
   UpgradePage,
 } from './pages';
-import { LoadingPage } from './components/ui';
+import { LoadingPage, ToastProvider, BackToTop } from './components/ui';
 import { useAuthStore } from './store';
 import { authApi } from './api';
 
@@ -126,47 +126,50 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <AppInitializer>
-          <Routes>
-          {/* Public Routes */}
-          <Route
-            element={
-              <PublicRoute>
-                <AuthLayout />
-              </PublicRoute>
-            }
-          >
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-otp" element={<VerifyOtpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          </Route>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppInitializer>
+            <Routes>
+              {/* Public Routes */}
+              <Route
+                element={
+                  <PublicRoute>
+                    <AuthLayout />
+                  </PublicRoute>
+                }
+              >
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-otp" element={<VerifyOtpPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              </Route>
 
-          {/* Protected Routes */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/patients" element={<PatientsListPage />} />
-            <Route path="/patients/new" element={<PatientFormPage />} />
-            <Route path="/patients/:id" element={<PatientDetailPage />} />
-            <Route path="/patients/:id/edit" element={<PatientFormPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/upgrade" element={<UpgradePage />} />
-          </Route>
+              {/* Protected Routes */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/patients" element={<PatientsListPage />} />
+                <Route path="/patients/new" element={<PatientFormPage />} />
+                <Route path="/patients/:id" element={<PatientDetailPage />} />
+                <Route path="/patients/:id/edit" element={<PatientFormPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/upgrade" element={<UpgradePage />} />
+              </Route>
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-        </AppInitializer>
-      </BrowserRouter>
+              {/* Default redirect */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+            <BackToTop />
+          </AppInitializer>
+        </BrowserRouter>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

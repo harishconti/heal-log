@@ -1,8 +1,8 @@
 {
-    "version": "1.0.9",
-    "build_date": "2026-01-09T00:00:00Z",
-    "commit": "update-documentation",
-    "release_notes": "Documentation update with version consistency, Google Contacts sync integration, and web dashboard improvements.",
+    "version": "1.1.4",
+    "build_date": "2026-01-10T00:00:00Z",
+    "commit": "fix-version-bump",
+    "release_notes": "Fixed version bump workflow to commit all version files and synchronized versions across the codebase.",
     "features": [
         "Authentication (login, register, token refresh)",
         "Email OTP verification for new registrations",

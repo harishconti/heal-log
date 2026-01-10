@@ -70,7 +70,7 @@ export function PatientsListPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -86,7 +86,7 @@ export function PatientsListPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <form onSubmit={handleSearch} className="flex-1 flex gap-3">
             <div className="relative flex-1">
@@ -115,13 +115,12 @@ export function PatientsListPage() {
               value={filters.group || ''}
               onChange={(e) => handleGroupFilter(e.target.value || null)}
               disabled={isLoadingGroups}
-              className={`block rounded-xl border px-4 py-3 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 min-w-[160px] ${
-                groupsError
+              className={`block rounded-xl border px-4 py-3 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 min-w-[160px] ${groupsError
                   ? 'border-red-300 bg-red-50 text-red-700'
                   : isLoadingGroups
-                  ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-wait'
-                  : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
-              }`}
+                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-wait'
+                    : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                }`}
               title={groupsError || undefined}
             >
               <option value="">
@@ -153,22 +152,22 @@ export function PatientsListPage() {
             action={
               !filters.search && !filters.group
                 ? {
-                    label: 'Add Patient',
-                    onClick: () => window.location.href = '/patients/new',
-                    icon: Plus,
-                  }
+                  label: 'Add Patient',
+                  onClick: () => window.location.href = '/patients/new',
+                  icon: Plus,
+                }
                 : undefined
             }
             secondaryAction={
               filters.search || filters.group
                 ? {
-                    label: 'Clear filters',
-                    onClick: () => {
-                      setSearchInput('');
-                      updateFilters({ search: undefined, group: undefined });
-                      setSearchParams(new URLSearchParams());
-                    },
-                  }
+                  label: 'Clear filters',
+                  onClick: () => {
+                    setSearchInput('');
+                    updateFilters({ search: undefined, group: undefined });
+                    setSearchParams(new URLSearchParams());
+                  },
+                }
                 : undefined
             }
           />
@@ -309,11 +308,10 @@ export function PatientsListPage() {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
-                          pagination.page === pageNum
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${pagination.page === pageNum
                             ? 'bg-primary-600 text-white shadow-sm'
                             : 'text-gray-600 hover:bg-gray-100'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>

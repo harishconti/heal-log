@@ -116,7 +116,7 @@ export function ProfilePage() {
   const isPro = user?.plan === 'pro';
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
@@ -365,14 +365,12 @@ export function ProfilePage() {
               {passwordRequirements.map((req, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-1.5 text-xs ${
-                    req.regex.test(newPassword) ? 'text-emerald-600' : 'text-gray-400'
-                  }`}
+                  className={`flex items-center gap-1.5 text-xs ${req.regex.test(newPassword) ? 'text-emerald-600' : 'text-gray-400'
+                    }`}
                 >
                   <CheckCircle2
-                    className={`h-3.5 w-3.5 ${
-                      req.regex.test(newPassword) ? 'text-emerald-500' : 'text-gray-300'
-                    }`}
+                    className={`h-3.5 w-3.5 ${req.regex.test(newPassword) ? 'text-emerald-500' : 'text-gray-300'
+                      }`}
                   />
                   {req.label}
                 </div>

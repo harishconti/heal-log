@@ -24,7 +24,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.heallog.app",
-      "versionCode": 25,
+      "versionCode": 26,
       "edgeToEdgeEnabled": true
     },
     "androidStatusBar": {

@@ -300,7 +300,7 @@ export default function AddPatientScreen() {
                 <Text style={styles.inputLabel}>Year of Birth</Text>
                 <View style={styles.pickerButton}>
                   <TextInput
-                    style={[styles.pickerText, { flex: 1 }]}
+                    style={[styles.pickerText, { flex: 1, color: theme.colors.text }]}
                     placeholder="YYYY"
                     placeholderTextColor={theme.colors.textSecondary}
                     value={yearOfBirth?.toString() || ''}

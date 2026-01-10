@@ -84,6 +84,9 @@ function Index({ patients, groups, totalPatientCount }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Optimistic favorite state for instant UI feedback
+  const [optimisticFavorites, setOptimisticFavorites] = useState<Record<string, boolean>>({});
+
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
       Haptics.impactAsync(style);
@@ -158,15 +161,37 @@ function Index({ patients, groups, totalPatientCount }) {
   const handleToggleFavorite = async (patient: Patient) => {
     // Trigger haptic immediately for responsive feedback
     triggerHaptic();
+
+    // Optimistic update - update UI immediately
+    const newFavoriteState = !patient.isFavorite;
+    setOptimisticFavorites(prev => ({
+      ...prev,
+      [patient.id]: newFavoriteState
+    }));
+
     try {
+      // Update database in background
       await database.write(async () => {
         await patient.update(p => {
-          p.isFavorite = !p.isFavorite;
+          p.isFavorite = newFavoriteState;
         });
       });
       // Trigger immediate sync after favorite toggle
       triggerChangeBasedSync();
+
+      // Clear optimistic state after successful DB update
+      setOptimisticFavorites(prev => {
+        const newState = { ...prev };
+        delete newState[patient.id];
+        return newState;
+      });
     } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticFavorites(prev => {
+        const newState = { ...prev };
+        delete newState[patient.id];
+        return newState;
+      });
       Alert.alert('Update Failed', 'Failed to update favorite status.');
       console.error('Failed to update favorite status:', error);
     }
@@ -255,87 +280,92 @@ function Index({ patients, groups, totalPatientCount }) {
     router.push('/add-patient');
   };
 
-  const renderPatientCard = ({ item }: { item: Patient }) => (
-    <SwipeableRow
-      rightActions={[
-        {
-          icon: 'trash-outline',
-          color: theme.colors.surface,
-          backgroundColor: theme.colors.error,
-          onPress: () => handleDeletePatient(item),
-          label: 'Delete',
-        },
-      ]}
-      leftActions={[
-        {
-          icon: item.isFavorite ? 'heart-dislike' : 'heart',
-          color: theme.colors.surface,
-          backgroundColor: item.isFavorite ? theme.colors.textSecondary : theme.colors.error,
-          onPress: () => handleToggleFavorite(item),
-          label: item.isFavorite ? 'Unfavorite' : 'Favorite',
-        },
-        {
-          icon: 'create-outline',
-          color: theme.colors.surface,
-          backgroundColor: theme.colors.primary,
-          onPress: () => router.push(`/edit-patient/${item.id}`),
-          label: 'Edit',
-        },
-      ]}
-    >
-      <LongPressMenu
-        options={getPatientMenuOptions(item)}
-        onPress={() => router.push(`/patient/${item.id}`)}
+  const renderPatientCard = ({ item }: { item: Patient }) => {
+    // Use optimistic state if available, otherwise use actual DB state
+    const isFavorite = optimisticFavorites[item.id] ?? item.isFavorite;
+
+    return (
+      <SwipeableRow
+        rightActions={[
+          {
+            icon: 'trash-outline',
+            color: theme.colors.surface,
+            backgroundColor: theme.colors.error,
+            onPress: () => handleDeletePatient(item),
+            label: 'Delete',
+          },
+        ]}
+        leftActions={[
+          {
+            icon: isFavorite ? 'heart-dislike' : 'heart',
+            color: theme.colors.surface,
+            backgroundColor: isFavorite ? theme.colors.textSecondary : theme.colors.error,
+            onPress: () => handleToggleFavorite(item),
+            label: isFavorite ? 'Unfavorite' : 'Favorite',
+          },
+          {
+            icon: 'create-outline',
+            color: theme.colors.surface,
+            backgroundColor: theme.colors.primary,
+            onPress: () => router.push(`/edit-patient/${item.id}`),
+            label: 'Edit',
+          },
+        ]}
       >
-        <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.cardContent}>
-            <View style={styles.patientInfo}>
-              <CachedImage
-                base64={item.photo}
-                cacheKey={`patient-${item.id}`}
-                size={50}
-                containerStyle={styles.patientPhoto}
-                placeholderColor={theme.colors.background}
-                placeholderIconColor={theme.colors.textSecondary}
-              />
-              <View style={styles.patientDetails}>
-                <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-                <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                {item.initialComplaint ? (
-                  <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                    {item.initialComplaint}
-                  </Text>
+        <LongPressMenu
+          options={getPatientMenuOptions(item)}
+          onPress={() => router.push(`/patient/${item.id}`)}
+        >
+          <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.cardContent}>
+              <View style={styles.patientInfo}>
+                <CachedImage
+                  base64={item.photo}
+                  cacheKey={`patient-${item.id}`}
+                  size={50}
+                  containerStyle={styles.patientPhoto}
+                  placeholderColor={theme.colors.background}
+                  placeholderIconColor={theme.colors.textSecondary}
+                />
+                <View style={styles.patientDetails}>
+                  <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
+                  {item.initialComplaint ? (
+                    <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                      {item.initialComplaint}
+                    </Text>
+                  ) : null}
+                </View>
+                {item.phone ? (
+                  <TouchableOpacity
+                    style={[styles.callButton, { backgroundColor: theme.colors.success }]}
+                    onPress={() => handleCallPatient(item)}
+                  >
+                    <Ionicons name="call" size={18} color="#fff" />
+                  </TouchableOpacity>
                 ) : null}
               </View>
-              {item.phone ? (
+              <View style={styles.cardActions}>
                 <TouchableOpacity
-                  style={[styles.callButton, { backgroundColor: theme.colors.success }]}
-                  onPress={() => handleCallPatient(item)}
+                  onPress={() => handleToggleFavorite(item)}
+                  style={styles.favoriteButton}
                 >
-                  <Ionicons name="call" size={18} color="#fff" />
+                  <Ionicons
+                    name={isFavorite ? 'heart' : 'heart-outline'}
+                    size={20}
+                    color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
+                  />
                 </TouchableOpacity>
-              ) : null}
-            </View>
-            <View style={styles.cardActions}>
-              <TouchableOpacity
-                onPress={() => handleToggleFavorite(item)}
-                style={styles.favoriteButton}
-              >
-                <Ionicons
-                  name={item.isFavorite ? 'heart' : 'heart-outline'}
-                  size={20}
-                  color={item.isFavorite ? theme.colors.error : theme.colors.textSecondary}
-                />
-              </TouchableOpacity>
-              <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
-                <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+                <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
+                  <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </LongPressMenu>
-    </SwipeableRow>
-  );
+        </LongPressMenu>
+      </SwipeableRow>
+    );
+  };
 
   const filterButtons = useMemo(() => {
     const buttons = [

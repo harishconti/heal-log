@@ -443,6 +443,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },

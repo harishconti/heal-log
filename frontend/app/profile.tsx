@@ -21,9 +21,10 @@ import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import api from '@/services/api';
-import { triggerChangeBasedSync } from '@/services/backgroundSync';
+import { triggerChangeBasedSync, triggerBackgroundSync } from '@/services/backgroundSync';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
+import appJson from '@/app.json';
 
 interface SubscriptionInfo {
   plan: string;
@@ -219,8 +220,8 @@ export default function ProfileScreen() {
 
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
 
-      // Trigger immediate sync after profile update
-      triggerChangeBasedSync();
+      // Trigger immediate sync after profile update (forced sync, bypasses settings)
+      await triggerBackgroundSync();
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
       console.error('Error saving profile photo:', error);
@@ -245,8 +246,8 @@ export default function ProfileScreen() {
 
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
 
-      // Trigger immediate sync after profile update
-      triggerChangeBasedSync();
+      // Trigger immediate sync after profile update (forced sync, bypasses settings)
+      await triggerBackgroundSync();
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
       console.error('Error removing profile photo:', error);
@@ -544,7 +545,7 @@ export default function ProfileScreen() {
         </Card>
 
         {/* App Version */}
-        <Text style={styles.versionText}>HEAL LOG v1.0.9</Text>
+        <Text style={styles.versionText}>HEAL LOG v{appJson.expo.version}</Text>
       </ScrollView>
     </SafeAreaView>
   );

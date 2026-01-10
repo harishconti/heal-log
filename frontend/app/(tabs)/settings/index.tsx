@@ -12,6 +12,7 @@ import {
 } from '@/services/biometricAuth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/Card';
+import appJson from '@/app.json';
 
 const SettingsScreen = () => {
     const { theme, fontScale } = useTheme();
@@ -309,7 +310,7 @@ const SettingsScreen = () => {
                 </Card>
 
                 {/* Version */}
-                <Text style={styles.versionText}>HEAL LOG v1.0.9</Text>
+                <Text style={styles.versionText}>HEAL LOG v{appJson.expo.version}</Text>
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -329,6 +330,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
         backgroundColor: theme.colors.surface,
         paddingHorizontal: 16,
         paddingVertical: 12,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 12,
         borderBottomWidth: 1,
         borderBottomColor: theme.colors.border,
     },

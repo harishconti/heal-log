@@ -297,31 +297,14 @@ export default function AddPatientScreen() {
 
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
-                <Text style={styles.inputLabel}>Year of Birth</Text>
-                <View style={styles.pickerButton}>
-                  <TextInput
-                    style={[styles.pickerText, { flex: 1, color: theme.colors.text }]}
-                    placeholder="YYYY"
-                    placeholderTextColor={theme.colors.textSecondary}
-                    value={yearOfBirth?.toString() || ''}
-                    onChangeText={(text) => {
-                      if (!text) {
-                        setValue('year_of_birth', null);
-                      } else {
-                        // Only allow numeric input
-                        const numericText = text.replace(/[^0-9]/g, '');
-                        if (numericText.length <= 4) {
-                          const year = parseInt(numericText, 10);
-                          if (!isNaN(year)) {
-                            setValue('year_of_birth', year);
-                          }
-                        }
-                      }
-                    }}
-                    keyboardType="number-pad"
-                    maxLength={4}
-                  />
-                </View>
+                <ControlledInput
+                  control={control}
+                  name="year_of_birth"
+                  label="Year of Birth"
+                  placeholder="YYYY"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputLabel}>Gender</Text>

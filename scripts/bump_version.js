@@ -8,6 +8,7 @@
  * It also synchronizes the version to:
  * - frontend/app.json (and increments android.versionCode)
  * - frontend/package.json
+ * - backend/VERSION.json
  * - README.md
  */
 
@@ -18,6 +19,7 @@ const versionFilePath = path.join(__dirname, '../VERSION');
 const readmePath = path.join(__dirname, '../README.md');
 const appJsonPath = path.join(__dirname, '../frontend/app.json');
 const packageJsonPath = path.join(__dirname, '../frontend/package.json');
+const backendVersionPath = path.join(__dirname, '../backend/VERSION.json');
 
 function bumpVersion() {
     // Read current version from VERSION file
@@ -95,6 +97,21 @@ function bumpVersion() {
         }
     } catch (err) {
         console.error(`Error updating frontend/package.json: ${err.message}`);
+    }
+
+    // Update backend/VERSION.json
+    try {
+        if (fs.existsSync(backendVersionPath)) {
+            const versionJson = JSON.parse(fs.readFileSync(backendVersionPath, 'utf8'));
+            versionJson.version = newVersion;
+            versionJson.build_date = new Date().toISOString().split('T')[0] + 'T00:00:00Z';
+            fs.writeFileSync(backendVersionPath, JSON.stringify(versionJson, null, 4) + '\n');
+            console.log(`Updated backend/VERSION.json to version: ${newVersion}`);
+        } else {
+            console.log('backend/VERSION.json not found, skipping...');
+        }
+    } catch (err) {
+        console.error(`Error updating backend/VERSION.json: ${err.message}`);
     }
 
     console.log(`\n✓ Successfully bumped version to: ${newVersion}`);

@@ -5,15 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   Alert,
-  Image,
   RefreshControl,
   Platform,
   ActivityIndicator,
   LogBox,
   StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Constants for pagination
 const PATIENTS_PAGE_SIZE = 50;
@@ -51,8 +50,9 @@ function Index({ patients, groups, totalPatientCount }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { theme, fontScale } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  const styles = createStyles(theme, fontScale);
+  const styles = useMemo(() => createStyles(theme, fontScale, insets), [theme, fontScale, insets]);
 
   const {
     searchQuery,
@@ -318,47 +318,66 @@ function Index({ patients, groups, totalPatientCount }) {
         >
           <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.cardContent}>
-              <View style={styles.patientInfo}>
+              <View style={styles.patientInfoHeader}>
                 <CachedImage
                   base64={item.photo}
                   cacheKey={`patient-${item.id}`}
-                  size={50}
+                  size={56}
                   containerStyle={styles.patientPhoto}
-                  placeholderColor={theme.colors.background}
-                  placeholderIconColor={theme.colors.textSecondary}
+                  placeholderColor={theme.colors.surfaceHighlight}
+                  placeholderIconColor={theme.colors.secondary}
                 />
                 <View style={styles.patientDetails}>
-                  <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                  {item.initialComplaint ? (
-                    <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                      {item.initialComplaint}
-                    </Text>
-                  ) : null}
+                   <View style={styles.nameRow}>
+                    <Text style={[styles.patientName, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</Text>
+                    {isFavorite && (
+                      <Ionicons name="heart" size={16} color={theme.colors.error} style={{marginLeft: 4}} />
+                    )}
+                   </View>
+                  <Text style={[styles.patientId, { color: theme.colors.secondary }]}>ID: {item.patientId}</Text>
                 </View>
-                {item.phone ? (
+                <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
+                   <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+                </View>
+              </View>
+
+              {item.initialComplaint ? (
+                <View style={[styles.complaintContainer, { backgroundColor: theme.colors.background }]}>
+                  <Text style={[styles.complaintLabel, { color: theme.colors.secondary }]}>Chief Complaint:</Text>
+                  <Text style={[styles.complaint, { color: theme.colors.text }]} numberOfLines={2}>
+                    {item.initialComplaint}
+                  </Text>
+                </View>
+              ) : null}
+
+              <View style={styles.cardFooter}>
+                 <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: theme.colors.surfaceHighlight }]}
+                    onPress={() => handleToggleFavorite(item)}
+                 >
+                    <Ionicons
+                      name={isFavorite ? 'heart' : 'heart-outline'}
+                      size={20}
+                      color={isFavorite ? theme.colors.error : theme.colors.secondary}
+                    />
+                 </TouchableOpacity>
+
+                 {item.phone && (
                   <TouchableOpacity
-                    style={[styles.callButton, { backgroundColor: theme.colors.success }]}
+                    style={[styles.actionButton, { backgroundColor: theme.colors.surfaceHighlight }]}
                     onPress={() => handleCallPatient(item)}
                   >
-                    <Ionicons name="call" size={18} color="#fff" />
+                    <Ionicons name="call-outline" size={20} color={theme.colors.success} />
                   </TouchableOpacity>
-                ) : null}
-              </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  onPress={() => handleToggleFavorite(item)}
-                  style={styles.favoriteButton}
-                >
-                  <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={20}
-                    color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
-                  <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
-                </View>
+                 )}
+
+                 <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: theme.colors.surfaceHighlight, marginLeft: 'auto' }]}
+                    onPress={() => router.push(`/patient/${item.id}`)}
+                 >
+                    <Text style={[styles.viewDetailsText, { color: theme.colors.primary }]}>View</Text>
+                    <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
+                 </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -495,14 +514,14 @@ function Index({ patients, groups, totalPatientCount }) {
 
   if (authLoading || loading.patients) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
             {authLoading ? 'Loading...' : 'Loading patients...'}
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -511,86 +530,93 @@ function Index({ patients, groups, totalPatientCount }) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header, Offline Banner, Search, Filters */}
-      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>HEAL LOG</Text>
-          <Text style={styles.headerSubtitle}>Welcome, {user?.full_name?.split(' ')[0]}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
-            <Ionicons name={refreshing || loading.sync ? "sync-circle" : isOffline ? "cloud-offline" : "cloud-done"} size={24} color={isOffline ? theme.colors.warning : theme.colors.surface} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={navigateToProfile}>
-            <Ionicons name="person-circle-outline" size={24} color={theme.colors.surface} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={addNewPatient}>
-            <Ionicons name="add" size={24} color={theme.colors.surface} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
-        <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Search by name, ID, phone..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={theme.colors.textSecondary}
-        />
-        <TouchableOpacity
-          style={styles.advancedSearchButton}
-          onPress={() => {
-            triggerHaptic();
-            setShowAdvancedSearch(true);
-          }}
-        >
-          <Ionicons
-            name="options"
-            size={20}
-            color={activeAdvancedFilterCount > 0 ? theme.colors.primary : theme.colors.textSecondary}
-          />
-          {activeAdvancedFilterCount > 0 && (
-            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
-              <Text style={styles.filterBadgeText}>{activeAdvancedFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View>
-        <FlashList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filterButtons}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              key={item.filter}
-              style={[styles.filterButton, { backgroundColor: selectedFilter === item.filter ? theme.colors.primary : theme.colors.surface }]}
-              onPress={() => {
-                triggerHaptic();
-                setSelectedFilter(item.filter);
-              }}
-            >
-              <Text style={[styles.filterText, { color: selectedFilter === item.filter ? theme.colors.surface : theme.colors.textSecondary }]}>
-                {item.label}
-              </Text>
+      <View style={[styles.headerContainer, { backgroundColor: theme.colors.surface }]}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>HealLog</Text>
+            <Text style={styles.headerSubtitle}>
+               Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.full_name?.split(' ')[0]}
+            </Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
+              <Ionicons name={refreshing || loading.sync ? "sync-circle" : isOffline ? "cloud-offline" : "cloud-done"} size={24} color={isOffline ? theme.colors.warning : theme.colors.textSecondary} />
             </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.filter}
-          contentContainerStyle={styles.filtersContainer}
-          estimatedItemSize={100}
-        />
+            <TouchableOpacity style={styles.headerButton} onPress={navigateToProfile}>
+              <Ionicons name="person-circle-outline" size={24} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={[styles.searchContainer, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
+          <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search patients..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          <TouchableOpacity
+            style={styles.advancedSearchButton}
+            onPress={() => {
+              triggerHaptic();
+              setShowAdvancedSearch(true);
+            }}
+          >
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={activeAdvancedFilterCount > 0 ? theme.colors.primary : theme.colors.textSecondary}
+            />
+            {activeAdvancedFilterCount > 0 && (
+              <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
+                <Text style={styles.filterBadgeText}>{activeAdvancedFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View>
+          <FlashList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={filterButtons}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                key={item.filter}
+                style={[
+                  styles.filterButton,
+                  {
+                    backgroundColor: selectedFilter === item.filter ? theme.colors.primary : theme.colors.background,
+                    borderColor: selectedFilter === item.filter ? theme.colors.primary : theme.colors.border
+                  }
+                ]}
+                onPress={() => {
+                  triggerHaptic();
+                  setSelectedFilter(item.filter);
+                }}
+              >
+                <Text style={[styles.filterText, { color: selectedFilter === item.filter ? '#FFFFFF' : theme.colors.textSecondary }]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.filter}
+            contentContainerStyle={styles.filtersContainer}
+            estimatedItemSize={100}
+          />
+        </View>
       </View>
 
       <FlashList
         data={visiblePatients}
         renderItem={renderPatientCard}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.patientsList}
-        estimatedItemSize={150}
+        contentContainerStyle={[styles.patientsList, { paddingBottom: insets.bottom + 80 }]}
+        estimatedItemSize={180}
         onEndReached={loadMorePatients}
         onEndReachedThreshold={0.3}
         refreshControl={
@@ -616,42 +642,29 @@ function Index({ patients, groups, totalPatientCount }) {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
+             <View style={[styles.emptyStateIconContainer, { backgroundColor: theme.colors.primaryMuted }]}>
+               <Ionicons name="people" size={32} color={theme.colors.primary} />
+             </View>
             <Text style={[styles.emptyStateText, { color: theme.colors.text }]}>No patients found</Text>
             <Text style={[styles.emptyStateSubtext, { color: theme.colors.textSecondary }]}>
-              {searchQuery ? 'Try adjusting your search' : 'Add your first patient to get started'}
+              {searchQuery ? 'Try adjusting your search filters' : 'Add your first patient to get started'}
             </Text>
+            {!searchQuery && (
+               <TouchableOpacity style={[styles.addPatientButton, { backgroundColor: theme.colors.primary }]} onPress={addNewPatient}>
+                  <Text style={styles.addPatientButtonText}>Add Patient</Text>
+               </TouchableOpacity>
+            )}
           </View>
         }
       />
 
-      <View style={[styles.statsFooter, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.statsText, { color: theme.colors.textSecondary }]}>
-          {filteredPatients.length} of {totalPatientCount} patients
-          {activeAdvancedFilterCount > 0 && ` (${activeAdvancedFilterCount} filter${activeAdvancedFilterCount > 1 ? 's' : ''})`}
-        </Text>
-        <View style={styles.syncStatusContainer}>
-          <Ionicons
-            name={isOffline ? 'cloud-offline' : 'cloud-done'}
-            size={14}
-            color={isOffline ? theme.colors.warning : theme.colors.success}
-            style={styles.syncIcon}
-          />
-          <Text style={[styles.syncTimeText, { color: isOffline ? theme.colors.warning : theme.colors.textSecondary }]}>
-            {isOffline
-              ? 'Offline - Changes saved locally'
-              : lastSyncTime
-                ? `Synced ${new Date(lastSyncTime).toLocaleTimeString()}`
-                : 'Not synced yet'
-            }
-          </Text>
-        </View>
-        {user?.plan && (
-          <Text style={[styles.planText, { color: theme.colors.primary }]}>
-            {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
-          </Text>
-        )}
-      </View>
+      {/* Floating Add Button */}
+      <TouchableOpacity
+         style={[styles.fab, { backgroundColor: theme.colors.primary, bottom: insets.bottom + 24 }]}
+         onPress={addNewPatient}
+      >
+         <Ionicons name="add" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
 
       {/* Advanced Search Panel */}
       <AdvancedSearchPanel
@@ -661,7 +674,7 @@ function Index({ patients, groups, totalPatientCount }) {
         onFiltersChange={setAdvancedFilters}
         groups={groups || []}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -701,7 +714,7 @@ const enhance = withObservables([], () => {
 export default enhance(Index);
 
 
-const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number, insets: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -711,235 +724,245 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16 * fontScale,
-    marginTop: 16,
+    fontSize: theme.typography.sizes.md * fontScale,
+    marginTop: theme.spacing.md,
+  },
+  headerContainer: {
+    paddingTop: insets.top,
+    paddingBottom: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    ...theme.shadows.sm,
+    zIndex: 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
   },
   headerLeft: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 22 * fontScale,
-    fontWeight: 'bold',
-    color: theme.colors.surface,
+    fontSize: theme.typography.sizes.xl * fontScale,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14 * fontScale,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.sizes.sm * fontScale,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 8,
+    gap: theme.spacing.sm,
     alignItems: 'center',
   },
   headerButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  offlineBanner: {
-    backgroundColor: theme.colors.warning,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  offlineText: {
-    color: theme.colors.surface,
-    fontSize: 14 * fontScale,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    height: 48,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: theme.spacing.sm,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 12,
-    fontSize: 16 * fontScale,
+    fontSize: theme.typography.sizes.md * fontScale,
   },
   advancedSearchButton: {
-    padding: 8,
+    padding: theme.spacing.xs,
     position: 'relative',
   },
   filterBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: 0,
+    right: 0,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
   },
   filterBadgeText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#fff',
   },
   filtersContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.full,
+    marginRight: theme.spacing.xs,
+    borderWidth: 1,
   },
   filterText: {
-    fontSize: 14 * fontScale,
-    fontWeight: '600',
-  },
-  syncStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  syncIcon: {
-    marginRight: 4,
-  },
-  syncTimeText: {
-    fontSize: 12 * fontScale,
+    fontSize: theme.typography.sizes.sm * fontScale,
+    fontWeight: theme.typography.weights.medium,
   },
   patientsList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
   },
   patientCard: {
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
   },
   cardContent: {
-    padding: 16,
+    padding: theme.spacing.lg,
   },
-  patientInfo: {
+  patientInfoHeader: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
+    alignItems: 'flex-start',
   },
   patientPhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  patientPhotoPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: theme.spacing.md,
+    borderWidth: 2,
+    borderColor: theme.colors.surfaceHighlight,
   },
   patientDetails: {
     flex: 1,
+    justifyContent: 'center',
   },
-  patientName: {
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  patientId: {
-    fontSize: 14 * fontScale,
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 2,
   },
-  patientContact: {
-    fontSize: 14 * fontScale,
-    marginBottom: 4,
+  patientName: {
+    fontSize: theme.typography.sizes.lg * fontScale,
+    fontWeight: theme.typography.weights.semibold,
+    marginRight: 4,
+  },
+  patientId: {
+    fontSize: theme.typography.sizes.xs * fontScale,
+    fontWeight: theme.typography.weights.medium,
+    letterSpacing: 0.5,
+  },
+  complaintContainer: {
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  complaintLabel: {
+    fontSize: theme.typography.sizes.xs * fontScale,
+    marginBottom: 2,
+    fontWeight: theme.typography.weights.medium,
+    textTransform: 'uppercase',
   },
   complaint: {
-    fontSize: 14 * fontScale,
-    fontStyle: 'italic',
+    fontSize: theme.typography.sizes.sm * fontScale,
+    lineHeight: 20,
   },
-  cardActions: {
+  cardFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.spacing.sm,
   },
-  favoriteButton: {
-    padding: 4,
-  },
-  callButton: {
+  actionButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+  },
+  viewDetailsText: {
+     fontSize: theme.typography.sizes.sm * fontScale,
+     fontWeight: theme.typography.weights.semibold,
+     marginRight: 2,
   },
   groupBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
   },
   groupText: {
-    fontSize: 12 * fontScale,
-    fontWeight: '500',
+    fontSize: 10 * fontScale,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 48,
+    paddingVertical: theme.spacing.xxl,
+  },
+  emptyStateIconContainer: {
+     width: 80,
+     height: 80,
+     borderRadius: 40,
+     justifyContent: 'center',
+     alignItems: 'center',
+     marginBottom: theme.spacing.lg,
   },
   emptyStateText: {
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: theme.typography.sizes.lg * fontScale,
+    fontWeight: theme.typography.weights.semibold,
+    marginBottom: theme.spacing.xs,
   },
   emptyStateSubtext: {
-    fontSize: 14 * fontScale,
+    fontSize: theme.typography.sizes.sm * fontScale,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.spacing.xl,
+    lineHeight: 20,
+    marginBottom: theme.spacing.lg,
+  },
+  addPatientButton: {
+     paddingHorizontal: theme.spacing.xl,
+     paddingVertical: theme.spacing.md,
+     borderRadius: theme.borderRadius.full,
+  },
+  addPatientButtonText: {
+     color: '#FFFFFF',
+     fontWeight: theme.typography.weights.semibold,
+     fontSize: theme.typography.sizes.md,
   },
   loadMoreContainer: {
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
   },
   loadMoreText: {
-    fontSize: 12 * fontScale,
+    fontSize: theme.typography.sizes.xs * fontScale,
   },
-  statsFooter: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statsText: {
-    fontSize: 14 * fontScale,
-  },
-  planText: {
-    fontSize: 12 * fontScale,
-    fontWeight: '500',
-  },
+  fab: {
+     position: 'absolute',
+     right: 20,
+     width: 56,
+     height: 56,
+     borderRadius: 28,
+     justifyContent: 'center',
+     alignItems: 'center',
+     ...theme.shadows.lg,
+  }
 });
-

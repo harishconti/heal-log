@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Appearance, ColorSchemeName } from 'react-native';
+import { Appearance, ColorSchemeName, Platform } from 'react-native';
 import { useAppStore } from '@/store/useAppStore';
+import { useFonts } from 'expo-font';
 
 export interface Theme {
   colors: {
@@ -9,6 +10,7 @@ export interface Theme {
     secondary: string;
     background: string;
     surface: string;
+    surfaceHighlight: string;
     error: string;
     warning: string;
     success: string;
@@ -25,6 +27,7 @@ export interface Theme {
     md: number;
     lg: number;
     xl: number;
+    xxl: number;
   };
   typography: {
     sizes: {
@@ -34,6 +37,7 @@ export interface Theme {
       lg: number;
       xl: number;
       xxl: number;
+      xxxl: number;
     };
     weights: {
       normal: '400';
@@ -49,25 +53,31 @@ export interface Theme {
     xl: number;
     full: number;
   };
+  shadows: {
+    sm: any;
+    md: any;
+    lg: any;
+  };
 }
 
-// Healthcare-focused design system - clean, professional, trustworthy
+// Modern Healthcare Design System
 const lightTheme: Theme = {
   colors: {
-    primary: '#1A8CFF',        // Bright healthcare blue
-    primaryMuted: '#E8F4FF',   // Light blue tint for backgrounds
-    secondary: '#6B7280',      // Neutral gray
-    background: '#F0F4F8',     // Soft blue-gray background
-    surface: '#FFFFFF',        // Pure white for cards/inputs
-    error: '#EF4444',          // Red for errors
-    warning: '#F59E0B',        // Amber for warnings
-    success: '#10B981',        // Green for success states
-    text: '#111827',           // Near-black for primary text
-    textSecondary: '#6B7280',  // Medium gray for secondary text
-    border: '#E5E7EB',         // Light gray for borders
-    shadow: '#1A8CFF',         // Blue tint shadow
-    card: '#FFFFFF',           // White cards
-    notification: '#1A8CFF',   // Blue notifications
+    primary: '#2563EB',        // Modern Royal Blue
+    primaryMuted: '#EFF6FF',   // Very light blue for backgrounds
+    secondary: '#64748B',      // Slate Gray
+    background: '#F8FAFC',     // Very light slate background (cleaner than gray)
+    surface: '#FFFFFF',        // Pure white
+    surfaceHighlight: '#F1F5F9', // Light gray for pressed states
+    error: '#EF4444',          // Red
+    warning: '#F59E0B',        // Amber
+    success: '#10B981',        // Emerald Green
+    text: '#0F172A',           // Slate 900 (High contrast)
+    textSecondary: '#64748B',  // Slate 500
+    border: '#E2E8F0',         // Slate 200
+    shadow: '#64748B',         // Shadow color
+    card: '#FFFFFF',
+    notification: '#2563EB',
   },
   spacing: {
     xs: 4,
@@ -75,6 +85,7 @@ const lightTheme: Theme = {
     md: 16,
     lg: 24,
     xl: 32,
+    xxl: 48,
   },
   typography: {
     sizes: {
@@ -84,6 +95,7 @@ const lightTheme: Theme = {
       lg: 18,
       xl: 24,
       xxl: 32,
+      xxxl: 40,
     },
     weights: {
       normal: '400',
@@ -93,31 +105,90 @@ const lightTheme: Theme = {
     },
   },
   borderRadius: {
-    sm: 8,
+    sm: 6,
     md: 12,
     lg: 16,
     xl: 24,
-    full: 9999,  // For pills and fully rounded elements
+    full: 9999,
+  },
+  shadows: {
+    sm: Platform.select({
+      ios: {
+        shadowColor: '#64748B',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: { elevation: 2 },
+    }),
+    md: Platform.select({
+      ios: {
+        shadowColor: '#64748B',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: { elevation: 4 },
+    }),
+    lg: Platform.select({
+      ios: {
+        shadowColor: '#64748B',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+      },
+      android: { elevation: 8 },
+    }),
   },
 };
 
 const darkTheme: Theme = {
   ...lightTheme,
   colors: {
-    primary: '#4DA8FF',        // Lighter blue for dark mode
-    primaryMuted: '#1E3A5F',   // Dark blue tint
-    secondary: '#9CA3AF',      // Light gray
-    background: '#0F1419',     // Deep dark blue-gray
-    surface: '#1A2332',        // Elevated dark surface
-    error: '#F87171',          // Lighter red
-    warning: '#FBBF24',        // Brighter amber
-    success: '#34D399',        // Brighter green
-    text: '#F9FAFB',           // Off-white text
-    textSecondary: '#9CA3AF',  // Light gray secondary
-    border: '#2D3B4E',         // Dark blue-gray border
-    shadow: '#000000',         // Pure black shadow
-    card: '#1A2332',           // Dark card background
-    notification: '#4DA8FF',   // Light blue
+    primary: '#60A5FA',        // Lighter blue for dark mode
+    primaryMuted: '#1E293B',   // Dark Slate
+    secondary: '#94A3B8',      // Slate 400
+    background: '#0F172A',     // Slate 900
+    surface: '#1E293B',        // Slate 800
+    surfaceHighlight: '#334155', // Slate 700
+    error: '#F87171',
+    warning: '#FBBF24',
+    success: '#34D399',
+    text: '#F8FAFC',           // Slate 50
+    textSecondary: '#94A3B8',  // Slate 400
+    border: '#334155',         // Slate 700
+    shadow: '#000000',
+    card: '#1E293B',
+    notification: '#60A5FA',
+  },
+  shadows: {
+    sm: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+      },
+      android: { elevation: 2 },
+    }),
+    md: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: { elevation: 4 },
+    }),
+    lg: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.4,
+        shadowRadius: 15,
+      },
+      android: { elevation: 8 },
+    }),
   },
 };
 
@@ -143,17 +214,12 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-import { useFonts } from 'expo-font';
-
 export const useInitializeTheme = () => {
   const { settings } = useAppStore();
   const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme()
   );
 
-  // const [fontsLoaded] = useFonts({
-  //   'SpaceMono-Regular': require('@/assets/fonts/SpaceMono-Regular.ttf'),
-  // });
   const fontsLoaded = true;
 
   useEffect(() => {
@@ -199,7 +265,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const currentTheme = getEffectiveTheme() === 'dark' ? darkTheme : lightTheme;
   const isDark = getEffectiveTheme() === 'dark';
 
-  // Calculate font scale based on settings
   const getFontScale = (): number => {
     switch (settings.fontSize) {
       case 'small':
@@ -207,7 +272,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       case 'large':
         return 1.1;
       default:
-        return 1.0; // medium
+        return 1.0;
     }
   };
 

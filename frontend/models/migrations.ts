@@ -27,7 +27,7 @@ export default schemaMigrations({
         // Fix schema mismatch: align column names with backend (created_at, updated_at, user_id)
         // Drop the old table and recreate with correct columns.
         // Data will be restored from backend on next sync.
-        unsafeExecuteSql('DROP TABLE IF EXISTS clinical_notes'),
+        unsafeExecuteSql('DROP TABLE IF EXISTS clinical_notes;'),
         createTable({
           name: 'clinical_notes',
           columns: [

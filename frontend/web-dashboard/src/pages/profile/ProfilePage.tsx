@@ -4,8 +4,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Mail, Phone, Stethoscope, Calendar, Crown, Shield, Sparkles, Check, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { CardHeader, Button, Input, Badge, Modal } from '../../components/ui';
+import {
+  Stethoscope,
+  Calendar,
+  Crown,
+  Shield,
+  Sparkles,
+  Check,
+  Eye,
+  EyeOff,
+  CheckCircle2
+} from 'lucide-react';
+import { CardHeader, Button, Input, Badge, Modal, Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { userApi } from '../../api/user';
 
@@ -116,189 +126,187 @@ export function ProfilePage() {
   const isPro = user?.plan === 'pro';
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        <p className="text-gray-500 mt-1">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Profile Settings</h1>
+        <p className="text-gray-500 mt-2 font-medium">Manage your account settings and preferences</p>
       </div>
 
-      {/* Profile Overview */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center gap-5 mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/25">
-              <span className="text-white font-bold text-3xl">
-                {user?.full_name?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">{user?.full_name}</h2>
-                <Badge variant={isPro ? 'primary' : 'default'} className="font-semibold">
-                  {isPro ? 'Pro' : 'Basic'}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Profile Card */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="text-center overflow-hidden relative">
+            {/* Background decoration */}
+            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-primary-500 to-primary-600 opacity-90"></div>
+
+            <div className="relative pt-8 px-4 pb-6">
+              <div className="w-24 h-24 bg-white p-1 rounded-2xl mx-auto shadow-xl shadow-primary-900/10 mb-4">
+                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                   <span className="text-gray-600 font-bold text-4xl">
+                    {user?.full_name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold text-gray-900">{user?.full_name}</h2>
+              <p className="text-gray-500 text-sm mb-4">{user?.email}</p>
+
+              <div className="flex justify-center mb-6">
+                 <Badge variant={isPro ? 'primary' : 'default'} className="px-3 py-1 font-semibold">
+                  {isPro ? 'Pro Plan' : 'Basic Plan'}
                 </Badge>
               </div>
-              <p className="text-gray-500">{user?.email}</p>
-              {user?.medical_specialty && (
-                <p className="text-primary-600 font-medium text-sm mt-0.5">{user.medical_specialty}</p>
-              )}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Mail className="h-5 w-5 text-primary-500" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
-                <p className="text-gray-900 font-semibold">{user?.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Phone className="h-5 w-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
-                <p className="text-gray-900 font-semibold">{user?.phone || 'Not set'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Stethoscope className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Specialty</p>
-                <p className="text-gray-900 font-semibold">{user?.medical_specialty || 'Not set'}</p>
+              <div className="grid grid-cols-2 gap-3 text-left">
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Stethoscope className="w-4 h-4 text-violet-500" />
+                    <span className="text-xs font-semibold text-gray-500 uppercase">Specialty</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.medical_specialty || '-'}
+                  </p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-semibold text-gray-500 uppercase">Joined</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">
+                     {user?.created_at ? format(new Date(user.created_at), 'MMM yyyy') : '-'}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Calendar className="h-5 w-5 text-amber-500" />
+          </Card>
+
+           {/* Security Quick Link */}
+           <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <Shield className="w-24 h-24" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member since</p>
-                <p className="text-gray-900 font-semibold">
-                  {user?.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'N/A'}
+              <div className="relative z-10">
+                <h3 className="font-bold text-lg mb-2">Security</h3>
+                <p className="text-gray-300 text-sm mb-6 max-w-[200px]">
+                  Secure your account with a strong password.
                 </p>
+                <Button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-none"
+                >
+                  Change Password
+                </Button>
               </div>
-            </div>
-          </div>
+           </Card>
         </div>
-      </div>
 
-      {/* Subscription Info */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <CardHeader title="Subscription" />
-        <div className="px-6 pb-6 space-y-4">
-          <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-sm ${isPro ? 'bg-gradient-to-br from-amber-100 to-amber-200' : 'bg-gray-100'}`}>
-                <Crown className={`h-7 w-7 ${isPro ? 'text-amber-600' : 'text-gray-400'}`} />
+        {/* Right Column: Edit Form & Subscription */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Edit Profile Form */}
+          <Card>
+            <CardHeader title="Personal Information" />
+
+            {profileSuccess && (
+              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-700 flex items-center gap-3 animate-slide-up">
+                <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                </div>
+                <span className="font-medium">Profile updated successfully!</span>
               </div>
-              <div>
-                <p className="font-bold text-gray-900 text-lg">
-                  {isPro ? 'Pro Plan' : 'Basic Plan'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {isPro
-                    ? 'Full access to all features'
-                    : '90-day trial with basic features'}
-                </p>
+            )}
+
+            {profileError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 font-medium">
+                {profileError}
               </div>
-            </div>
-            <Badge variant={user?.subscription_status === 'active' ? 'success' : 'warning'} className="font-semibold">
-              {user?.subscription_status || 'trialing'}
-            </Badge>
-          </div>
+            )}
 
-          {user?.subscription_end_date && (
-            <p className="text-sm text-gray-500">
-              {isPro ? 'Renews' : 'Trial ends'} on{' '}
-              <span className="font-semibold text-gray-700">
-                {format(new Date(user.subscription_end_date), 'MMMM d, yyyy')}
-              </span>
-            </p>
-          )}
+            <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                   <Input
+                    label="Full Name"
+                    placeholder="Dr. John Smith"
+                    error={profileErrors.full_name?.message}
+                    {...registerProfile('full_name')}
+                  />
+                </div>
 
-          {!isPro && (
-            <Link to="/upgrade">
-              <Button className="w-full h-12 shadow-lg shadow-primary-500/25">
-                <Sparkles className="h-5 w-5" />
-                Upgrade to Pro - $9.99/month
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
+                <Input
+                  label="Phone Number"
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  error={profileErrors.phone?.message}
+                  {...registerProfile('phone')}
+                />
 
-      {/* Edit Profile Form */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <CardHeader title="Edit Profile" />
-
-        <div className="px-6 pb-6">
-          {profileSuccess && (
-            <div className="mb-5 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 border border-emerald-100 rounded-xl text-sm text-emerald-600 flex items-center gap-2 font-medium">
-              <Check className="h-4 w-4" />
-              Profile updated successfully!
-            </div>
-          )}
-
-          {profileError && (
-            <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
-              {profileError}
-            </div>
-          )}
-
-          <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
-            <Input
-              label="Full Name"
-              placeholder="Dr. John Smith"
-              error={profileErrors.full_name?.message}
-              {...registerProfile('full_name')}
-            />
-            <Input
-              label="Phone Number"
-              type="tel"
-              placeholder="+1 (555) 123-4567"
-              error={profileErrors.phone?.message}
-              {...registerProfile('phone')}
-            />
-            <Input
-              label="Medical Specialty"
-              placeholder="e.g., Cardiology"
-              error={profileErrors.medical_specialty?.message}
-              {...registerProfile('medical_specialty')}
-            />
-            <div className="flex justify-end pt-2">
-              <Button type="submit" isLoading={isUpdatingProfile} className="h-11 px-6">
-                Save Changes
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Security */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <CardHeader title="Security" />
-        <div className="px-6 pb-6">
-          <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Shield className="h-7 w-7 text-primary-500" />
+                <Input
+                  label="Medical Specialty"
+                  placeholder="e.g., Cardiology"
+                  error={profileErrors.medical_specialty?.message}
+                  {...registerProfile('medical_specialty')}
+                />
               </div>
-              <div>
-                <p className="font-bold text-gray-900">Password</p>
-                <p className="text-sm text-gray-500">Secure your account with a strong password</p>
+
+              <div className="flex justify-end pt-4 border-t border-gray-50">
+                <Button type="submit" isLoading={isUpdatingProfile} size="lg" className="min-w-[140px]">
+                  Save Changes
+                </Button>
               </div>
+            </form>
+          </Card>
+
+          {/* Subscription Info */}
+          <Card>
+            <CardHeader title="Subscription Plan" />
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+               <div className={`
+                 w-full sm:w-auto p-6 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center min-w-[160px]
+                 ${isPro ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100' : 'bg-gray-50 border border-gray-100'}
+               `}>
+                  <div className={`p-3 rounded-xl mb-3 ${isPro ? 'bg-amber-100' : 'bg-gray-200'}`}>
+                    <Crown className={`w-6 h-6 ${isPro ? 'text-amber-600' : 'text-gray-500'}`} />
+                  </div>
+                  <p className={`font-bold text-lg ${isPro ? 'text-amber-900' : 'text-gray-700'}`}>
+                    {isPro ? 'Pro Plan' : 'Basic Plan'}
+                  </p>
+                  <p className={`text-xs font-medium mt-1 uppercase tracking-wide ${isPro ? 'text-amber-700' : 'text-gray-500'}`}>
+                    {user?.subscription_status || 'Active'}
+                  </p>
+               </div>
+
+               <div className="flex-1 space-y-4 py-2">
+                 <div>
+                    <h4 className="font-semibold text-gray-900">
+                      {isPro ? 'You have full access' : 'Upgrade to unlock all features'}
+                    </h4>
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      {isPro
+                        ? 'Your Pro subscription gives you access to advanced analytics, unlimited patients, and priority support.'
+                        : 'Get access to advanced analytics, web dashboard, and priority support with our Pro plan.'
+                      }
+                    </p>
+                 </div>
+
+                 {user?.subscription_end_date && (
+                    <p className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      {isPro ? 'Renews' : 'Trial ends'} on {format(new Date(user.subscription_end_date), 'MMMM d, yyyy')}
+                    </p>
+                  )}
+
+                  {!isPro && (
+                    <Link to="/upgrade">
+                      <Button className="w-full sm:w-auto shadow-lg shadow-primary-500/20 mt-2">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Upgrade to Pro - $9.99/mo
+                      </Button>
+                    </Link>
+                  )}
+               </div>
             </div>
-            <Button variant="outline" onClick={() => setShowPasswordModal(true)} className="h-11">
-              Change Password
-            </Button>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -314,14 +322,16 @@ export function ProfilePage() {
         title="Change Password"
       >
         {passwordSuccess && (
-          <div className="mb-5 p-4 bg-gradient-to-r from-emerald-50 to-emerald-50/50 border border-emerald-100 rounded-xl text-sm text-emerald-600 flex items-center gap-2 font-medium">
-            <Check className="h-4 w-4" />
-            Password changed successfully!
+          <div className="mb-5 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-700 flex items-center gap-3">
+            <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Check className="h-3 w-3 text-emerald-600" />
+            </div>
+            <span className="font-medium">Password changed successfully!</span>
           </div>
         )}
 
         {passwordError && (
-          <div className="mb-5 p-4 bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
+          <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
             {passwordError}
           </div>
         )}
@@ -361,16 +371,18 @@ export function ProfilePage() {
 
           {/* Password strength indicator */}
           {newPassword && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
               {passwordRequirements.map((req, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-1.5 text-xs ${req.regex.test(newPassword) ? 'text-emerald-600' : 'text-gray-400'
-                    }`}
+                  className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                    req.regex.test(newPassword) ? 'text-emerald-600' : 'text-gray-400'
+                  }`}
                 >
                   <CheckCircle2
-                    className={`h-3.5 w-3.5 ${req.regex.test(newPassword) ? 'text-emerald-500' : 'text-gray-300'
-                      }`}
+                    className={`h-3.5 w-3.5 transition-colors ${
+                      req.regex.test(newPassword) ? 'text-emerald-500' : 'text-gray-300'
+                    }`}
                   />
                   {req.label}
                 </div>
@@ -393,7 +405,7 @@ export function ProfilePage() {
               Cancel
             </Button>
             <Button type="submit" isLoading={isChangingPassword}>
-              Change Password
+              Update Password
             </Button>
           </div>
         </form>

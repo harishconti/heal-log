@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
-import { Shield, Heart, Activity, Stethoscope, Sparkles, CheckCircle2, Users } from 'lucide-react';
+import { Shield, Activity, Stethoscope, Sparkles, Users } from 'lucide-react';
 
 export function AuthLayout() {
   return (

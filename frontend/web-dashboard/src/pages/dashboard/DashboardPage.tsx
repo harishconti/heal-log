@@ -14,7 +14,6 @@ import {
   Calendar,
   Activity,
   Clock,
-  Heart,
   ChevronRight,
   BarChart3,
 } from 'lucide-react';
@@ -42,7 +41,7 @@ import type { PatientStats, Patient } from '../../types';
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Tier 1: Header Skeleton */}
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -54,7 +53,7 @@ function DashboardSkeleton() {
         </div>
 
         {/* KPI Cards Skeleton - 3 column grid */}
-        <div className="kpi-grid">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -75,9 +74,9 @@ function DashboardSkeleton() {
       </div>
 
       {/* Tier 2: Main Content Skeleton */}
-      <div className="content-split">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Chart Skeleton */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-8 border-b border-gray-100 bg-gray-50/50">
             <div className="flex justify-between">
               <div className="space-y-2">
@@ -102,27 +101,6 @@ function DashboardSkeleton() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Tier 3: Recent Patients Skeleton */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50/80 border-b border-gray-100 px-8 py-5">
-          <div className="flex justify-between">
-            <div className="h-6 w-36 bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-        <div className="px-8 py-6 space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4 p-4 rounded-xl">
-              <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse" />
-              <div className="flex-1 space-y-2">
-                <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
-                <div className="h-4 w-56 bg-gray-100 rounded animate-pulse" />
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -215,20 +193,14 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      {/* ================================================================
-          TIER 1 - HEADER SECTION (Top ~20% of viewport)
-          - Welcome greeting
-          - Quick Stats: 3 large KPI cards
-          - Spacing: 32px top, 40px between cards
-          ================================================================ */}
-      <section className="dashboard-tier-1">
-        {/* Header with greeting */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      {/* Header Section */}
+      <section>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-page-title">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
               {getGreeting()}, {firstName}
             </h1>
-            <p className="text-body flex items-center gap-2 mt-2">
+            <p className="text-gray-500 flex items-center gap-2 mt-2 font-medium">
               <Calendar className="h-4 w-4 text-gray-400" />
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -239,15 +211,15 @@ export function DashboardPage() {
             </p>
           </div>
           <Link to="/patients/new">
-            <Button size="lg" className="shadow-lg shadow-primary-500/25 px-6">
+            <Button size="lg" className="shadow-lg shadow-primary-500/20" rounded="full">
               <Plus className="h-5 w-5" />
               Add Patient
             </Button>
           </Link>
         </div>
 
-        {/* Primary KPI Cards - 3 column grid */}
-        <div className="kpi-grid">
+        {/* KPI Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <KPICard
             title="Total Patients"
             value={stats?.total_patients || 0}
@@ -276,145 +248,125 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ================================================================
-          TIER 2 - MAIN CONTENT AREA (50-60% of viewport)
-          - Left Column (65%): Large chart or primary content
-          - Right Column (35%): Quick actions sidebar
-          ================================================================ */}
-      <section className="dashboard-tier-2">
-        <div className="content-split">
-          {/* Left: Patient Growth Chart OR Upgrade Promo */}
-          <div>
-            {isPro ? (
-              <ChartCard
-                title="Patient Growth"
-                subtitle="Last 30 days"
-                minHeight={320}
-                action={
-                  <Link
-                    to="/analytics"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
-                  >
-                    View analytics
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                }
-              >
-                {growthData.length > 0 ? (
-                  <LineChart
-                    data={growthData}
-                    height={280}
-                    title="Patient Growth Chart"
-                  />
-                ) : (
-                  <div className="h-[280px] flex flex-col items-center justify-center text-gray-400">
-                    <Activity className="h-12 w-12 mb-3 text-gray-300" />
-                    <p className="text-body">No growth data available yet</p>
-                    <p className="text-label mt-1">Add patients to see trends</p>
-                  </div>
-                )}
-              </ChartCard>
-            ) : (
-              <PromoCard
-                icon={TrendingUp}
-                title="Unlock Analytics"
-                description="Upgrade to Pro to access detailed analytics and insights about your practice growth."
-                action={
-                  <Link to="/upgrade">
-                    <Button size="lg" className="shadow-lg shadow-primary-500/25 px-8">
-                      <Sparkles className="h-5 w-5" />
-                      Upgrade to Pro
-                    </Button>
-                  </Link>
-                }
-                className="h-full min-h-[380px]"
+      {/* Main Content Grid */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column (Chart/Promo) */}
+        <div className="lg:col-span-2">
+          {isPro ? (
+            <ChartCard
+              title="Patient Growth"
+              subtitle="New patients over the last 30 days"
+              minHeight={320}
+              className="h-full"
+              action={
+                <Link
+                  to="/analytics"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  View analytics
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              }
+            >
+              {growthData.length > 0 ? (
+                <LineChart
+                  data={growthData}
+                  height={300}
+                  title="Patient Growth Chart"
+                />
+              ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                  <Activity className="h-10 w-10 mb-3 text-gray-300" />
+                  <p className="font-medium">No growth data available yet</p>
+                  <p className="text-sm mt-1">Add patients to see trends</p>
+                </div>
+              )}
+            </ChartCard>
+          ) : (
+            <PromoCard
+              icon={TrendingUp}
+              title="Unlock Analytics"
+              description="Upgrade to Pro to access detailed analytics and insights about your practice growth."
+              action={
+                <Link to="/upgrade">
+                  <Button className="bg-white text-primary-700 hover:bg-primary-50 shadow-none border border-transparent hover:border-white/20">
+                    <Sparkles className="h-4 w-4" />
+                    Upgrade to Pro
+                  </Button>
+                </Link>
+              }
+              className="h-full min-h-[380px] flex flex-col justify-center"
+            />
+          )}
+        </div>
+
+        {/* Right Column (Sidebar) */}
+        <div className="space-y-6">
+          <ActionCard title="Quick Actions">
+            <ActionItem
+              icon={Plus}
+              label="Add New Patient"
+              iconColor="text-primary-600"
+              onClick={() => navigate('/patients/new')}
+            />
+            <ActionItem
+              icon={Users}
+              label="View All Patients"
+              iconColor="text-emerald-600"
+              onClick={() => navigate('/patients')}
+            />
+            {isPro && (
+              <ActionItem
+                icon={BarChart3}
+                label="View Analytics"
+                iconColor="text-violet-600"
+                onClick={() => navigate('/analytics')}
               />
             )}
-          </div>
+            <ActionItem
+              icon={User}
+              label="Edit Profile"
+              iconColor="text-amber-600"
+              onClick={() => navigate('/profile')}
+            />
+          </ActionCard>
 
-          {/* Right: Quick Actions Sidebar */}
-          <div className="space-y-6">
-            <ActionCard title="Quick Actions" accentColor="primary">
-              <div className="space-y-2">
-                <ActionItem
-                  icon={Plus}
-                  label="Add New Patient"
-                  iconColor="text-primary-600"
-                  onClick={() => navigate('/patients/new')}
-                />
-                <ActionItem
-                  icon={Users}
-                  label="View All Patients"
-                  iconColor="text-emerald-600"
-                  onClick={() => navigate('/patients')}
-                />
-                {isPro && (
-                  <ActionItem
-                    icon={BarChart3}
-                    label="View Analytics"
-                    iconColor="text-violet-600"
-                    onClick={() => navigate('/analytics')}
-                  />
-                )}
-                <ActionItem
-                  icon={User}
-                  label="Edit Profile"
-                  iconColor="text-amber-600"
-                  onClick={() => navigate('/profile')}
-                />
+          {/* Summary Card */}
+          <ActionCard title="Today's Overview" className="bg-gradient-to-br from-white to-gray-50/50">
+            <div className="space-y-3 px-1">
+              <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-600">Notes</span>
+                </div>
+                <span className="text-lg font-bold text-gray-900">-</span>
               </div>
-            </ActionCard>
-
-            {/* Secondary Info Card */}
-            <ActionCard title="Today's Summary" accentColor="emerald">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    <span className="text-sm text-gray-600">Notes Today</span>
+              <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-amber-600" />
                   </div>
-                  <span className="text-lg font-semibold text-gray-900">-</span>
+                  <span className="text-sm font-medium text-gray-600">Pending</span>
                 </div>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <span className="text-sm text-gray-600">Pending Follow-ups</span>
-                  </div>
-                  <span className="text-lg font-semibold text-gray-900">-</span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                      <Heart className="h-4 w-4 text-red-500" />
-                    </div>
-                    <span className="text-sm text-gray-600">Critical Patients</span>
-                  </div>
-                  <span className="text-lg font-semibold text-gray-900">-</span>
-                </div>
+                <span className="text-lg font-bold text-gray-900">-</span>
               </div>
-            </ActionCard>
-          </div>
+            </div>
+          </ActionCard>
         </div>
       </section>
 
-      {/* ================================================================
-          TIER 3 - SUPPORTING SECTION (Bottom 15-20%)
-          - Recent Patients: Full-width table with proper row styling
-          - 56-64px row height, alternating colors, hover states
-          ================================================================ */}
-      <section className="dashboard-tier-3">
+      {/* Recent Patients Table */}
+      <section>
         <DataCard
           title="Recent Patients"
-          subtitle={recentPatients.length > 0 ? `${recentPatients.length} most recent` : undefined}
+          subtitle={recentPatients.length > 0 ? `${recentPatients.length} most recent records` : undefined}
           action={
             recentPatients.length > 0 && (
               <Link
                 to="/patients"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
               >
                 View all
                 <ArrowRight className="h-4 w-4" />
@@ -423,59 +375,61 @@ export function DashboardPage() {
           }
         >
           {recentPatients.length > 0 ? (
-            <div className="stagger-animation -mx-2">
-              {recentPatients.map((patient, index) => (
+            <div className="divide-y divide-gray-50">
+              {recentPatients.map((patient) => (
                 <Link
                   key={patient.id}
                   to={`/patients/${patient.id}`}
-                  className="block"
+                  className="block group"
                 >
-                  <DataRow
-                    className={`
-                      group
-                      ${index % 2 === 1 ? 'bg-gray-50/50' : ''}
-                    `}
-                  >
+                  <DataRow className="group-hover:bg-gray-50/80 transition-all duration-200">
                     {/* Avatar */}
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all flex-shrink-0">
-                      <span className="text-white font-semibold text-lg">
+                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                      <span className="text-primary-700 font-bold text-sm">
                         {patient.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
 
                     {/* Patient Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
-                        {patient.name}
-                      </p>
+                    <div className="flex-1 min-w-0 ml-4">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                          {patient.name}
+                        </p>
+                        {patient.is_favorite && (
+                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 truncate mt-0.5">
-                        {patient.group || 'No group'} • ID: {patient.patient_id}
+                        {patient.group ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 mr-2">
+                            {patient.group}
+                          </span>
+                        ) : null}
+                        ID: {patient.patient_id}
                       </p>
                     </div>
 
-                    {/* Badges and Arrow */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {patient.is_favorite && (
-                        <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                      )}
-                      <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-primary-500 transition-colors" />
-                    </div>
+                    {/* Arrow */}
+                    <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
                   </DataRow>
                 </Link>
               ))}
             </div>
           ) : (
-            <EmptyState
-              icon={Users}
-              title="No patients yet"
-              description="Get started by adding your first patient to the system."
-              action={{
-                label: 'Add Patient',
-                onClick: () => navigate('/patients/new'),
-                icon: Plus,
-              }}
-              size="sm"
-            />
+            <div className="p-12">
+              <EmptyState
+                icon={Users}
+                title="No patients yet"
+                description="Get started by adding your first patient to the system."
+                action={{
+                  label: 'Add Patient',
+                  onClick: () => navigate('/patients/new'),
+                  icon: Plus,
+                }}
+                size="sm"
+              />
+            </div>
           )}
         </DataCard>
       </section>

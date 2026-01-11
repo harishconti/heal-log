@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User, Phone, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, Button, Input, Textarea, Spinner } from '../../components/ui';
 import { patientsApi, type CreatePatientData } from '../../api/patients';
 import { getErrorMessage } from '../../utils/errorUtils';
@@ -123,174 +123,216 @@ export function PatientFormPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-[50vh]">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
         <Link
           to={isEditing ? `/patients/${id}` : '/patients'}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-3 hover:bg-gray-100 rounded-xl transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEditing ? 'Edit Patient' : 'Add New Patient'}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            {isEditing ? 'Edit Patient' : 'Add New Patient'}
+          </h1>
+          <p className="text-gray-500 font-medium mt-1">
+            {isEditing ? 'Update patient details and medical info' : 'Create a new patient record'}
+          </p>
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
           {error}
         </div>
       )}
 
-      <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Personal Information Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <User className="h-5 w-5 text-primary-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+          </div>
+
+          <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <Input
+                  label="Full Name *"
+                  placeholder="e.g. John Doe"
+                  error={errors.name?.message}
+                  {...register('name')}
+                />
+              </div>
+
               <Input
-                label="Patient Name *"
-                placeholder="Full name"
-                error={errors.name?.message}
-                {...register('name')}
+                label="Date of Birth (Year)"
+                type="number"
+                placeholder="YYYY"
+                min={1900}
+                max={currentYear}
+                error={errors.year_of_birth?.message}
+                {...register('year_of_birth', { valueAsNumber: true })}
               />
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Gender
+                </label>
+                <div className="relative">
+                  <select
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-sm shadow-gray-100/50 focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all"
+                    {...register('gender')}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
             </div>
+          </Card>
+        </section>
 
-            <Input
-              label="Phone Number"
-              type="tel"
-              placeholder="+1 (555) 123-4567"
-              error={errors.phone?.message}
-              {...register('phone')}
-            />
+        {/* Contact Information Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <Phone className="h-5 w-5 text-emerald-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Contact Details</h2>
+          </div>
 
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="patient@example.com"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-
-            <Input
-              label="Address"
-              placeholder="Street address"
-              error={errors.address?.message}
-              {...register('address')}
-            />
-
-            <Input
-              label="Location/City"
-              placeholder="City, State"
-              error={errors.location?.message}
-              {...register('location')}
-            />
-
-            <Input
-              label="Year of Birth"
-              type="number"
-              placeholder="YYYY"
-              min={1900}
-              max={currentYear}
-              error={errors.year_of_birth?.message}
-              {...register('year_of_birth', { valueAsNumber: true })}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gender
-              </label>
-              <select
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                {...register('gender')}
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Group/Category
-                {isLoadingGroups && (
-                  <span className="ml-2 text-xs text-gray-400">(loading groups...)</span>
-                )}
-              </label>
-              <input
-                type="text"
-                list="groups-list"
-                placeholder={isLoadingGroups ? "Loading groups..." : "Select or type a new group"}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                {...register('group')}
+          <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Phone Number"
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                error={errors.phone?.message}
+                {...register('phone')}
               />
-              <datalist id="groups-list">
-                {groups.map((group) => (
-                  <option key={group} value={group} />
-                ))}
-              </datalist>
-            </div>
 
-            <div className="sm:col-span-2">
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="patient@example.com"
+                error={errors.email?.message}
+                {...register('email')}
+              />
+
+              <div className="md:col-span-2">
+                <Input
+                  label="Address"
+                  placeholder="Street address, Apt, Suite"
+                  error={errors.address?.message}
+                  {...register('address')}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Input
+                  label="Location/City"
+                  placeholder="City, State, Zip Code"
+                  error={errors.location?.message}
+                  {...register('location')}
+                />
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Medical Information Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <FileText className="h-5 w-5 text-violet-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Medical History</h2>
+          </div>
+
+          <Card>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Group/Category
+                  {isLoadingGroups && (
+                    <span className="ml-2 text-xs text-gray-400 font-normal">(loading groups...)</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  list="groups-list"
+                  placeholder={isLoadingGroups ? "Loading..." : "Select or type a new group (e.g. Cardiology, Pediatrics)"}
+                  className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-sm shadow-gray-100/50 focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all placeholder-gray-400"
+                  {...register('group')}
+                />
+                <datalist id="groups-list">
+                  {groups.map((group) => (
+                    <option key={group} value={group} />
+                  ))}
+                </datalist>
+              </div>
+
               <Textarea
                 label="Initial Complaint"
-                placeholder="Describe the patient's initial complaint or symptoms..."
-                rows={3}
+                placeholder="Describe the patient's initial complaint, symptoms, or reason for visit..."
+                rows={4}
                 error={errors.initial_complaint?.message}
                 {...register('initial_complaint')}
               />
-            </div>
 
-            <div className="sm:col-span-2">
               <Textarea
                 label="Initial Diagnosis"
-                placeholder="Initial diagnosis or assessment..."
-                rows={3}
+                placeholder="Initial diagnosis or clinical assessment..."
+                rows={4}
                 error={errors.initial_diagnosis?.message}
                 {...register('initial_diagnosis')}
               />
-            </div>
 
-            <div className="sm:col-span-2">
               <Textarea
                 label="Active Treatment Plan"
-                placeholder="Current treatment plan or monitoring notes..."
-                rows={3}
+                placeholder="Current medications, therapies, or monitoring instructions..."
+                rows={4}
                 error={errors.active_treatment_plan?.message}
                 {...register('active_treatment_plan')}
               />
-            </div>
 
-            <div className="sm:col-span-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  {...register('is_favorite')}
-                />
-                <span className="text-sm text-gray-700">Mark as favorite</span>
-              </label>
+              <div className="pt-4 border-t border-gray-100">
+                <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200 w-fit">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-primary-500 checked:bg-primary-500"
+                      {...register('is_favorite')}
+                    />
+                    <CheckCircle2 className="pointer-events-none absolute h-3.5 w-3.5 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 select-none">Mark as favorite patient</span>
+                </label>
+              </div>
             </div>
-          </div>
+          </Card>
+        </section>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <Link to={isEditing ? `/patients/${id}` : '/patients'}>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" isLoading={isSubmitting}>
-              {isEditing ? 'Save Changes' : 'Add Patient'}
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-4 pt-4 pb-12">
+          <Link to={isEditing ? `/patients/${id}` : '/patients'}>
+            <Button type="button" variant="ghost" size="lg">
+              Cancel
             </Button>
-          </div>
-        </form>
-      </Card>
+          </Link>
+          <Button type="submit" size="lg" isLoading={isSubmitting} className="min-w-[160px] shadow-lg shadow-primary-500/20">
+            {isEditing ? 'Save Changes' : 'Create Patient'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

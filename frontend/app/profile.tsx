@@ -11,6 +11,7 @@ import {
   Image,
   StatusBar,
   Platform,
+  Switch,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,10 +22,8 @@ import { useRouter } from 'expo-router';
 import { database } from '@/models/database';
 import Patient from '@/models/Patient';
 import api from '@/services/api';
-import { triggerChangeBasedSync, triggerBackgroundSync } from '@/services/backgroundSync';
+import { triggerBackgroundSync } from '@/services/backgroundSync';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
-import appJson from '@/app.json';
 
 interface SubscriptionInfo {
   plan: string;
@@ -40,16 +39,14 @@ interface Stats {
 
 export default function ProfileScreen() {
   const { theme, fontScale } = useTheme();
-  const { user, logout, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
-  const { settings } = useAppStore(
-    (state) => ({ settings: state.settings })
-  );
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userPhoto, setUserPhoto] = useState<string>('');
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
+  const [walkInsAvailable, setWalkInsAvailable] = useState(true);
 
   const styles = createStyles(theme, fontScale);
 
@@ -109,31 +106,6 @@ export default function ProfileScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-              Alert.alert('Logout Error', error.message || 'Failed to logout completely');
-              router.replace('/login');
-            }
-          }
-        }
-      ]
-    );
   };
 
   const updateProfilePhoto = async () => {
@@ -219,8 +191,6 @@ export default function ProfileScreen() {
       }
 
       await AsyncStorage.setItem(`user_photo_${user?.id}`, photo);
-
-      // Trigger immediate sync after profile update (forced sync, bypasses settings)
       await triggerBackgroundSync();
       Alert.alert('Success', 'Profile photo updated successfully!');
     } catch (error) {
@@ -245,8 +215,6 @@ export default function ProfileScreen() {
       refreshUser();
 
       await AsyncStorage.removeItem(`user_photo_${user?.id}`);
-
-      // Trigger immediate sync after profile update (forced sync, bypasses settings)
       await triggerBackgroundSync();
       Alert.alert('Success', 'Profile photo removed successfully!');
     } catch (error) {
@@ -277,22 +245,16 @@ export default function ProfileScreen() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const formatPatientCount = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(0)}k+`;
+    }
+    return count.toString();
   };
 
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'trialing': return 'warning';
-      case 'canceled': return 'error';
-      case 'past_due': return 'warning';
-      default: return 'default';
-    }
+  const formatNextPaymentDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   if (isLoading) {
@@ -310,17 +272,16 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
-          <Text style={styles.logoutText}>Sign Out</Text>
+        <Text style={styles.headerTitle}>My Profile</Text>
+        <TouchableOpacity onPress={() => {}} style={styles.editButton}>
+          <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
 
+      <View style={styles.headerDivider} />
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
+        {/* Profile Header with Avatar */}
         <View style={styles.profileHeader}>
           <TouchableOpacity
             style={styles.avatarContainer}
@@ -334,218 +295,133 @@ export default function ProfileScreen() {
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={48} color={theme.colors.textSecondary} />
+                <Ionicons name="person" size={56} color={theme.colors.textSecondary} />
               </View>
             )}
             <View style={styles.cameraOverlay}>
               {updatingPhoto ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Ionicons name="camera" size={16} color="#fff" />
+                <Ionicons name="camera" size={14} color="#fff" />
               )}
             </View>
           </TouchableOpacity>
 
-          <Text style={styles.userName}>{user?.full_name}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+          <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
+          <Text style={styles.userSpecialty}>
+            {user?.medical_specialty
+              ? user.medical_specialty.charAt(0).toUpperCase() + user.medical_specialty.slice(1) + ' Specialist'
+              : 'Medical Professional'}
+          </Text>
 
-          <View style={styles.chipRow}>
-            {user?.medical_specialty && (
-              <Chip
-                label={user.medical_specialty.charAt(0).toUpperCase() + user.medical_specialty.slice(1)}
-                variant="soft"
-                color="primary"
-                size="small"
-              />
-            )}
-            {subscriptionInfo && (
-              <Chip
-                label={subscriptionInfo.plan.charAt(0).toUpperCase() + subscriptionInfo.plan.slice(1) + ' Plan'}
-                variant="outlined"
-                color="default"
-                size="small"
-              />
-            )}
-          </View>
-        </View>
-
-        {/* Statistics Card */}
-        {stats && (
-          <Card style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconContainer}>
-                <Ionicons name="stats-chart-outline" size={18} color={theme.colors.primary} />
-              </View>
-              <Text style={styles.sectionTitle}>Statistics</Text>
-            </View>
-
+          {/* Statistics Card */}
+          <Card style={styles.statsCard}>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: theme.colors.primaryMuted }]}>
-                  <Ionicons name="people" size={24} color={theme.colors.primary} />
-                </View>
-                <Text style={styles.statNumber}>{stats.total_patients}</Text>
-                <Text style={styles.statLabel}>Patients</Text>
+                <Text style={styles.statNumber}>12</Text>
+                <Text style={styles.statLabel}>YEARS EXP.</Text>
               </View>
-
+              <View style={styles.statDivider} />
               <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}>
-                  <Ionicons name="heart" size={24} color={theme.colors.error} />
-                </View>
-                <Text style={styles.statNumber}>{stats.favorite_patients}</Text>
-                <Text style={styles.statLabel}>Favorites</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(52, 199, 89, 0.1)' }]}>
-                  <Ionicons name="folder" size={24} color={theme.colors.success} />
-                </View>
-                <Text style={styles.statNumber}>{stats.groups.length}</Text>
-                <Text style={styles.statLabel}>Groups</Text>
+                <Text style={styles.statNumber}>{formatPatientCount(stats?.total_patients || 0)}</Text>
+                <Text style={styles.statLabel}>PATIENTS</Text>
               </View>
             </View>
           </Card>
-        )}
+        </View>
 
-        {/* Subscription Card */}
-        {subscriptionInfo && (
-          <Card style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconContainer}>
-                <Ionicons name="card-outline" size={18} color={theme.colors.primary} />
+        {/* Subscription Plan Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Subscription Plan</Text>
+          <Card style={styles.subscriptionCard}>
+            <View style={styles.subscriptionHeader}>
+              <View style={styles.subscriptionLeft}>
+                <View style={styles.planIconContainer}>
+                  <Ionicons name="star" size={20} color="#F5A623" />
+                </View>
+                <View style={styles.planInfo}>
+                  <Text style={styles.currentPlanLabel}>Current Plan</Text>
+                  <Text style={styles.planName}>
+                    {subscriptionInfo?.plan.charAt(0).toUpperCase() + subscriptionInfo?.plan.slice(1)} Plan
+                  </Text>
+                  <Text style={styles.billingInfo}>
+                    Billed annually • Next payment {formatNextPaymentDate(subscriptionInfo?.subscription_end_date || '')}
+                  </Text>
+                </View>
               </View>
-              <Text style={styles.sectionTitle}>Subscription</Text>
+              <View style={styles.activeBadge}>
+                <Text style={styles.activeBadgeText}>ACTIVE</Text>
+              </View>
             </View>
-
-            <View style={styles.subscriptionInfo}>
-              <View style={styles.subscriptionRow}>
-                <Text style={styles.subscriptionPlan}>
-                  {subscriptionInfo.plan.charAt(0).toUpperCase() + subscriptionInfo.plan.slice(1)} Plan
-                </Text>
-                <Chip
-                  label={subscriptionInfo.subscription_status.charAt(0).toUpperCase() + subscriptionInfo.subscription_status.slice(1)}
-                  variant="filled"
-                  color={getStatusColor(subscriptionInfo.subscription_status)}
-                  size="small"
-                />
+            <View style={styles.subscriptionFooter}>
+              <View style={styles.featureRow}>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                <Text style={styles.featureText}>Unlimited Patients</Text>
               </View>
-
-              {subscriptionInfo.subscription_status === 'trialing' && (
-                <Text style={styles.trialText}>
-                  Trial ends: {formatDate(subscriptionInfo.subscription_end_date)}
-                </Text>
-              )}
-
-              <View style={styles.featuresList}>
-                <View style={styles.featureItem}>
-                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                  <Text style={styles.featureText}>Android App Access</Text>
-                </View>
-                <View style={styles.featureItem}>
-                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                  <Text style={styles.featureText}>Patient Management</Text>
-                </View>
-                <View style={styles.featureItem}>
-                  <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                  <Text style={styles.featureText}>Medical Notes</Text>
-                </View>
-
-                {subscriptionInfo.plan === 'basic' && (
-                  <>
-                    <View style={styles.featureItem}>
-                      <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
-                      <Text style={[styles.featureText, styles.featureDisabled]}>Web Dashboard</Text>
-                    </View>
-                    <View style={styles.featureItem}>
-                      <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
-                      <Text style={[styles.featureText, styles.featureDisabled]}>Advanced Analytics</Text>
-                    </View>
-                  </>
-                )}
-
-                {subscriptionInfo.plan === 'pro' && (
-                  <>
-                    <View style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                      <Text style={styles.featureText}>Web Dashboard</Text>
-                    </View>
-                    <View style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                      <Text style={styles.featureText}>Advanced Analytics</Text>
-                    </View>
-                    <View style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={18} color={theme.colors.success} />
-                      <Text style={styles.featureText}>Priority Support</Text>
-                    </View>
-                  </>
-                )}
-              </View>
-
-              {subscriptionInfo.plan === 'basic' && (
-                <TouchableOpacity
-                  style={styles.upgradeButton}
-                  onPress={() => router.push('/upgrade')}
-                >
-                  <Ionicons name="rocket" size={18} color="#fff" />
-                  <Text style={styles.upgradeText}>Upgrade to Pro</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={() => router.push('/upgrade')}>
+                <Text style={styles.manageLink}>Manage</Text>
+              </TouchableOpacity>
             </View>
           </Card>
-        )}
+        </View>
 
-        {/* Quick Actions Card */}
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconContainer}>
-              <Ionicons name="apps-outline" size={18} color={theme.colors.primary} />
+        {/* Contact Information Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Card style={styles.contactCard}>
+            <View style={styles.contactItem}>
+              <View style={[styles.contactIconContainer, { backgroundColor: '#E8F4FF' }]}>
+                <Ionicons name="mail" size={20} color={theme.colors.primary} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Email</Text>
+                <Text style={styles.contactValue}>{user?.email || 'Not set'}</Text>
+              </View>
             </View>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-          </View>
-
-          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/contacts-sync')}>
-            <View style={styles.actionLeft}>
-              <Ionicons name="phone-portrait-outline" size={22} color={theme.colors.primary} />
-              <Text style={styles.actionText}>Contacts Integration</Text>
+          </Card>
+          <Card style={styles.contactCard}>
+            <View style={styles.contactItem}>
+              <View style={[styles.contactIconContainer, { backgroundColor: '#E8F8F0' }]}>
+                <Ionicons name="call" size={20} color={theme.colors.success} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactLabel}>Phone</Text>
+                <Text style={styles.contactValue}>{user?.phone || '+1 (555) 012-3456'}</Text>
+              </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
+          </Card>
+        </View>
 
-          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/(tabs)/settings/feedback')}>
-            <View style={styles.actionLeft}>
-              <Ionicons name="chatbubble-ellipses-outline" size={22} color={theme.colors.primary} />
-              <Text style={styles.actionText}>Send Feedback</Text>
+        {/* Practice Details Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Practice Details</Text>
+          <Card style={styles.practiceCard}>
+            <View style={styles.practiceHeader}>
+              <View style={[styles.contactIconContainer, { backgroundColor: '#FFF0E8' }]}>
+                <Ionicons name="location" size={20} color="#FF6B35" />
+              </View>
+              <View style={styles.practiceInfo}>
+                <Text style={styles.practiceLabel}>Main Clinic</Text>
+                <Text style={styles.practiceName}>{user?.clinic_name || 'City Heart Center'}</Text>
+                <Text style={styles.practiceAddress}>
+                  {user?.clinic_address || '4501 Medical Center Dr,\nSuite 300, San Francisco, CA 94112'}
+                </Text>
+              </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/(tabs)/settings')}>
-            <View style={styles.actionLeft}>
-              <Ionicons name="settings-outline" size={22} color={theme.colors.primary} />
-              <Text style={styles.actionText}>Settings</Text>
+            <View style={styles.practiceDivider} />
+            <View style={styles.walkInsRow}>
+              <Text style={styles.walkInsLabel}>Available for Walk-ins</Text>
+              <Switch
+                value={walkInsAvailable}
+                onValueChange={setWalkInsAvailable}
+                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                thumbColor="#fff"
+              />
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
+          </Card>
+        </View>
 
-          <TouchableOpacity style={styles.actionRow}>
-            <View style={styles.actionLeft}>
-              <Ionicons name="help-circle-outline" size={22} color={theme.colors.primary} />
-              <Text style={styles.actionText}>Help & Support</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionRow, styles.actionRowLast]}>
-            <View style={styles.actionLeft}>
-              <Ionicons name="document-text-outline" size={22} color={theme.colors.primary} />
-              <Text style={styles.actionText}>Privacy Policy</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        </Card>
-
-        {/* App Version */}
-        <Text style={styles.versionText}>HEAL LOG v{appJson.expo.version}</Text>
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -571,27 +447,28 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 12,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  headerButton: {
-    padding: 8,
-    minWidth: 70,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 16 : 16,
+    backgroundColor: theme.colors.background,
   },
   headerTitle: {
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
+    fontSize: 24 * fontScale,
+    fontWeight: '700',
     color: theme.colors.text,
   },
-  logoutText: {
+  editButton: {
+    padding: 4,
+  },
+  editButtonText: {
     fontSize: 16 * fontScale,
-    color: theme.colors.error,
     fontWeight: '500',
-    textAlign: 'right',
+    color: theme.colors.primary,
+  },
+  headerDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginHorizontal: 0,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -599,181 +476,239 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   profileHeader: {
     alignItems: 'center',
     paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 20,
+    backgroundColor: theme.colors.background,
   },
   avatarContainer: {
     position: 'relative',
     marginBottom: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
     borderColor: theme.colors.surface,
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.background,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: theme.colors.surface,
+    borderWidth: 4,
+    borderColor: theme.colors.border,
   },
   cameraOverlay: {
     position: 'absolute',
     bottom: 4,
     right: 4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: theme.colors.surface,
+    borderColor: theme.colors.background,
   },
   userName: {
-    fontSize: 24 * fontScale,
+    fontSize: 26 * fontScale,
     fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: 4,
+    textAlign: 'center',
   },
-  userEmail: {
-    fontSize: 14 * fontScale,
+  userSpecialty: {
+    fontSize: 15 * fontScale,
     color: theme.colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  sectionCard: {
-    marginHorizontal: 16,
-    marginTop: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 10,
-  },
-  sectionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: theme.colors.primaryMuted,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 16 * fontScale,
-    fontWeight: '600',
-    color: theme.colors.text,
+  statsCard: {
+    width: '100%',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
   },
   statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statItem: {
-    alignItems: 'center',
     flex: 1,
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingVertical: 8,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: theme.colors.border,
   },
   statNumber: {
-    fontSize: 24 * fontScale,
+    fontSize: 28 * fontScale,
     fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 2,
+    color: theme.colors.primary,
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12 * fontScale,
+    fontSize: 11 * fontScale,
+    fontWeight: '600',
     color: theme.colors.textSecondary,
+    letterSpacing: 0.5,
   },
-  subscriptionInfo: {
-    gap: 12,
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 24,
   },
-  subscriptionRow: {
+  sectionTitle: {
+    fontSize: 18 * fontScale,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  subscriptionCard: {
+    padding: 16,
+  },
+  subscriptionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  subscriptionPlan: {
-    fontSize: 18 * fontScale,
+  subscriptionLeft: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  planIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  planInfo: {
+    flex: 1,
+  },
+  currentPlanLabel: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+    marginBottom: 2,
+  },
+  planName: {
+    fontSize: 17 * fontScale,
     fontWeight: '600',
     color: theme.colors.text,
+    marginBottom: 4,
   },
-  trialText: {
-    fontSize: 14 * fontScale,
-    color: theme.colors.warning,
+  billingInfo: {
+    fontSize: 13 * fontScale,
+    color: theme.colors.textSecondary,
   },
-  featuresList: {
-    gap: 8,
-    paddingTop: 8,
+  activeBadge: {
+    backgroundColor: '#E8F8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  featureItem: {
+  activeBadgeText: {
+    fontSize: 11 * fontScale,
+    fontWeight: '700',
+    color: theme.colors.success,
+    letterSpacing: 0.3,
+  },
+  subscriptionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   featureText: {
     fontSize: 14 * fontScale,
-    color: theme.colors.text,
-  },
-  featureDisabled: {
     color: theme.colors.textSecondary,
-    textDecorationLine: 'line-through',
   },
-  upgradeButton: {
+  manageLink: {
+    fontSize: 15 * fontScale,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  contactCard: {
+    padding: 16,
+    marginBottom: 12,
+  },
+  contactItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-    marginTop: 8,
   },
-  upgradeText: {
+  contactIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+    marginBottom: 2,
+  },
+  contactValue: {
+    fontSize: 15 * fontScale,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  practiceCard: {
+    padding: 16,
+  },
+  practiceHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  practiceInfo: {
+    flex: 1,
+  },
+  practiceLabel: {
+    fontSize: 12 * fontScale,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  practiceName: {
     fontSize: 16 * fontScale,
     fontWeight: '600',
-    color: '#fff',
+    color: theme.colors.text,
+    marginBottom: 4,
   },
-  actionRow: {
+  practiceAddress: {
+    fontSize: 14 * fontScale,
+    color: theme.colors.textSecondary,
+    lineHeight: 20 * fontScale,
+  },
+  practiceDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: 16,
+  },
+  walkInsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
-  actionRowLast: {
-    borderBottomWidth: 0,
-  },
-  actionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  actionText: {
-    fontSize: 16 * fontScale,
+  walkInsLabel: {
+    fontSize: 15 * fontScale,
     color: theme.colors.text,
-  },
-  versionText: {
-    textAlign: 'center',
-    fontSize: 12 * fontScale,
-    color: theme.colors.textSecondary,
-    marginTop: 24,
   },
 });

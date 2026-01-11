@@ -87,8 +87,8 @@ export function LoginPage() {
     <div className="space-y-8">
       {/* Header - Simplified */}
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
-        <p className="text-gray-600">Please enter your details to sign in.</p>
+        <h2 className="text-[20px] font-semibold text-[#1e3a8a] tracking-tight">Welcome back</h2>
+        <p className="text-[14px] text-[#94a3b8]">Please enter your details to sign in.</p>
       </div>
 
       {/* Error message */}
@@ -108,7 +108,7 @@ export function LoginPage() {
               autoComplete="email"
               placeholder="doctor@example.com"
               error={errors.email?.message}
-              className="h-12 text-base rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              required
               {...register('email')}
             />
           </div>
@@ -120,7 +120,7 @@ export function LoginPage() {
               autoComplete="current-password"
               placeholder="Enter your password"
               error={errors.password?.message}
-              className="h-12 text-base pr-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              required
               {...register('password')}
             />
             <button
@@ -150,7 +150,7 @@ export function LoginPage() {
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all"
+          className="w-full h-[44px] text-[14px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
           isLoading={isSubmitting}
         >
           Sign in
@@ -170,7 +170,7 @@ export function LoginPage() {
       {/* Register link - Simplified */}
       <Link
         to="/register"
-        className="flex items-center justify-center w-full h-12 px-6 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-all"
+        className="flex items-center justify-center w-full h-[44px] px-6 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-all text-[14px]"
       >
         Create an account
       </Link>

@@ -22,11 +22,6 @@ const registerSchema = z
       .regex(/[a-z]/, 'Password must contain a lowercase letter')
       .regex(/[0-9]/, 'Password must contain a number')
       .regex(/[^A-Za-z0-9]/, 'Password must contain a special character'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
   });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -44,7 +39,6 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -76,9 +70,9 @@ export function RegisterPage() {
   return (
     <div>
       {/* Header */}
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h2>
-        <p className="text-gray-500">Start managing your patients today</p>
+      <div className="mb-6">
+        <h2 className="text-[20px] font-semibold text-[#1e3a8a] mb-2">Create your account</h2>
+        <p className="text-[14px] text-[#94a3b8]">Start managing your patients today</p>
       </div>
 
       {/* Error message */}
@@ -89,32 +83,40 @@ export function RegisterPage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <Input
-          label="Full name"
-          type="text"
-          autoComplete="name"
-          placeholder="Dr. John Smith"
-          error={errors.full_name?.message}
-          {...register('full_name')}
-        />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        <Input
-          label="Email address"
-          type="email"
-          autoComplete="email"
-          placeholder="doctor@example.com"
-          error={errors.email?.message}
-          {...register('email')}
-        />
+        {/* Desktop: Name + Email on one row. Mobile: Stacked */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Input
+            label="Full name"
+            type="text"
+            autoComplete="name"
+            placeholder="Dr. John Smith"
+            error={errors.full_name?.message}
+            required
+            {...register('full_name')}
+          />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            placeholder="doctor@example.com"
+            error={errors.email?.message}
+            required
+            {...register('email')}
+          />
+        </div>
+
+        {/* Desktop: Phone + Specialty on one row. Mobile: Stacked */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Input
             label="Phone number"
             type="tel"
             autoComplete="tel"
             placeholder="+1 (555) 123-4567"
             error={errors.phone?.message}
+            required
             {...register('phone')}
           />
 
@@ -123,6 +125,7 @@ export function RegisterPage() {
             options={SPECIALTY_OPTIONS}
             error={errors.medical_specialty?.message}
             {...register('medical_specialty')}
+            /* Optional field */
           />
         </div>
 
@@ -133,12 +136,13 @@ export function RegisterPage() {
             autoComplete="new-password"
             placeholder="Create a strong password"
             error={errors.password?.message}
+            required
             {...register('password')}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-4 top-[38px] text-gray-400 hover:text-[#2563eb] transition-colors"
           >
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
@@ -146,7 +150,7 @@ export function RegisterPage() {
 
         {/* Password strength indicator */}
         {password && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             {passwordRequirements.map((req, idx) => (
               <div
                 key={idx}
@@ -165,43 +169,27 @@ export function RegisterPage() {
           </div>
         )}
 
-        <div className="relative">
-          <Input
-            label="Confirm password"
-            type={showConfirmPassword ? 'text' : 'password'}
-            autoComplete="new-password"
-            placeholder="Confirm your password"
-            error={errors.confirmPassword?.message}
-            {...register('confirmPassword')}
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </button>
-        </div>
+        <div className="h-[1px] bg-slate-200 my-6"></div>
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
+          className="w-full h-[44px] text-[14px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
           isLoading={isSubmitting}
         >
-          Create account
+          ✓ Create account
         </Button>
       </form>
 
       {/* Login link */}
-      <p className="mt-8 text-center text-gray-500">
-        Already have an account?{' '}
+      <div className="mt-4 text-center">
+        <span className="text-[13px] text-gray-500">Already have an account? </span>
         <Link
           to="/login"
-          className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+          className="text-[13px] font-medium text-[#5b9fd6] hover:underline transition-colors"
         >
           Sign in
         </Link>
-      </p>
+      </div>
     </div>
   );
 }

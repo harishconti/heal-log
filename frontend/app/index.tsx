@@ -12,6 +12,7 @@ import {
   Platform,
   ActivityIndicator,
   LogBox,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -139,7 +140,23 @@ const MemoizedPatientCard = React.memo(function PatientCard({
         options={getMenuOptions(item)}
         onPress={() => onNavigate(item.id)}
       >
-        <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.patientCard,
+            {
+              backgroundColor: pressed ? theme.colors.primaryMuted : theme.colors.surface,
+              // Elevated shadow on press for iOS
+              ...(pressed && Platform.OS === 'ios' ? {
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+              } : {}),
+              // Elevated shadow on press for Android
+              ...(pressed && Platform.OS === 'android' ? {
+                elevation: 4,
+              } : {}),
+            }
+          ]}
+        >
           {/* Modern clean card layout: Avatar | Content | Badge */}
           <View style={styles.cardRow}>
             {/* Left: Avatar */}
@@ -197,7 +214,7 @@ const MemoizedPatientCard = React.memo(function PatientCard({
               </Text>
             </View>
           </View>
-        </View>
+        </Pressable>
       </LongPressMenu>
     </SwipeableRow>
   );

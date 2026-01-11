@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -8,6 +9,7 @@ import {
   TextStyle,
   Platform,
   View,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -62,6 +64,9 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const { theme } = useTheme();
   const { settings } = useAppStore();
+  const [isFocused, setIsFocused] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const handlePress = async () => {
     if (disabled || loading) return;
@@ -72,6 +77,26 @@ export const Button: React.FC<ButtonProps> = ({
     }
 
     onPress();
+  };
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 10,
+    }).start();
   };
 
   const getButtonStyle = (): ViewStyle => {
@@ -304,17 +329,66 @@ export const Button: React.FC<ButtonProps> = ({
     );
   };
 
+  // Get focus indicator style
+  const getFocusStyle = (): ViewStyle => {
+    if (!isFocused) return {};
+    return {
+      borderWidth: 2,
+      borderColor: variant === 'outline' ? theme.colors.primary : theme.colors.surface,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+      ...Platform.select({
+        android: {
+          elevation: 8,
+        },
+      }),
+    };
+  };
+
+  // Get pressed style (ripple-like effect)
+  const getPressedStyle = (): ViewStyle => {
+    if (!isPressed) return {};
+    return {
+      opacity: 0.9,
+    };
+  };
+
   return (
-    <TouchableOpacity
-      style={getButtonStyle()}
-      onPress={handlePress}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-      accessibilityLabel={title}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading }}
-    >
-      {renderContent()}
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Pressable
+        style={({ pressed }) => [
+          getButtonStyle(),
+          getFocusStyle(),
+          pressed && getPressedStyle(),
+          Platform.OS === 'android' && {
+            // Android ripple container
+            overflow: 'hidden',
+          },
+        ]}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        disabled={disabled || loading}
+        accessibilityLabel={title}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: disabled || loading }}
+        android_ripple={
+          Platform.OS === 'android' && !disabled
+            ? {
+                color: variant === 'primary' || variant === 'danger' || variant === 'success'
+                  ? 'rgba(255, 255, 255, 0.3)'
+                  : `${theme.colors.primary}30`,
+                borderless: false,
+              }
+            : undefined
+        }
+      >
+        {renderContent()}
+      </Pressable>
+    </Animated.View>
   );
 };

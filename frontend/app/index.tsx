@@ -45,6 +45,131 @@ import { CachedImage } from '@/components/ui/CachedImage';
 import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
 import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
+import { FullPageSkeleton, PatientListSkeleton } from '@/components/ui/SkeletonLoader';
+import { preloadImages } from '@/services/image_service';
+
+// Memoized Patient Card Component for better performance
+const MemoizedPatientCard = React.memo(function PatientCard({
+  item,
+  isFavorite,
+  theme,
+  styles,
+  onToggleFavorite,
+  onDelete,
+  onCall,
+  onNavigate,
+  onEdit,
+  getMenuOptions,
+}: {
+  item: Patient;
+  isFavorite: boolean;
+  theme: any;
+  styles: any;
+  onToggleFavorite: (patient: Patient) => void;
+  onDelete: (patient: Patient) => void;
+  onCall: (patient: Patient) => void;
+  onNavigate: (id: string) => void;
+  onEdit: (id: string) => void;
+  getMenuOptions: (patient: Patient) => MenuOption[];
+}) {
+  return (
+    <SwipeableRow
+      rightActions={[
+        {
+          icon: 'trash-outline',
+          color: theme.colors.surface,
+          backgroundColor: theme.colors.error,
+          onPress: () => onDelete(item),
+          label: 'Delete',
+        },
+      ]}
+      leftActions={[
+        {
+          icon: isFavorite ? 'heart-dislike' : 'heart',
+          color: theme.colors.surface,
+          backgroundColor: isFavorite ? theme.colors.textSecondary : theme.colors.error,
+          onPress: () => onToggleFavorite(item),
+          label: isFavorite ? 'Unfavorite' : 'Favorite',
+        },
+        {
+          icon: 'create-outline',
+          color: theme.colors.surface,
+          backgroundColor: theme.colors.primary,
+          onPress: () => onEdit(item.id),
+          label: 'Edit',
+        },
+      ]}
+    >
+      <LongPressMenu
+        options={getMenuOptions(item)}
+        onPress={() => onNavigate(item.id)}
+      >
+        <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.cardContent}>
+            <View style={styles.patientInfo}>
+              <CachedImage
+                base64={item.photo}
+                cacheKey={`patient-${item.id}`}
+                size={50}
+                containerStyle={styles.patientPhoto}
+                placeholderColor={theme.colors.background}
+                placeholderIconColor={theme.colors.textSecondary}
+              />
+              <View style={styles.patientDetails}>
+                <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
+                <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
+                {item.initialComplaint ? (
+                  <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                    {item.initialComplaint}
+                  </Text>
+                ) : null}
+              </View>
+              {item.phone ? (
+                <TouchableOpacity
+                  style={[styles.callButton, { backgroundColor: theme.colors.success }]}
+                  onPress={() => onCall(item)}
+                  accessibilityLabel={`Call ${item.name}`}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="call" size={18} color="#fff" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <View style={styles.cardActions}>
+              <TouchableOpacity
+                onPress={() => onToggleFavorite(item)}
+                style={styles.favoriteButton}
+                accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name={isFavorite ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
+                <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </LongPressMenu>
+    </SwipeableRow>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison for better memoization
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.name === nextProps.item.name &&
+    prevProps.item.photo === nextProps.item.photo &&
+    prevProps.item.patientId === nextProps.item.patientId &&
+    prevProps.item.initialComplaint === nextProps.item.initialComplaint &&
+    prevProps.item.phone === nextProps.item.phone &&
+    prevProps.item.group === nextProps.item.group &&
+    prevProps.isFavorite === nextProps.isFavorite
+  );
+});
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -53,7 +178,8 @@ function Index({ patients, groups, totalPatientCount }) {
   const { theme, fontScale } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const styles = createStyles(theme, fontScale, insets.top);
+  // Memoize styles to prevent recreation on every render
+  const styles = useMemo(() => createStyles(theme, fontScale, insets.top), [theme, fontScale, insets.top]);
 
   const {
     searchQuery,
@@ -259,7 +385,8 @@ function Index({ patients, groups, totalPatientCount }) {
     }
   };
 
-  const getPatientMenuOptions = (patient: Patient): MenuOption[] => [
+  // Memoized menu options generator
+  const getPatientMenuOptions = useCallback((patient: Patient): MenuOption[] => [
     {
       id: 'view',
       label: 'View Details',
@@ -292,7 +419,7 @@ function Index({ patients, groups, totalPatientCount }) {
       onPress: () => handleDeletePatient(patient),
       destructive: true,
     },
-  ];
+  ], [router, handleCallPatient, handleToggleFavorite, handleDeletePatient]);
 
   const navigateToProfile = () => {
     triggerHaptic();
@@ -305,96 +432,46 @@ function Index({ patients, groups, totalPatientCount }) {
     router.push('/add-patient');
   };
 
-  const renderPatientCard = ({ item }: { item: Patient }) => {
+  // Memoized navigation handlers
+  const handleNavigate = useCallback((id: string) => {
+    router.push(`/patient/${id}`);
+  }, [router]);
+
+  const handleEdit = useCallback((id: string) => {
+    router.push(`/edit-patient/${id}`);
+  }, [router]);
+
+  // Memoized render function for FlashList
+  const renderPatientCard = useCallback(({ item }: { item: Patient }) => {
     // Use optimistic state if available, otherwise use actual DB state
     const isFavorite = optimisticFavorites[item.id] ?? item.isFavorite;
 
     return (
-      <SwipeableRow
-        rightActions={[
-          {
-            icon: 'trash-outline',
-            color: theme.colors.surface,
-            backgroundColor: theme.colors.error,
-            onPress: () => handleDeletePatient(item),
-            label: 'Delete',
-          },
-        ]}
-        leftActions={[
-          {
-            icon: isFavorite ? 'heart-dislike' : 'heart',
-            color: theme.colors.surface,
-            backgroundColor: isFavorite ? theme.colors.textSecondary : theme.colors.error,
-            onPress: () => handleToggleFavorite(item),
-            label: isFavorite ? 'Unfavorite' : 'Favorite',
-          },
-          {
-            icon: 'create-outline',
-            color: theme.colors.surface,
-            backgroundColor: theme.colors.primary,
-            onPress: () => router.push(`/edit-patient/${item.id}`),
-            label: 'Edit',
-          },
-        ]}
-      >
-        <LongPressMenu
-          options={getPatientMenuOptions(item)}
-          onPress={() => router.push(`/patient/${item.id}`)}
-        >
-          <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.cardContent}>
-              <View style={styles.patientInfo}>
-                <CachedImage
-                  base64={item.photo}
-                  cacheKey={`patient-${item.id}`}
-                  size={50}
-                  containerStyle={styles.patientPhoto}
-                  placeholderColor={theme.colors.background}
-                  placeholderIconColor={theme.colors.textSecondary}
-                />
-                <View style={styles.patientDetails}>
-                  <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                  {item.initialComplaint ? (
-                    <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                      {item.initialComplaint}
-                    </Text>
-                  ) : null}
-                </View>
-                {item.phone ? (
-                  <TouchableOpacity
-                    style={[styles.callButton, { backgroundColor: theme.colors.success }]}
-                    onPress={() => handleCallPatient(item)}
-                    accessibilityLabel={`Call ${item.name}`}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="call" size={18} color="#fff" />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  onPress={() => handleToggleFavorite(item)}
-                  style={styles.favoriteButton}
-                  accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={20}
-                    color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
-                  <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </LongPressMenu>
-      </SwipeableRow>
+      <MemoizedPatientCard
+        item={item}
+        isFavorite={isFavorite}
+        theme={theme}
+        styles={styles}
+        onToggleFavorite={handleToggleFavorite}
+        onDelete={handleDeletePatient}
+        onCall={handleCallPatient}
+        onNavigate={handleNavigate}
+        onEdit={handleEdit}
+        getMenuOptions={getPatientMenuOptions}
+      />
     );
-  };
+  }, [optimisticFavorites, theme, styles, handleToggleFavorite, handleDeletePatient, handleCallPatient, handleNavigate, handleEdit, getPatientMenuOptions]);
+
+  // Preload images for visible patients on initial render and when list changes
+  useEffect(() => {
+    if (visiblePatients.length > 0) {
+      preloadImages(
+        visiblePatients.slice(0, 10),
+        (patient) => `patient-${patient.id}`,
+        (patient) => patient.photo
+      );
+    }
+  }, [visiblePatients]);
 
   const filterButtons = useMemo(() => {
     const buttons = [
@@ -522,15 +599,18 @@ function Index({ patients, groups, totalPatientCount }) {
     }
   }, [hasMorePatients, isLoadingMore, filteredPatients.length]);
 
+  // Show skeleton loading state for better perceived performance
   if (authLoading || loading.patients) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-            {authLoading ? 'Loading...' : 'Loading patients...'}
-          </Text>
+        {/* Header skeleton */}
+        <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>HEAL LOG</Text>
+            <Text style={styles.headerSubtitle}>Loading...</Text>
+          </View>
         </View>
+        <FullPageSkeleton />
       </SafeAreaView>
     );
   }

@@ -188,7 +188,94 @@ export const ProfileSkeleton: React.FC = () => {
   );
 };
 
+/**
+ * Multiple patient card skeletons for list loading state
+ */
+export const PatientListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => {
+  return (
+    <View style={styles.listContainer}>
+      {Array.from({ length: count }).map((_, index) => (
+        <PatientCardSkeleton key={`skeleton-${index}`} />
+      ))}
+    </View>
+  );
+};
+
+/**
+ * Search bar skeleton
+ */
+export const SearchBarSkeleton: React.FC = () => {
+  const { theme } = useTheme();
+
+  return (
+    <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
+      <SkeletonLoader width={20} height={20} borderRadius={10} />
+      <SkeletonLoader width="75%" height={16} borderRadius={4} style={{ marginLeft: 12 }} />
+      <SkeletonLoader width={20} height={20} borderRadius={10} style={{ marginLeft: 'auto' }} />
+    </View>
+  );
+};
+
+/**
+ * Filter chips skeleton
+ */
+export const FilterChipsSkeleton: React.FC = () => {
+  return (
+    <View style={styles.filterContainer}>
+      {[60, 80, 70, 90].map((width, i) => (
+        <SkeletonLoader
+          key={i}
+          width={width}
+          height={32}
+          borderRadius={16}
+          style={{ marginRight: 8 }}
+        />
+      ))}
+    </View>
+  );
+};
+
+/**
+ * Full page skeleton for initial patient list loading
+ */
+export const FullPageSkeleton: React.FC = () => {
+  return (
+    <View style={styles.fullPage}>
+      <SearchBarSkeleton />
+      <FilterChipsSkeleton />
+      <PatientListSkeleton count={6} />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  fullPage: {
+    flex: 1,
+    paddingTop: 8,
+  },
   patientCard: {
     borderRadius: 12,
     marginBottom: 12,

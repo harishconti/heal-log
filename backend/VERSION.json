@@ -1,5 +1,5 @@
 {
-    "version": "1.2.3",
+    "version": "1.2.4",
     "build_date": "2026-01-11T00:00:00Z",
     "commit": "fix-version-bump",
     "release_notes": "Fixed version bump workflow to commit all version files and synchronized versions across the codebase.",

@@ -1,11 +1,131 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, CancelTokenSource } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { authEvents } from '@/utils/events';
+import { retryWithBackoff } from '@/utils/retry';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://doctor-log-production.up.railway.app';
+
+// Request cancellation manager
+class RequestManager {
+  private pendingRequests: Map<string, AbortController> = new Map();
+
+  /**
+   * Create a new AbortController for a request
+   * @param requestId - Unique identifier for the request
+   * @returns AbortController signal
+   */
+  createRequest(requestId: string): AbortSignal {
+    // Cancel any existing request with the same ID
+    this.cancelRequest(requestId);
+
+    const controller = new AbortController();
+    this.pendingRequests.set(requestId, controller);
+    return controller.signal;
+  }
+
+  /**
+   * Cancel a specific request by ID
+   */
+  cancelRequest(requestId: string): void {
+    const controller = this.pendingRequests.get(requestId);
+    if (controller) {
+      controller.abort();
+      this.pendingRequests.delete(requestId);
+    }
+  }
+
+  /**
+   * Cancel all pending requests
+   */
+  cancelAllRequests(): void {
+    this.pendingRequests.forEach((controller) => {
+      controller.abort();
+    });
+    this.pendingRequests.clear();
+  }
+
+  /**
+   * Mark a request as completed
+   */
+  completeRequest(requestId: string): void {
+    this.pendingRequests.delete(requestId);
+  }
+
+  /**
+   * Get number of pending requests
+   */
+  get pendingCount(): number {
+    return this.pendingRequests.size;
+  }
+}
+
+export const requestManager = new RequestManager();
+
+// User-friendly error messages
+const ERROR_MESSAGES: Record<string, string> = {
+  NETWORK_ERROR: 'Unable to connect to the server. Please check your internet connection.',
+  TIMEOUT: 'The request took too long. Please try again.',
+  SERVER_ERROR: 'Something went wrong on our end. Please try again later.',
+  UNAUTHORIZED: 'Your session has expired. Please log in again.',
+  FORBIDDEN: 'You do not have permission to perform this action.',
+  NOT_FOUND: 'The requested resource was not found.',
+  VALIDATION_ERROR: 'Please check your input and try again.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
+  DEFAULT: 'An unexpected error occurred. Please try again.',
+};
+
+/**
+ * Get a user-friendly error message from an API error
+ */
+export function getApiErrorMessage(error: any): string {
+  // Check for network errors
+  if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK') {
+    return ERROR_MESSAGES.NETWORK_ERROR;
+  }
+
+  // Check for timeout
+  if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+    return ERROR_MESSAGES.TIMEOUT;
+  }
+
+  // Check for cancelled requests
+  if (axios.isCancel(error)) {
+    return 'Request was cancelled.';
+  }
+
+  // Check response status codes
+  if (error.response) {
+    const { status, data } = error.response;
+
+    // Extract backend error message if available
+    const backendMessage = data?.detail || data?.message || data?.error?.message;
+
+    switch (status) {
+      case 400:
+        return backendMessage || ERROR_MESSAGES.VALIDATION_ERROR;
+      case 401:
+        return ERROR_MESSAGES.UNAUTHORIZED;
+      case 403:
+        return ERROR_MESSAGES.FORBIDDEN;
+      case 404:
+        return ERROR_MESSAGES.NOT_FOUND;
+      case 429:
+        return ERROR_MESSAGES.RATE_LIMITED;
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return ERROR_MESSAGES.SERVER_ERROR;
+      default:
+        return backendMessage || ERROR_MESSAGES.DEFAULT;
+    }
+  }
+
+  return error.message || ERROR_MESSAGES.DEFAULT;
+}
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'token';
@@ -446,5 +566,138 @@ export const logout = async (): Promise<void> => {
     }
   }
 };
+
+/**
+ * Make a GET request with automatic retry logic
+ * @param url - API endpoint
+ * @param config - Axios config options
+ * @param requestId - Optional request ID for cancellation
+ */
+export async function apiGet<T = any>(
+  url: string,
+  config: any = {},
+  requestId?: string
+): Promise<T> {
+  const signal = requestId ? requestManager.createRequest(requestId) : undefined;
+
+  try {
+    const response = await retryWithBackoff(
+      () => api.get<T>(url, { ...config, signal }),
+      {
+        maxRetries: 2,
+        initialDelay: 1000,
+        shouldRetry: (error) => {
+          // Don't retry cancelled requests
+          if (axios.isCancel(error)) return false;
+          // Retry on network errors or 5xx
+          return error.code === 'ERR_NETWORK' || (error.response?.status >= 500);
+        },
+      }
+    );
+    return response.data;
+  } finally {
+    if (requestId) {
+      requestManager.completeRequest(requestId);
+    }
+  }
+}
+
+/**
+ * Make a POST request with automatic retry logic
+ * @param url - API endpoint
+ * @param data - Request body
+ * @param config - Axios config options
+ * @param requestId - Optional request ID for cancellation
+ */
+export async function apiPost<T = any>(
+  url: string,
+  data?: any,
+  config: any = {},
+  requestId?: string
+): Promise<T> {
+  const signal = requestId ? requestManager.createRequest(requestId) : undefined;
+
+  try {
+    const response = await retryWithBackoff(
+      () => api.post<T>(url, data, { ...config, signal }),
+      {
+        maxRetries: 2,
+        initialDelay: 1000,
+        shouldRetry: (error) => {
+          // Don't retry cancelled requests
+          if (axios.isCancel(error)) return false;
+          // Only retry on network errors or 5xx (not on client errors)
+          return error.code === 'ERR_NETWORK' || (error.response?.status >= 500);
+        },
+      }
+    );
+    return response.data;
+  } finally {
+    if (requestId) {
+      requestManager.completeRequest(requestId);
+    }
+  }
+}
+
+/**
+ * Make a PUT request with automatic retry logic
+ */
+export async function apiPut<T = any>(
+  url: string,
+  data?: any,
+  config: any = {},
+  requestId?: string
+): Promise<T> {
+  const signal = requestId ? requestManager.createRequest(requestId) : undefined;
+
+  try {
+    const response = await retryWithBackoff(
+      () => api.put<T>(url, data, { ...config, signal }),
+      {
+        maxRetries: 2,
+        initialDelay: 1000,
+        shouldRetry: (error) => {
+          if (axios.isCancel(error)) return false;
+          return error.code === 'ERR_NETWORK' || (error.response?.status >= 500);
+        },
+      }
+    );
+    return response.data;
+  } finally {
+    if (requestId) {
+      requestManager.completeRequest(requestId);
+    }
+  }
+}
+
+/**
+ * Make a DELETE request with automatic retry logic
+ */
+export async function apiDelete<T = any>(
+  url: string,
+  config: any = {},
+  requestId?: string
+): Promise<T> {
+  const signal = requestId ? requestManager.createRequest(requestId) : undefined;
+
+  try {
+    const response = await retryWithBackoff(
+      () => api.delete<T>(url, { ...config, signal }),
+      {
+        maxRetries: 2,
+        initialDelay: 1000,
+        shouldRetry: (error) => {
+          if (axios.isCancel(error)) return false;
+          return error.code === 'ERR_NETWORK' || (error.response?.status >= 500);
+        },
+      }
+    );
+    return response.data;
+  } finally {
+    if (requestId) {
+      requestManager.completeRequest(requestId);
+    }
+  }
+}
 
 export default api;

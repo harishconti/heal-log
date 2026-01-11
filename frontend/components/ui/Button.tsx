@@ -289,7 +289,16 @@ export const Button: React.FC<ButtonProps> = ({
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {icon && iconPosition === 'left' && renderIcon()}
-        {title ? <Text style={getTextStyle()}>{title}</Text> : null}
+        {title ? (
+          <Text
+            style={getTextStyle()}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {title}
+          </Text>
+        ) : null}
         {icon && iconPosition === 'right' && renderIcon()}
       </View>
     );
@@ -301,6 +310,9 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading }}
     >
       {renderContent()}
     </TouchableOpacity>

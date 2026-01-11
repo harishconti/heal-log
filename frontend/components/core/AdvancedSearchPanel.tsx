@@ -122,7 +122,7 @@ const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Search by Condition */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
@@ -366,6 +366,10 @@ const createStyles = (theme: any, fontScale: number) =>
     },
     closeButton: {
       padding: 4,
+      minWidth: 48,
+      minHeight: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     title: {
       fontSize: 18 * fontScale,
@@ -374,6 +378,10 @@ const createStyles = (theme: any, fontScale: number) =>
     },
     resetButton: {
       padding: 4,
+      minWidth: 48,
+      minHeight: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     resetText: {
       fontSize: 14 * fontScale,

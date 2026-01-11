@@ -221,7 +221,7 @@ function EditPatientScreen({ patient }) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoid}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton} accessibilityLabel="Close" accessibilityRole="button">
             <Ionicons name="close" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Patient</Text>
@@ -234,7 +234,7 @@ function EditPatientScreen({ patient }) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.photoSection}>
             <TouchableOpacity style={styles.photoContainer} onPress={showImagePicker}>
               {photo ? (
@@ -363,7 +363,7 @@ function EditPatientScreen({ patient }) {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: '80%' }]}>
             <Text style={styles.modalTitle}>Select Medical Group</Text>
-            <ScrollView style={styles.groupList}>
+            <ScrollView style={styles.groupList} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
               {allGroups.map((group) => (
                 <TouchableOpacity
                   key={group}
@@ -466,7 +466,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   loadingText: { marginTop: 16, fontSize: 16 * fontScale, color: theme.colors.textSecondary },
   keyboardAvoid: { flex: 1 },
   header: { backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16 },
-  headerButton: { padding: 8 },
+  headerButton: { padding: 8, minWidth: 48, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 20 * fontScale, fontWeight: 'bold', color: '#fff' },
   saveText: { fontSize: 16 * fontScale, fontWeight: '600', color: '#fff' },
   disabledButton: { opacity: 0.5 },

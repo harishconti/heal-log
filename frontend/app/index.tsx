@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo, useState } from 'react';
+import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import {
   Platform,
   ActivityIndicator,
   LogBox,
-  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Constants for pagination
 const PATIENTS_PAGE_SIZE = 50;
@@ -51,8 +51,9 @@ function Index({ patients, groups, totalPatientCount }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { theme, fontScale } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  const styles = createStyles(theme, fontScale);
+  const styles = createStyles(theme, fontScale, insets.top);
 
   const {
     searchQuery,
@@ -86,6 +87,30 @@ function Index({ patients, groups, totalPatientCount }) {
 
   // Optimistic favorite state for instant UI feedback
   const [optimisticFavorites, setOptimisticFavorites] = useState<Record<string, boolean>>({});
+
+  // Debounced search state
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search input
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(text);
+    }, 300);
+  }, [setSearchQuery]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (settings.hapticEnabled) {
@@ -340,6 +365,8 @@ function Index({ patients, groups, totalPatientCount }) {
                   <TouchableOpacity
                     style={[styles.callButton, { backgroundColor: theme.colors.success }]}
                     onPress={() => handleCallPatient(item)}
+                    accessibilityLabel={`Call ${item.name}`}
+                    accessibilityRole="button"
                   >
                     <Ionicons name="call" size={18} color="#fff" />
                   </TouchableOpacity>
@@ -349,6 +376,8 @@ function Index({ patients, groups, totalPatientCount }) {
                 <TouchableOpacity
                   onPress={() => handleToggleFavorite(item)}
                   style={styles.favoriteButton}
+                  accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  accessibilityRole="button"
                 >
                   <Ionicons
                     name={isFavorite ? 'heart' : 'heart-outline'}
@@ -398,9 +427,9 @@ function Index({ patients, groups, totalPatientCount }) {
 
     let result = patients;
 
-    // Apply basic search filter (name, ID, phone)
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
+    // Apply basic search filter (name, ID, phone) - use debounced query
+    if (debouncedSearchQuery) {
+      const lowerQuery = debouncedSearchQuery.toLowerCase();
       result = result.filter(p =>
         p.name?.toLowerCase().includes(lowerQuery) ||
         p.patientId?.toLowerCase().includes(lowerQuery) ||
@@ -467,7 +496,7 @@ function Index({ patients, groups, totalPatientCount }) {
     }
 
     return result;
-  }, [patients, searchQuery, selectedFilter, advancedFilters]);
+  }, [patients, debouncedSearchQuery, selectedFilter, advancedFilters]);
 
   // Paginated visible patients for lazy loading
   const visiblePatients = useMemo(() => {
@@ -519,13 +548,30 @@ function Index({ patients, groups, totalPatientCount }) {
           <Text style={styles.headerSubtitle}>Welcome, {user?.full_name?.split(' ')[0]}</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => handleSync(true)} disabled={refreshing || loading.sync}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => handleSync(true)}
+            disabled={refreshing || loading.sync}
+            accessibilityLabel={isOffline ? "Sync data, currently offline" : "Sync data"}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: refreshing || loading.sync }}
+          >
             <Ionicons name={refreshing || loading.sync ? "sync-circle" : isOffline ? "cloud-offline" : "cloud-done"} size={24} color={isOffline ? theme.colors.warning : theme.colors.surface} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={navigateToProfile}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={navigateToProfile}
+            accessibilityLabel="View profile"
+            accessibilityRole="button"
+          >
             <Ionicons name="person-circle-outline" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={addNewPatient}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={addNewPatient}
+            accessibilityLabel="Add new patient"
+            accessibilityRole="button"
+          >
             <Ionicons name="add" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
         </View>
@@ -537,8 +583,10 @@ function Index({ patients, groups, totalPatientCount }) {
           style={[styles.searchInput, { color: theme.colors.text }]}
           placeholder="Search by name, ID, phone..."
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleSearchChange}
           placeholderTextColor={theme.colors.textSecondary}
+          accessibilityLabel="Search patients"
+          accessibilityHint="Search by name, ID, or phone number"
         />
         <TouchableOpacity
           style={styles.advancedSearchButton}
@@ -701,7 +749,7 @@ const enhance = withObservables([], () => {
 export default enhance(Index);
 
 
-const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
+const createStyles = (theme: any, fontScale: number, topInset: number = 0) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -720,7 +768,7 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 16 : 16,
+    paddingTop: Platform.OS === 'android' ? Math.max(topInset, 24) + 16 : 16,
   },
   headerLeft: {
     flex: 1,
@@ -741,9 +789,9 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     alignItems: 'center',
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -886,6 +934,10 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   },
   favoriteButton: {
     padding: 4,
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   callButton: {
     width: 36,

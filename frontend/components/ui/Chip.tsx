@@ -184,8 +184,10 @@ export const Chip: React.FC<ChipProps> = ({
       {onClose && (
         <TouchableOpacity
           onPress={onClose}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ marginLeft: 4 }}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+          style={{ marginLeft: 4, minWidth: 24, minHeight: 24, justifyContent: 'center', alignItems: 'center' }}
+          accessibilityLabel={`Remove ${label}`}
+          accessibilityRole="button"
         >
           <Ionicons
             name="close"

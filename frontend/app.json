@@ -28,7 +28,13 @@
       "edgeToEdgeEnabled": true
     },
     "androidStatusBar": {
-      "backgroundColor": "#000000"
+      "barStyle": "light-content",
+      "backgroundColor": "#1A8CFF"
+    },
+    "androidNavigationBar": {
+      "visible": "sticky",
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
     },
     "web": {
       "bundler": "metro",

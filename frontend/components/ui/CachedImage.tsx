@@ -17,9 +17,20 @@ import {
   ActivityIndicator,
   ImageStyle,
   ViewStyle,
+  PixelRatio,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getOptimizedImageUri } from '@/services/image_service';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Responsive size calculation for different screen densities
+const getResponsiveSize = (baseSize: number, fontScale: number = 1): number => {
+  const scaleFactor = SCREEN_WIDTH / 375; // Base on iPhone X width
+  const adjustedScale = Math.min(Math.max(scaleFactor, 0.85), 1.25);
+  return Math.round(baseSize * adjustedScale * Math.min(fontScale, 1.15));
+};
 
 interface CachedImageProps {
   base64?: string | null;
@@ -30,6 +41,8 @@ interface CachedImageProps {
   placeholderColor?: string;
   placeholderIconColor?: string;
   showLoading?: boolean;
+  responsive?: boolean;
+  accessibilityLabel?: string;
 }
 
 /**
@@ -44,9 +57,15 @@ function CachedImageComponent({
   placeholderColor = '#f0f0f0',
   placeholderIconColor = '#666',
   showLoading = false,
+  responsive = true,
+  accessibilityLabel = 'Profile photo',
 }: CachedImageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  // Apply responsive scaling if enabled
+  const fontScale = PixelRatio.getFontScale();
+  const finalSize = responsive ? getResponsiveSize(size, fontScale) : size;
 
   // Get cached or create new URI
   const imageUri = useMemo(() => {
@@ -61,31 +80,35 @@ function CachedImageComponent({
   }, [base64, cacheKey]);
 
   const containerStyles: ViewStyle = {
-    width: size,
-    height: size,
-    borderRadius: size / 2,
+    width: finalSize,
+    height: finalSize,
+    borderRadius: finalSize / 2,
     overflow: 'hidden',
     ...containerStyle,
   };
 
   const imageStyles: ImageStyle = {
-    width: size,
-    height: size,
-    borderRadius: size / 2,
+    width: finalSize,
+    height: finalSize,
+    borderRadius: finalSize / 2,
     ...style,
   };
 
   // Show placeholder if no image or error
   if (!imageUri || hasError) {
     return (
-      <View style={[styles.placeholder, containerStyles, { backgroundColor: placeholderColor }]}>
-        <Ionicons name="person" size={size * 0.5} color={placeholderIconColor} />
+      <View
+        style={[styles.placeholder, containerStyles, { backgroundColor: placeholderColor }]}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="image"
+      >
+        <Ionicons name="person" size={finalSize * 0.5} color={placeholderIconColor} />
       </View>
     );
   }
 
   return (
-    <View style={containerStyles}>
+    <View style={containerStyles} accessibilityLabel={accessibilityLabel} accessibilityRole="image">
       <Image
         source={{ uri: imageUri }}
         style={imageStyles}
@@ -98,6 +121,7 @@ function CachedImageComponent({
         // Performance optimizations
         resizeMode="cover"
         fadeDuration={0} // Disable fade for faster display
+        accessible={false}
       />
       {showLoading && isLoading && (
         <View style={[styles.loadingOverlay, containerStyles]}>

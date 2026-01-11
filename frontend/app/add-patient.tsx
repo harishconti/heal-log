@@ -228,7 +228,12 @@ export default function AddPatientScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+            accessibilityLabel="Close"
+            accessibilityRole="button"
+          >
             <Ionicons name="close" size={24} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Patient</Text>
@@ -236,12 +241,19 @@ export default function AddPatientScreen() {
             onPress={handleSubmit(onSubmit)}
             style={[styles.headerButton, loading && styles.disabledButton]}
             disabled={loading}
+            accessibilityLabel="Save patient"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading }}
           >
             <Text style={styles.saveText}>Save</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Photo Section */}
           <View style={styles.photoSection}>
             <TouchableOpacity style={styles.photoContainer} onPress={showImagePicker}>
@@ -471,7 +483,7 @@ export default function AddPatientScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: '80%' }]}>
             <Text style={styles.modalTitle}>Select Medical Group</Text>
-            <ScrollView style={styles.groupList}>
+            <ScrollView style={styles.groupList} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
               <TouchableOpacity
                 style={styles.createGroupOption}
                 onPress={() => {
@@ -632,6 +644,10 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   headerButton: {
     padding: 8,
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 20,

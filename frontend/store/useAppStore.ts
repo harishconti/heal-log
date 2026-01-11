@@ -54,6 +54,10 @@ export interface SyncState {
   pendingChanges: number;
   lastSyncAttempt: string | null;
   consecutiveFailures: number;
+  progress: number; // 0-100
+  totalRecords: number;
+  syncedRecords: number;
+  currentOperation: 'pull' | 'push' | 'idle';
 }
 
 interface LoadingState {
@@ -125,6 +129,8 @@ interface AppState {
   decrementPendingChanges: () => void;
   recordSyncAttempt: (success: boolean) => void;
   resetSyncState: () => void;
+  updateSyncProgress: (progress: number, syncedRecords?: number, totalRecords?: number) => void;
+  setSyncOperation: (operation: 'pull' | 'push' | 'idle') => void;
 
   // Convenience getters
   isAnyLoading: () => boolean;
@@ -149,6 +155,10 @@ const initialSyncState: SyncState = {
   pendingChanges: 0,
   lastSyncAttempt: null,
   consecutiveFailures: 0,
+  progress: 0,
+  totalRecords: 0,
+  syncedRecords: 0,
+  currentOperation: 'idle',
 };
 
 const initialLoadingState: LoadingState = {
@@ -252,6 +262,27 @@ export const useAppStore = create(
         });
       },
       resetSyncState: () => set({ syncState: initialSyncState }),
+      updateSyncProgress: (progress, syncedRecords, totalRecords) => {
+        const current = get().syncState;
+        set({
+          syncState: {
+            ...current,
+            progress,
+            syncedRecords: syncedRecords ?? current.syncedRecords,
+            totalRecords: totalRecords ?? current.totalRecords,
+          },
+        });
+      },
+      setSyncOperation: (operation) => {
+        const current = get().syncState;
+        set({
+          syncState: {
+            ...current,
+            currentOperation: operation,
+            status: operation === 'idle' ? current.status : 'syncing',
+          },
+        });
+      },
 
       // Convenience getters
       isAnyLoading: () => {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Platform, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ export default function TabsLayout() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { settings } = useAppStore();
+  const router = useRouter();
 
   const triggerHaptic = () => {
     if (settings.hapticEnabled) {
@@ -55,6 +56,30 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: theme.colors.primaryMuted },
+              ]}
+              accessibilityLabel="Home tab"
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+            >
+              <Ionicons
+                name={focused ? 'home' : 'home-outline'}
+                size={size}
+                color={color}
+              />
+            </View>
+          ),
+          tabBarAccessibilityLabel: 'Home tab - Dashboard and overview',
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
           title: 'Patients',
           tabBarIcon: ({ color, size, focused }) => (
             <View
@@ -77,31 +102,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                focused && { backgroundColor: theme.colors.primaryMuted },
-              ]}
-              accessibilityLabel="Analytics tab"
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-            >
-              <Ionicons
-                name={focused ? 'analytics' : 'analytics-outline'}
-                size={size}
-                color={color}
-              />
-            </View>
-          ),
-          tabBarAccessibilityLabel: 'Analytics tab - View statistics and reports',
-        }}
-      />
-      <Tabs.Screen
         name="settings"
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            triggerHaptic();
+            router.push('/settings');
+          },
+        }}
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, size, focused }) => (
@@ -122,6 +130,37 @@ export default function TabsLayout() {
             </View>
           ),
           tabBarAccessibilityLabel: 'Settings tab - App preferences and configuration',
+        }}
+      />
+      <Tabs.Screen
+        name="pro"
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            triggerHaptic();
+            router.push('/profile');
+          },
+        }}
+        options={{
+          title: 'Pro',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={[
+                styles.iconContainer,
+                focused && { backgroundColor: theme.colors.primaryMuted },
+              ]}
+              accessibilityLabel="Pro tab"
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+            >
+              <Ionicons
+                name={focused ? 'diamond' : 'diamond-outline'}
+                size={size}
+                color={color}
+              />
+            </View>
+          ),
+          tabBarAccessibilityLabel: 'Pro tab - Profile and subscription',
         }}
       />
     </Tabs>

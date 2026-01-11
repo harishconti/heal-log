@@ -101,6 +101,7 @@ const AppLayout = () => {
         <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="register" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="profile" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="analytics" options={{ headerShown: false }} />
         <Stack.Screen name="add-patient" options={{ headerShown: false, animation: 'slide_from_bottom' }} />

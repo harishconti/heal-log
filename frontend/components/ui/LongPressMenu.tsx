@@ -44,7 +44,7 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
   options,
   onLongPress,
   onPress,
-  delayLongPress = 500,
+  delayLongPress = 400, // Reduced from 500ms for snappier feel
   disabled = false,
   accessibilityLabel,
   accessibilityHint,
@@ -83,17 +83,17 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
     setMenuPosition({ x, y });
     setMenuVisible(true);
 
-    // Animate menu appearance
+    // Animate menu appearance - optimized for snappier feel
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
-        tension: 100,
-        friction: 8,
+        tension: 150, // Increased from 100 for faster spring
+        friction: 7, // Reduced from 8 for snappier bounce
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 150,
+        duration: 120, // Reduced from 150ms
         useNativeDriver: true,
       }),
     ]).start();
@@ -137,23 +137,23 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
 
   const handlePressIn = () => {
     setIsPressing(true);
-    // Animate scale down slightly to indicate press
+    // Animate scale down slightly to indicate press - faster response
     Animated.spring(pressScaleAnim, {
-      toValue: 0.98,
+      toValue: 0.97, // Slightly more noticeable scale
       useNativeDriver: true,
-      tension: 100,
-      friction: 10,
+      tension: 200, // Increased for faster response
+      friction: 8, // Reduced for snappier feel
     }).start();
   };
 
   const handlePressOut = () => {
     setIsPressing(false);
-    // Animate scale back
+    // Animate scale back - faster recovery
     Animated.spring(pressScaleAnim, {
       toValue: 1,
       useNativeDriver: true,
-      tension: 100,
-      friction: 10,
+      tension: 200, // Increased for faster response
+      friction: 8, // Reduced for snappier feel
     }).start();
   };
 

@@ -50,7 +50,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   enabled = true,
   overshootLeft = false,
   overshootRight = false,
-  friction = 2,
+  friction = 1.5, // Reduced from 2 for snappier swipe completion
   accessibilityLabel,
   accessibilityHint,
 }) => {

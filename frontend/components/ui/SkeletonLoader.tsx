@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface SkeletonLoaderProps {
@@ -7,48 +7,95 @@ interface SkeletonLoaderProps {
   height?: number;
   borderRadius?: number;
   style?: any;
+  variant?: 'pulse' | 'shimmer';
 }
 
 /**
- * Skeleton loader component for better loading UX
- * Creates a shimmer effect while content is loading
+ * Optimized Skeleton loader component for better loading UX
+ * Uses native driver for opacity animations where possible
  */
 export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   width = '100%',
   height = 20,
   borderRadius = 4,
   style,
+  variant = 'pulse',
 }) => {
   const { theme } = useTheme();
-  const animatedValue = React.useRef(new Animated.Value(0)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0.4)).current;
+  const translateAnim = React.useRef(new Animated.Value(-1)).current;
 
   React.useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
+    if (variant === 'shimmer') {
+      // Shimmer effect using translateX with native driver
+      const shimmerAnimation = Animated.loop(
+        Animated.timing(translateAnim, {
           toValue: 1,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: false,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 1000,
-          easing: Easing.ease,
-          useNativeDriver: false,
-        }),
-      ])
+          duration: 1200,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      shimmerAnimation.start();
+      return () => shimmerAnimation.stop();
+    } else {
+      // Optimized pulse animation using opacity with native driver
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0.4,
+            duration: 800,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+      return () => pulseAnimation.stop();
+    }
+  }, [variant, opacityAnim, translateAnim]);
+
+  if (variant === 'shimmer') {
+    return (
+      <View
+        style={[
+          {
+            width,
+            height,
+            borderRadius,
+            backgroundColor: theme.colors.border,
+            overflow: 'hidden',
+          },
+          style,
+        ]}
+        accessibilityLabel="Loading content"
+        accessibilityRole="progressbar"
+      >
+        <Animated.View
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: theme.colors.surface,
+            transform: [
+              {
+                translateX: translateAnim.interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: [-200, 200],
+                }),
+              },
+            ],
+            opacity: 0.3,
+          }}
+        />
+      </View>
     );
-
-    animation.start();
-
-    return () => animation.stop();
-  }, [animatedValue]);
-
-  const backgroundColor = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [theme.colors.border, theme.colors.textSecondary + '30'],
-  });
+  }
 
   return (
     <Animated.View
@@ -57,7 +104,8 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
           width,
           height,
           borderRadius,
-          backgroundColor,
+          backgroundColor: theme.colors.border,
+          opacity: opacityAnim,
         },
         style,
       ]}

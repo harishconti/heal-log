@@ -45,6 +45,7 @@ import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
 import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import SyncProgressIndicator from '@/components/core/SyncProgressIndicator';
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -93,15 +94,20 @@ function Index({ patients, groups, totalPatientCount }) {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounce search input
+  // Optimized debounce search input - reduced from 300ms to 200ms for snappier feel
+  // Instant local filtering with debounced query update
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
+    // Immediately update for instant visual feedback on short queries
+    if (text.length <= 2) {
+      setDebouncedSearchQuery(text);
+    }
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(text);
-    }, 300);
+    }, 200); // Reduced from 300ms for faster response
   }, [setSearchQuery]);
 
   // Cleanup timeout on unmount
@@ -618,6 +624,13 @@ function Index({ patients, groups, totalPatientCount }) {
         </View>
       </View>
 
+      {/* Sync Progress Indicator with retry functionality */}
+      <SyncProgressIndicator
+        onRetry={() => handleSync(true)}
+        onDismiss={() => {}}
+        compact={false}
+      />
+
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
@@ -716,15 +729,22 @@ function Index({ patients, groups, totalPatientCount }) {
           renderItem={renderPatientCard}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.patientsList}
-          estimatedItemSize={150}
+          // Optimized FlashList configuration for smoother scrolling
+          estimatedItemSize={120} // More accurate estimate based on actual card height
           onEndReached={loadMorePatients}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5} // Increased threshold for earlier loading
+          drawDistance={300} // Pre-render items further ahead for smoother scroll
+          overrideItemLayout={(layout, item) => {
+            // Provide consistent layout for better performance
+            layout.size = 120; // Fixed height for patient cards
+          }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => handleSync(true)}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
+              progressViewOffset={10}
             />
           }
           ListFooterComponent={
@@ -752,8 +772,22 @@ function Index({ patients, groups, totalPatientCount }) {
               </View>
               <Text style={[styles.emptyStateText, { color: theme.colors.text }]}>No patients found</Text>
               <Text style={[styles.emptyStateSubtext, { color: theme.colors.textSecondary }]}>
-                {searchQuery ? 'Try adjusting your search' : 'Add your first patient to get started'}
+                {searchQuery ? 'Try adjusting your search or filters' : 'Add your first patient to get started'}
               </Text>
+              {searchQuery && (
+                <TouchableOpacity
+                  style={[styles.clearSearchButton, { borderColor: theme.colors.primary }]}
+                  onPress={() => {
+                    setSearchQuery('');
+                    setDebouncedSearchQuery('');
+                  }}
+                  accessibilityLabel="Clear search"
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="close-circle-outline" size={18} color={theme.colors.primary} />
+                  <Text style={[styles.clearSearchText, { color: theme.colors.primary }]}>Clear Search</Text>
+                </TouchableOpacity>
+              )}
               {!searchQuery && (
                 <TouchableOpacity
                   style={[styles.emptyStateButton, { backgroundColor: theme.colors.primary }]}
@@ -810,6 +844,9 @@ function Index({ patients, groups, totalPatientCount }) {
   );
 }
 
+// Database query limit for initial load - prevents memory issues with large datasets
+const DATABASE_QUERY_LIMIT = 500;
+
 const enhance = withObservables([], () => {
   try {
     const patientCollection = database?.collections?.get<Patient>('patients');
@@ -824,9 +861,12 @@ const enhance = withObservables([], () => {
       };
     }
 
-    // Just observe all patients - filtering happens in component for reactivity
+    // Optimized query with database-level limit to prevent memory issues
+    // Additional filtering happens in component for reactivity
     return {
-      patients: patientCollection.query().observe(),
+      patients: patientCollection
+        .query(Q.sortBy('updated_at', Q.desc), Q.take(DATABASE_QUERY_LIMIT))
+        .observe(),
       groups: patientCollection.query(Q.where('group', Q.notEq(null))).observe().pipe(
         map(ps => [...new Set(ps.map(p => p.group))])
       ),
@@ -1083,6 +1123,20 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
     color: '#fff',
     fontSize: 16 * fontScale,
     fontWeight: '600',
+  },
+  clearSearchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+    marginBottom: 12,
+  },
+  clearSearchText: {
+    fontSize: 14 * fontScale,
+    fontWeight: '500',
   },
   loadMoreContainer: {
     paddingVertical: 16,

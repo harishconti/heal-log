@@ -8,12 +8,15 @@ import { Ionicons } from '@expo/vector-icons';
 interface OfflineIndicatorProps {
   compact?: boolean;
   onRetryPress?: () => void;
+  showExpandedByDefault?: boolean;
 }
 
 const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
-  compact = false,
-  onRetryPress
+  compact = true, // Changed default to compact for less intrusive display
+  onRetryPress,
+  showExpandedByDefault = false
 }) => {
+  const [isExpanded, setIsExpanded] = React.useState(showExpandedByDefault);
   const { isConnected, isInternetReachable, type } = useNetwork();
   const { theme } = useTheme();
   const { loading, lastSyncTime, errors } = useAppStore();
@@ -92,20 +95,29 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
     return 'Changes will sync when online';
   };
 
-  if (compact) {
+  // Render compact mode with tap-to-expand functionality
+  if (compact && !isExpanded) {
     return (
-      <Animated.View
-        style={[
-          styles.compactContainer,
-          {
-            backgroundColor: theme.colors.warning,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
+      <TouchableOpacity
+        onPress={() => setIsExpanded(true)}
+        activeOpacity={0.8}
+        accessibilityLabel="Offline indicator, tap to expand"
+        accessibilityRole="button"
       >
-        <Ionicons name="cloud-offline" size={14} color={theme.colors.surface} />
-        <Text style={[styles.compactText, { color: theme.colors.surface }]}>Offline</Text>
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.compactContainer,
+            {
+              backgroundColor: theme.colors.warning,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Ionicons name="cloud-offline" size={14} color={theme.colors.surface} />
+          <Text style={[styles.compactText, { color: theme.colors.surface }]}>Offline</Text>
+          <Ionicons name="chevron-down" size={12} color={theme.colors.surface} style={{ marginLeft: 4 }} />
+        </Animated.View>
+      </TouchableOpacity>
     );
   }
 
@@ -131,14 +143,28 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
             {getSecondaryMessage()}
           </Text>
         </View>
-        {onRetryPress && (
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
-            onPress={onRetryPress}
-          >
-            <Ionicons name="refresh" size={18} color={theme.colors.surface} />
-          </TouchableOpacity>
-        )}
+        <View style={styles.actionsContainer}>
+          {onRetryPress && (
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+              onPress={onRetryPress}
+              accessibilityLabel="Retry connection"
+              accessibilityRole="button"
+            >
+              <Ionicons name="refresh" size={18} color={theme.colors.surface} />
+            </TouchableOpacity>
+          )}
+          {compact && (
+            <TouchableOpacity
+              style={[styles.collapseButton, { backgroundColor: 'rgba(255,255,255,0.15)' }]}
+              onPress={() => setIsExpanded(false)}
+              accessibilityLabel="Collapse offline indicator"
+              accessibilityRole="button"
+            >
+              <Ionicons name="chevron-up" size={16} color={theme.colors.surface} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Connection type indicator */}
@@ -187,10 +213,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  actionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   retryButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  collapseButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },

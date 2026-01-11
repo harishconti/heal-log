@@ -12,7 +12,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-// Configuration
+// Configuration - Optimized for performance
 const IMAGE_CONFIG = {
   // Full size image settings
   fullSize: {
@@ -26,70 +26,159 @@ const IMAGE_CONFIG = {
     maxHeight: 150,
     quality: 0.5,
   },
-  // Cache settings
+  // Cache settings - Extended TTL for better performance
   cache: {
-    maxEntries: 50,
-    ttlMs: 5 * 60 * 1000, // 5 minutes
+    maxEntries: 100, // Increased from 50 to handle more patients
+    ttlMs: 30 * 60 * 1000, // Extended from 5 to 30 minutes
+    cleanupIntervalMs: 5 * 60 * 1000, // Cleanup every 5 minutes
   },
 };
 
-// Simple in-memory cache for images
+// Optimized in-memory cache with LRU eviction
 interface CacheEntry {
   uri: string;
   timestamp: number;
+  lastAccessed: number;
+  size: number; // Approximate size in bytes
 }
 
 class ImageCache {
   private cache: Map<string, CacheEntry> = new Map();
   private maxEntries: number;
   private ttlMs: number;
+  private cleanupIntervalMs: number;
+  private cleanupTimer: NodeJS.Timeout | null = null;
+  private totalSize: number = 0;
+  private maxSizeBytes: number = 50 * 1024 * 1024; // 50MB max cache size
 
-  constructor(maxEntries: number = 50, ttlMs: number = 300000) {
+  constructor(
+    maxEntries: number = 100,
+    ttlMs: number = 1800000,
+    cleanupIntervalMs: number = 300000
+  ) {
     this.maxEntries = maxEntries;
     this.ttlMs = ttlMs;
+    this.cleanupIntervalMs = cleanupIntervalMs;
+    this.startCleanupTimer();
+  }
+
+  private startCleanupTimer(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+    this.cleanupTimer = setInterval(() => {
+      this.cleanup();
+    }, this.cleanupIntervalMs);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+
+    this.cache.forEach((entry, key) => {
+      if (now - entry.timestamp > this.ttlMs) {
+        keysToDelete.push(key);
+        this.totalSize -= entry.size;
+      }
+    });
+
+    keysToDelete.forEach((key) => this.cache.delete(key));
+
+    if (__DEV__ && keysToDelete.length > 0) {
+      console.log(`[ImageCache] Cleaned up ${keysToDelete.length} expired entries`);
+    }
   }
 
   get(key: string): string | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
+    const now = Date.now();
     // Check if expired
-    if (Date.now() - entry.timestamp > this.ttlMs) {
+    if (now - entry.timestamp > this.ttlMs) {
       this.cache.delete(key);
+      this.totalSize -= entry.size;
       return null;
     }
 
+    // Update last accessed time for LRU tracking
+    entry.lastAccessed = now;
     return entry.uri;
   }
 
   set(key: string, uri: string): void {
-    // Evict oldest entries if at capacity
-    if (this.cache.size >= this.maxEntries) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) {
-        this.cache.delete(oldestKey);
-      }
+    // Estimate size (base64 string length * 0.75 for actual bytes)
+    const estimatedSize = Math.floor((uri.length - uri.indexOf(',') - 1) * 0.75);
+
+    // LRU eviction if at capacity
+    while (
+      (this.cache.size >= this.maxEntries || this.totalSize + estimatedSize > this.maxSizeBytes) &&
+      this.cache.size > 0
+    ) {
+      this.evictLRU();
     }
 
+    const now = Date.now();
     this.cache.set(key, {
       uri,
-      timestamp: Date.now(),
+      timestamp: now,
+      lastAccessed: now,
+      size: estimatedSize,
     });
+    this.totalSize += estimatedSize;
+  }
+
+  private evictLRU(): void {
+    let oldestKey: string | null = null;
+    let oldestAccess = Date.now();
+
+    this.cache.forEach((entry, key) => {
+      if (entry.lastAccessed < oldestAccess) {
+        oldestAccess = entry.lastAccessed;
+        oldestKey = key;
+      }
+    });
+
+    if (oldestKey) {
+      const entry = this.cache.get(oldestKey);
+      if (entry) {
+        this.totalSize -= entry.size;
+      }
+      this.cache.delete(oldestKey);
+    }
   }
 
   clear(): void {
     this.cache.clear();
+    this.totalSize = 0;
   }
 
   get size(): number {
     return this.cache.size;
   }
+
+  get memorySizeBytes(): number {
+    return this.totalSize;
+  }
+
+  get memorySizeMB(): string {
+    return (this.totalSize / (1024 * 1024)).toFixed(2);
+  }
+
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    this.clear();
+  }
 }
 
-// Global cache instance
+// Global cache instance with optimized settings
 const imageCache = new ImageCache(
   IMAGE_CONFIG.cache.maxEntries,
-  IMAGE_CONFIG.cache.ttlMs
+  IMAGE_CONFIG.cache.ttlMs,
+  IMAGE_CONFIG.cache.cleanupIntervalMs
 );
 
 /**
@@ -239,6 +328,17 @@ export function shouldCompressImage(base64: string, maxSizeKB: number = 500): bo
   return sizeKB > maxSizeKB;
 }
 
+/**
+ * Get cache statistics for monitoring
+ */
+export function getImageCacheStats() {
+  return {
+    entries: imageCache.size,
+    memorySizeMB: imageCache.memorySizeMB,
+    memorySizeBytes: imageCache.memorySizeBytes,
+  };
+}
+
 export default {
   compressImage,
   generateThumbnail,
@@ -246,6 +346,7 @@ export default {
   preloadImages,
   clearImageCache,
   getImageCacheSize,
+  getImageCacheStats,
   getBase64Size,
   shouldCompressImage,
 };

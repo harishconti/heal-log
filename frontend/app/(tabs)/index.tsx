@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator,
   LogBox,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -319,9 +320,37 @@ function Index({ patients, groups, totalPatientCount }) {
     router.push('/add-patient');
   };
 
+  // Helper function to get badge color based on group
+  const getGroupBadgeStyle = (group: string | undefined) => {
+    const groupLower = (group || 'general').toLowerCase();
+    const colorMap: Record<string, { bg: string; text: string }> = {
+      cardiology: { bg: '#FEE2E2', text: '#DC2626' },
+      emergency: { bg: '#FEE2E2', text: '#DC2626' },
+      neurology: { bg: '#FEF3C7', text: '#D97706' },
+      orthopedics: { bg: '#DBEAFE', text: '#2563EB' },
+      physiotherapy: { bg: '#D1FAE5', text: '#059669' },
+      post_surgical: { bg: '#E0E7FF', text: '#4F46E5' },
+      pediatrics: { bg: '#FCE7F3', text: '#DB2777' },
+      dermatology: { bg: '#FED7AA', text: '#EA580C' },
+      psychiatry: { bg: '#E9D5FF', text: '#9333EA' },
+      endocrinology: { bg: '#CCFBF1', text: '#0D9488' },
+      pulmonology: { bg: '#CFFAFE', text: '#0891B2' },
+      obstetric_cardiology: { bg: '#FEE2E2', text: '#DC2626' },
+      general: { bg: theme.colors.primaryMuted, text: theme.colors.primary },
+    };
+    return colorMap[groupLower] || colorMap.general;
+  };
+
+  // Format group name for display
+  const formatGroupName = (group: string | undefined): string => {
+    if (!group) return 'General';
+    return group.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+
   const renderPatientCard = ({ item }: { item: Patient }) => {
     // Use optimistic state if available, otherwise use actual DB state
     const isFavorite = optimisticFavorites[item.id] ?? item.isFavorite;
+    const badgeColors = getGroupBadgeStyle(item.group);
 
     return (
       <SwipeableRow
@@ -359,64 +388,80 @@ function Index({ patients, groups, totalPatientCount }) {
           accessibilityLabel={`${item.name} patient card`}
           accessibilityHint="Double tap to view details. Long press for more options."
         >
-          <View
-            style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.patientCard,
+              {
+                backgroundColor: pressed ? theme.colors.primaryMuted : theme.colors.surface,
+                // Elevated shadow on press for iOS
+                ...(pressed && Platform.OS === 'ios' ? {
+                  shadowOpacity: 0.12,
+                  shadowRadius: 12,
+                } : {}),
+                // Elevated shadow on press for Android
+                ...(pressed && Platform.OS === 'android' ? {
+                  elevation: 4,
+                } : {}),
+              }
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Patient ${item.name}, ID ${item.patientId}${item.initialComplaint ? `, ${item.initialComplaint}` : ''}`}
           >
-            <View style={styles.cardContent}>
-              <View style={styles.patientInfo}>
-                <CachedImage
-                  base64={item.photo}
-                  cacheKey={`patient-${item.id}`}
-                  size={50}
-                  containerStyle={styles.patientPhoto}
-                  placeholderColor={theme.colors.background}
-                  placeholderIconColor={theme.colors.textSecondary}
-                />
-                <View style={styles.patientDetails}>
-                  <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.patientId, { color: theme.colors.textSecondary }]}>ID: {item.patientId}</Text>
-                  {item.initialComplaint ? (
-                    <Text style={[styles.complaint, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                      {item.initialComplaint}
-                    </Text>
-                  ) : null}
-                </View>
-                {item.phone ? (
-                  <TouchableOpacity
-                    style={[styles.callButton, { backgroundColor: theme.colors.success }]}
-                    onPress={() => handleCallPatient(item)}
-                    accessibilityLabel={`Call ${item.name}`}
-                    accessibilityRole="button"
-                    accessibilityHint="Opens phone dialer"
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            {/* Modern clean card layout: Avatar | Content | Badge */}
+            <View style={styles.cardRow}>
+              {/* Left: Avatar */}
+              <CachedImage
+                base64={item.photo}
+                cacheKey={`patient-${item.id}`}
+                size={52}
+                containerStyle={styles.patientAvatar}
+                placeholderColor={theme.colors.primaryMuted}
+                placeholderIconColor={theme.colors.primary}
+              />
+
+              {/* Center: Name and Details */}
+              <View style={styles.cardCenter}>
+                <View style={styles.nameRow}>
+                  <Text
+                    style={[styles.patientName, { color: theme.colors.text }]}
+                    numberOfLines={1}
                   >
-                    <Ionicons name="call" size={18} color="#fff" />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  onPress={() => handleToggleFavorite(item)}
-                  style={styles.favoriteButton}
-                  accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  accessibilityRole="button"
-                  accessibilityState={{ checked: isFavorite }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={20}
-                    color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-                <View style={[styles.groupBadge, { backgroundColor: theme.colors.primaryMuted }]}>
-                  <Text style={[styles.groupText, { color: theme.colors.primary }]}>{item.group || 'General'}</Text>
+                    {item.name}
+                  </Text>
+                  {isFavorite && (
+                    <Ionicons
+                      name="heart"
+                      size={14}
+                      color={theme.colors.error}
+                      style={styles.favoriteIcon}
+                    />
+                  )}
                 </View>
+                <Text
+                  style={[styles.patientMeta, { color: theme.colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  ID: {item.patientId}
+                  {item.phone && ` • ${item.phone}`}
+                </Text>
+                {item.initialComplaint && (
+                  <Text
+                    style={[styles.patientComplaint, { color: theme.colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {item.initialComplaint}
+                  </Text>
+                )}
+              </View>
+
+              {/* Right: Status Badge */}
+              <View style={[styles.statusBadge, { backgroundColor: badgeColors.bg }]}>
+                <Text style={[styles.statusText, { color: badgeColors.text }]}>
+                  {formatGroupName(item.group)}
+                </Text>
               </View>
             </View>
-          </View>
+          </Pressable>
         </LongPressMenu>
       </SwipeableRow>
     );
@@ -933,45 +978,59 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Modern search container
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
     marginVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
-    fontSize: 16 * fontScale,
+    paddingVertical: 14,
+    fontSize: 15 * fontScale,
+    letterSpacing: -0.2,
   },
   advancedSearchButton: {
-    padding: 8,
+    padding: 10,
     position: 'relative',
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
   },
   filterBadgeText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#fff',
   },
   activeFiltersBar: {
@@ -995,18 +1054,24 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   },
   filtersContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 14,
     gap: 8,
   },
   filterButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     marginRight: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   filterText: {
-    fontSize: 14 * fontScale,
+    fontSize: 13 * fontScale,
     fontWeight: '600',
+    letterSpacing: -0.1,
   },
   syncStatusContainer: {
     flexDirection: 'row',
@@ -1020,43 +1085,118 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   },
   patientsList: {
     paddingHorizontal: 16,
+    paddingTop: 8,
   },
+  // Modern clean card design
   patientCard: {
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
+  // Single row layout: Avatar | Content | Badge
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 52,
+  },
+  // Avatar styling
+  patientAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: theme.colors.primaryMuted,
+  },
+  // Center content area
+  cardCenter: {
+    flex: 1,
+    marginRight: 12,
+    justifyContent: 'center',
+  },
+  // Name row with inline favorite icon
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  // Larger, bolder name
+  patientName: {
+    fontSize: 17 * fontScale,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    flexShrink: 1,
+  },
+  // Small favorite heart icon inline with name
+  favoriteIcon: {
+    marginLeft: 6,
+  },
+  // Secondary meta info (ID, phone)
+  patientMeta: {
+    fontSize: 13 * fontScale,
+    fontWeight: '400',
+    marginBottom: 2,
+    letterSpacing: -0.1,
+  },
+  // Complaint/condition text
+  patientComplaint: {
+    fontSize: 12 * fontScale,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    opacity: 0.8,
+  },
+  // Pill-shaped status badge (right-aligned)
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    alignSelf: 'center',
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  // Status badge text
+  statusText: {
+    fontSize: 10 * fontScale,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  // Legacy styles for compatibility
   cardContent: {
     padding: 16,
   },
   patientInfo: {
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'center',
   },
   patientPhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
   },
   patientDetails: {
     flex: 1,
   },
-  patientName: {
-    fontSize: 18 * fontScale,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
   patientId: {
-    fontSize: 14 * fontScale,
+    fontSize: 13 * fontScale,
     marginBottom: 2,
   },
   complaint: {
-    fontSize: 14 * fontScale,
+    fontSize: 12 * fontScale,
     fontStyle: 'italic',
   },
   cardActions: {
@@ -1072,21 +1212,22 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
     alignItems: 'center',
   },
   callButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   groupBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
   },
   groupText: {
-    fontSize: 12 * fontScale,
-    fontWeight: '500',
+    fontSize: 10 * fontScale,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   emptyState: {
     alignItems: 'center',

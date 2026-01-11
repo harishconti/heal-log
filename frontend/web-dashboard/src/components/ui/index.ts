@@ -15,3 +15,14 @@ export { DataTable, type Column, type DataTableProps } from './DataTable';
 export { BackToTop } from './BackToTop';
 export { EmptyState, NoResultsState, ErrorState } from './EmptyState';
 export { DateRangePicker } from './DateRangePicker';
+
+// Dashboard-specific card variants
+export {
+  KPICard,
+  DataCard,
+  DataRow,
+  ChartCard,
+  ActionCard,
+  ActionItem,
+  PromoCard,
+} from './DashboardCards';

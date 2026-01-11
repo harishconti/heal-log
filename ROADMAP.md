@@ -4,7 +4,7 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Current Version: 1.0.9
+## Current Version: 1.2.2
 
 ### Released Features
 - User registration and authentication with JWT
@@ -29,9 +29,9 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Phase 1: Beta Release (Current)
+## Phase 1: Beta Release
 
-**Status:** Complete (v1.0.9)
+**Status:** Complete (v1.2.2)
 
 ### Critical (Must Have)
 - [x] Core authentication flow
@@ -226,7 +226,9 @@ Have a feature idea? Here's how to submit it:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.9 | Jan 2026 | Current stable release - Web dashboard, sync fixes, Google Contacts integration |
+| 1.2.2 | Jan 2026 | Current stable - Android UI/UX improvements |
+| 1.2.1 | Jan 2026 | Landing page redesign |
+| 1.0.9 | Jan 2026 | Web dashboard, sync fixes, Google Contacts integration |
 | 1.0.0 | Dec 2025 | Initial release with core features |
 | 1.5.0 | Q2 2026 | Pro features (planned) |
 | 2.0.0 | Q3 2026 | Clinic edition (planned) |

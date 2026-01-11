@@ -238,7 +238,7 @@ export function DateRangePicker({
                     ${!isStart && !isEnd && !isRangeMiddle && !isDisabled ? 'text-gray-700' : ''}
                   `}
                   aria-label={`${date.toLocaleDateString()}`}
-                  aria-selected={isStart || isEnd}
+                  aria-selected={isStart || isEnd ? true : undefined}
                 >
                   {date.getDate()}
                 </button>

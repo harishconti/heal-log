@@ -230,8 +230,8 @@ export function DashboardLayout() {
         </header>
 
         {/* Page content */}
-        <main id="main-content" className="flex-1 p-6 lg:p-10" tabIndex={-1}>
-          <div className="max-w-7xl mx-auto">
+        <main id="main-content" className="flex-1 p-6 lg:p-12 bg-gray-50/50" tabIndex={-1}>
+          <div className="max-w-[1600px] mx-auto space-y-8">
             <Outlet />
           </div>
         </main>

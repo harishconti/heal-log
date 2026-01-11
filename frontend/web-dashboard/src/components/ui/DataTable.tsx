@@ -38,7 +38,7 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends object>({
   data,
   columns,
   keyExtractor,
@@ -75,8 +75,8 @@ export function DataTable<T extends Record<string, unknown>>({
     if (!sortConfig || onSort) return data; // If external sort handler, don't sort locally
 
     return [...data].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
 
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
@@ -222,7 +222,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       >
                         {column.render
                           ? column.render(item, index)
-                          : String(item[column.key] ?? '-')}
+                          : String((item as any)[column.key] ?? '-')}
                       </td>
                     ))}
                   </tr>

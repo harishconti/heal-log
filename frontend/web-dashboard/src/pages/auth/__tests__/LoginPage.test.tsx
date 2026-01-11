@@ -40,7 +40,7 @@ describe('LoginPage', () => {
 
   it('renders login form', () => {
     renderLoginPage();
-    expect(screen.getByText(/sign in to your account/i)).toBeInTheDocument();
+    expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
@@ -71,6 +71,6 @@ describe('LoginPage', () => {
 
   it('renders "Sign up" link', () => {
     renderLoginPage();
-    expect(screen.getByText(/sign up/i)).toBeInTheDocument();
+    expect(screen.getByText(/create an account/i)).toBeInTheDocument();
   });
 });

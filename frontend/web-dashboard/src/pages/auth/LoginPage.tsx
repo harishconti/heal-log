@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, ArrowRight, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react';
+import { Mail, ArrowRight, Lock, Eye, EyeOff } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
 import { Button, Input } from '../../components/ui';
@@ -63,22 +63,21 @@ export function LoginPage() {
   if (needsVerification) {
     return (
       <div className="text-center space-y-6">
-        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-primary-200/50">
-          <Mail className="h-10 w-10 text-primary-600" />
+        <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto">
+          <Mail className="h-8 w-8 text-blue-600" />
         </div>
-        <div className="space-y-3">
-          <h2 className="text-3xl font-bold text-gray-900">Verify Your Email</h2>
-          <p className="text-gray-600 leading-relaxed">
-            We've sent a verification code to{' '}
-            <span className="font-semibold text-gray-900">{verificationEmail}</span>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900">Verify Your Email</h2>
+          <p className="text-gray-600">
+            We've sent a code to <span className="font-semibold">{verificationEmail}</span>
           </p>
         </div>
         <Link
           to={`/verify-otp?email=${encodeURIComponent(verificationEmail)}`}
-          className="inline-flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold rounded-2xl hover:shadow-xl hover:shadow-primary-500/30 transition-all duration-300 group"
+          className="inline-flex items-center justify-center gap-2 w-full h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
         >
           Enter verification code
-          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     );
@@ -86,21 +85,16 @@ export function LoginPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-4">
-          <LogIn className="w-4 h-4" />
-          <span>Healthcare Professional Portal</span>
-        </div>
-        <h2 className="text-4xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
-        <p className="text-gray-600 text-lg">Sign in to manage your practice</p>
+      {/* Header - Simplified */}
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
+        <p className="text-gray-600">Please enter your details to sign in.</p>
       </div>
 
       {/* Error message */}
       {error && (
-        <div className="relative overflow-hidden p-4 bg-gradient-to-r from-red-50 via-red-50/80 to-red-50/60 border-l-4 border-red-500 rounded-xl shadow-sm">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-30" />
-          <p className="relative text-sm text-red-700 font-medium">{error}</p>
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-md">
+          <p className="text-sm text-red-700 font-medium">{error}</p>
         </div>
       )}
 
@@ -114,7 +108,7 @@ export function LoginPage() {
               autoComplete="email"
               placeholder="doctor@example.com"
               error={errors.email?.message}
-              className="h-14 text-base"
+              className="h-12 text-base rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               {...register('email')}
             />
           </div>
@@ -126,23 +120,29 @@ export function LoginPage() {
               autoComplete="current-password"
               placeholder="Enter your password"
               error={errors.password?.message}
-              className="h-14 text-base pr-12"
+              className="h-12 text-base pr-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-[42px] text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-4 top-[38px] text-gray-400 hover:text-gray-600 transition-colors"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+           {/* Pro Badge */}
+           <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded text-xs font-medium text-gray-600 border border-gray-200">
+              <Lock className="w-3 h-3" />
+              PRO
+           </div>
+
           <Link
             to="/forgot-password"
-            className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
           >
             Forgot password?
           </Link>
@@ -150,39 +150,30 @@ export function LoginPage() {
 
         <Button
           type="submit"
-          className="w-full h-14 text-base font-semibold shadow-xl shadow-primary-500/30 hover:shadow-2xl hover:shadow-primary-500/40 transition-all duration-300 group"
+          className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md transition-all"
           isLoading={isSubmitting}
         >
-          {!isSubmitting && <Lock className="h-5 w-5 group-hover:scale-110 transition-transform" />}
-          Sign in to Dashboard
+          Sign in
         </Button>
       </form>
 
       {/* Divider */}
-      <div className="relative flex items-center gap-4 py-4">
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-        <span className="text-sm text-gray-400 font-medium">New to HealLog?</span>
-        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-      </div>
-
-      {/* Register link */}
-      <Link
-        to="/register"
-        className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 font-semibold rounded-2xl border border-gray-200 hover:border-primary-300 hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-100 hover:text-primary-700 transition-all duration-300 group"
-      >
-        <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-        Create your account
-      </Link>
-
-      {/* Pro subscription notice */}
-      <div className="pt-6 border-t border-gray-100">
-        <div className="flex items-center justify-center gap-2 text-sm">
-          <Lock className="h-4 w-4 text-gray-400" />
-          <span className="text-gray-500">
-            Pro subscription required • <Link to="/pricing" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">View plans</Link>
-          </span>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
         </div>
       </div>
+
+      {/* Register link - Simplified */}
+      <Link
+        to="/register"
+        className="flex items-center justify-center w-full h-12 px-6 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-all"
+      >
+        Create an account
+      </Link>
     </div>
   );
 }

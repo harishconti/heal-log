@@ -7,7 +7,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, helperText, id, ...props }, ref) => {
+  ({ className = '', label, error, helperText, id, required, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-') || generatedId;
     const errorId = `${inputId}-error`;
@@ -21,27 +21,30 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-semibold text-gray-700 mb-2"
+            className="block text-[14px] font-bold text-gray-800 mb-2"
           >
             {label}
+            {required && <span className="text-red-600 ml-1">*</span>}
+            {!required && <span className="text-gray-400 font-normal ml-2">(optional)</span>}
           </label>
         )}
         <div className="relative">
           <input
             ref={ref}
             id={inputId}
+            required={required}
             aria-invalid={error ? 'true' : undefined}
             aria-describedby={describedBy}
             className={`
-              block w-full rounded-xl border bg-white px-4 py-3
-              text-gray-900 placeholder-gray-400
+              block w-full rounded-lg border px-4 h-[44px]
+              text-[14px] text-gray-900 placeholder-gray-400
               transition-all duration-200
-              shadow-sm shadow-gray-100/50
-              focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500
+              bg-white focus:bg-[#f8f9fa]
+              focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10
               disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
               ${error
                 ? 'border-red-300 focus:ring-red-100 focus:border-red-500'
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-gray-300 hover:border-gray-400'
               }
               ${className}
             `}

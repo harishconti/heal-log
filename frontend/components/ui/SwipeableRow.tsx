@@ -34,6 +34,9 @@ interface SwipeableRowProps {
   overshootLeft?: boolean;
   overshootRight?: boolean;
   friction?: number;
+  // Accessibility props
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const SWIPE_THRESHOLD = 80;
@@ -48,6 +51,8 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   overshootLeft = false,
   overshootRight = false,
   friction = 2,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { theme } = useTheme();
   const { settings } = useAppStore();
@@ -180,24 +185,54 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     onSwipeOpen?.(direction);
   };
 
+  // Build accessibility hint based on available actions
+  const getDefaultAccessibilityHint = () => {
+    const hints: string[] = [];
+    if (leftActions.length > 0) {
+      hints.push(`Swipe right for ${leftActions.map(a => a.label || 'action').join(', ')}`);
+    }
+    if (rightActions.length > 0) {
+      hints.push(`Swipe left for ${rightActions.map(a => a.label || 'action').join(', ')}`);
+    }
+    return hints.join('. ');
+  };
+
   if (!enabled) {
     return <>{children}</>;
   }
 
   return (
-    <Swipeable
-      ref={swipeableRef}
-      friction={friction}
-      overshootLeft={overshootLeft}
-      overshootRight={overshootRight}
-      renderLeftActions={leftActions.length > 0 ? renderLeftActions : undefined}
-      renderRightActions={rightActions.length > 0 ? renderRightActions : undefined}
-      onSwipeableOpen={handleSwipeOpen}
-      onSwipeableClose={onSwipeClose}
-      containerStyle={styles.swipeableContainer}
+    <View
+      accessible={true}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint || getDefaultAccessibilityHint()}
+      accessibilityRole="button"
     >
-      {children}
-    </Swipeable>
+      {/* Visual swipe affordance indicator */}
+      {(leftActions.length > 0 || rightActions.length > 0) && (
+        <View style={styles.swipeIndicator}>
+          {leftActions.length > 0 && (
+            <View style={[styles.swipeIndicatorDot, { backgroundColor: theme.colors.primary }]} />
+          )}
+          {rightActions.length > 0 && (
+            <View style={[styles.swipeIndicatorDot, { backgroundColor: theme.colors.error }]} />
+          )}
+        </View>
+      )}
+      <Swipeable
+        ref={swipeableRef}
+        friction={friction}
+        overshootLeft={overshootLeft}
+        overshootRight={overshootRight}
+        renderLeftActions={leftActions.length > 0 ? renderLeftActions : undefined}
+        renderRightActions={rightActions.length > 0 ? renderRightActions : undefined}
+        onSwipeableOpen={handleSwipeOpen}
+        onSwipeableClose={onSwipeClose}
+        containerStyle={styles.swipeableContainer}
+      >
+        {children}
+      </Swipeable>
+    </View>
   );
 };
 
@@ -224,6 +259,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     fontWeight: '500',
+  },
+  // Visual affordance for swipeable rows
+  swipeIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    gap: 4,
+    zIndex: 1,
+  },
+  swipeIndicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.4,
   },
 });
 

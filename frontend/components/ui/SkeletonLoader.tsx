@@ -61,9 +61,14 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
         },
         style,
       ]}
+      accessibilityLabel="Loading content"
+      accessibilityRole="progressbar"
     />
   );
 };
+
+// Default export for convenience
+export default SkeletonLoader;
 
 /**
  * Patient card skeleton loader

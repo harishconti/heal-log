@@ -31,6 +31,9 @@ interface LongPressMenuProps {
   onPress?: () => void;
   delayLongPress?: number;
   disabled?: boolean;
+  // Accessibility props
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -43,13 +46,17 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
   onPress,
   delayLongPress = 500,
   disabled = false,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { theme } = useTheme();
   const { settings } = useAppStore();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [isPressing, setIsPressing] = useState(false);
   const scaleAnim = useState(new Animated.Value(0))[0];
   const opacityAnim = useState(new Animated.Value(0))[0];
+  const pressScaleAnim = useState(new Animated.Value(1))[0];
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Medium) => {
     if (settings.hapticEnabled) {
@@ -128,16 +135,54 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
     }
   };
 
+  const handlePressIn = () => {
+    setIsPressing(true);
+    // Animate scale down slightly to indicate press
+    Animated.spring(pressScaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    setIsPressing(false);
+    // Animate scale back
+    Animated.spring(pressScaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 10,
+    }).start();
+  };
+
   return (
     <>
       <TouchableOpacity
         onPress={handlePress}
         onLongPress={showMenu}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         delayLongPress={delayLongPress}
-        activeOpacity={0.7}
+        activeOpacity={0.9}
         disabled={disabled}
+        accessible={true}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint || 'Long press to see more options'}
+        accessibilityRole="button"
       >
-        {children}
+        <Animated.View style={{ transform: [{ scale: pressScaleAnim }] }}>
+          {children}
+          {/* Visual affordance indicator for long-press */}
+          {options.length > 0 && !disabled && (
+            <View style={[styles.longPressIndicator, { backgroundColor: theme.colors.textSecondary }]}>
+              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
+              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
+              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
+            </View>
+          )}
+        </Animated.View>
       </TouchableOpacity>
 
       <Modal
@@ -145,9 +190,10 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
         transparent
         animationType="none"
         onRequestClose={hideMenu}
+        accessibilityViewIsModal={true}
       >
-        <TouchableWithoutFeedback onPress={hideMenu}>
-          <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={hideMenu} accessibilityLabel="Close menu">
+          <View style={styles.overlay} accessibilityRole="none">
             <Animated.View
               style={[
                 styles.menuContainer,
@@ -247,6 +293,23 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  // Visual affordance for long-press
+  longPressIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    flexDirection: 'row',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 2,
+    opacity: 0.6,
+  },
+  longPressIndicatorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
 });
 

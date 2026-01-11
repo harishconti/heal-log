@@ -75,9 +75,24 @@ export const patientSchema = z.object({
 
 export type PatientFormData = z.infer<typeof patientSchema>;
 
+// Password requirements (unified across the app)
+export const PASSWORD_REQUIREMENTS = {
+  minLength: 12,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumber: true,
+  requireSpecialChar: true,
+  specialChars: '!@#$%^&*(),.?":{}|<>',
+} as const;
+
+export const getPasswordRequirementsText = (): string => {
+  return `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters with uppercase, lowercase, number, and special character (${PASSWORD_REQUIREMENTS.specialChars})`;
+};
+
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  // Login uses simpler validation - full validation happens server-side
+  password: z.string().min(1, "Password is required"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -99,9 +114,9 @@ export const registerSchema = z.object({
     })
     .optional(),
   password: z.string()
-    .min(12, "Password must be at least 12 characters")
+    .min(PASSWORD_REQUIREMENTS.minLength, `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`)
     .refine(password => passwordRegex.test(password), {
-      message: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?\":{}|<>)"
+      message: getPasswordRequirementsText()
     }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -133,9 +148,9 @@ export type OTPFormData = z.infer<typeof otpSchema>;
 export const passwordResetSchema = z.object({
   token: z.string().min(1, "Reset token is required"),
   new_password: z.string()
-    .min(12, "Password must be at least 12 characters")
+    .min(PASSWORD_REQUIREMENTS.minLength, `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`)
     .refine(password => passwordRegex.test(password), {
-      message: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&*(),.?\":{}|<>)"
+      message: getPasswordRequirementsText()
     }),
   confirmPassword: z.string(),
 }).refine((data) => data.new_password === data.confirmPassword, {

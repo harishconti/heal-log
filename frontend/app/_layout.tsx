@@ -1,7 +1,7 @@
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { ThemeProvider, useInitializeTheme } from '@/contexts/ThemeContext';
-import { ActivityIndicator, View } from 'react-native';
+import { ThemeProvider, useInitializeTheme, useTheme } from '@/contexts/ThemeContext';
+import { ActivityIndicator, View, StatusBar, Platform } from 'react-native';
 import AppInitializer from '@/contexts/AppInitializer';
 import { initMonitoring, ErrorBoundary } from '@/utils/monitoring';
 import React, { useState, useEffect } from 'react';
@@ -11,6 +11,20 @@ import { trackOfflineOnlineTime } from '@/services/analytics';
 import { NetworkProvider } from '@/contexts/NetworkContext';
 import OfflineIndicator from '@/components/core/OfflineIndicator';
 import { initializeBackgroundSync, cleanupBackgroundSync } from '@/services/backgroundSync';
+
+// Dynamic status bar component that adapts to theme
+const DynamicStatusBar = () => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <StatusBar
+      barStyle={isDark ? 'light-content' : 'dark-content'}
+      backgroundColor={Platform.OS === 'android' ? theme.colors.primary : 'transparent'}
+      translucent={Platform.OS === 'android'}
+      animated={true}
+    />
+  );
+};
 
 initMonitoring();
 
@@ -71,15 +85,27 @@ const AppLayout = () => {
 
   return (
     <View style={{ flex: 1 }}>
+      <DynamicStatusBar />
       <OfflineIndicator />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="analytics" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: 200,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="register" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="analytics" options={{ headerShown: false }} />
+        <Stack.Screen name="add-patient" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="patient/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-patient/[id]" options={{ headerShown: false }} />
       </Stack>
     </View>
   );

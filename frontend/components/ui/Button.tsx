@@ -240,19 +240,19 @@ export const Button: React.FC<ButtonProps> = ({
     // Variant text colors
     const variantTextStyles: Record<string, TextStyle> = {
       primary: {
-        color: '#FFFFFF',
+        color: theme.colors.buttonText,
       },
       secondary: {
-        color: '#FFFFFF',
+        color: theme.colors.buttonText,
       },
       outline: {
         color: theme.colors.primary,
       },
       danger: {
-        color: '#FFFFFF',
+        color: theme.colors.buttonText,
       },
       success: {
-        color: '#FFFFFF',
+        color: theme.colors.buttonText,
       },
       ghost: {
         color: theme.colors.primary,
@@ -280,7 +280,7 @@ export const Button: React.FC<ButtonProps> = ({
     if (variant === 'outline' || variant === 'ghost') {
       return theme.colors.primary;
     }
-    return '#FFFFFF';
+    return theme.colors.buttonText;
   };
 
   const renderIcon = () => {

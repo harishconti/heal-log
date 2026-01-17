@@ -51,6 +51,7 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
 }) => {
   const { theme } = useTheme();
   const { settings } = useAppStore();
+  const styles = createStyles(theme);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isPressing, setIsPressing] = useState(false);
@@ -257,15 +258,15 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Lighter overlay for context menus
   },
   menuContainer: {
     position: 'absolute',
     width: MENU_WIDTH,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
     ...Platform.select({
       ios: {
@@ -281,28 +282,28 @@ const styles = StyleSheet.create({
   menuOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md - 2,
   },
   menuOptionDisabled: {
     opacity: 0.5,
   },
   menuIcon: {
-    marginRight: 12,
+    marginRight: theme.spacing.md - 4,
   },
   menuLabel: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.md,
     fontWeight: '500',
   },
   // Visual affordance for long-press
   longPressIndicator: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
+    bottom: theme.spacing.sm,
+    right: theme.spacing.sm,
     flexDirection: 'row',
     paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
     gap: 2,
     opacity: 0.6,
   },

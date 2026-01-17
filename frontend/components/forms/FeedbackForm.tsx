@@ -148,38 +148,38 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, isSubmitting }) =
 const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: theme.spacing.lg - 4,
   },
   label: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.md,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
     color: theme.colors.text,
   },
   button: {
     backgroundColor: theme.colors.primary,
-    padding: 15,
-    borderRadius: 8,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.lg - 4,
   },
   buttonDisabled: {
     backgroundColor: theme.colors.disabled,
   },
   buttonText: {
     color: theme.colors.buttonText,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.md,
     fontWeight: 'bold',
   },
   screenshotContainer: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg - 4,
     alignItems: 'center',
   },
   screenshotPreview: {
     width: 100,
     height: 100,
-    marginTop: 10,
-    borderRadius: 8,
+    marginTop: theme.spacing.sm + 2,
+    borderRadius: theme.borderRadius.sm,
   },
 });
 

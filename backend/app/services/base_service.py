@@ -3,11 +3,11 @@ from beanie import Document
 from pydantic import BaseModel
 import uuid
 import random
-import logging
 from datetime import datetime, timezone
 import time
 from functools import wraps
 from app.core.config import settings
+from app.core.logger import get_logger
 
 ModelType = TypeVar("ModelType", bound=Document)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -17,7 +17,7 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 QUERY_LOG_SAMPLE_RATE = 0.01  # Log 1% of queries to prevent database bloat
 SLOW_QUERY_THRESHOLD_MS = 500  # Always log queries slower than 500ms
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def log_query_performance(func):
@@ -53,13 +53,15 @@ def log_query_performance(func):
                 ).insert()
             except Exception as e:
                 # Don't let logging failures affect the actual query
-                logger.debug(f"Failed to log query performance: {e}")
+                logger.debug("query_performance_log_failed", error=str(e))
 
         # Log slow queries to standard logging as well
         if is_slow:
             logger.warning(
-                f"[SLOW_QUERY] {func.__name__} on {args[0].model.__name__} "
-                f"took {execution_time_ms:.2f}ms"
+                "slow_query",
+                function=func.__name__,
+                model=args[0].model.__name__,
+                execution_time_ms=round(execution_time_ms, 2)
             )
 
         return result

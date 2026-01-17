@@ -4,6 +4,7 @@ from app.schemas.user import User, UserCreate, UserResponse
 from app.schemas.otp import OTPVerifyRequest, OTPResendRequest, PasswordResetRequest, PasswordResetConfirm
 from app.core.exceptions import APIException
 from app.core.limiter import limiter
+from app.core.logger import get_logger
 from app.schemas.token import Token, RefreshToken
 from app.services.user_service import user_service
 from app.services.otp_service import otp_service
@@ -12,13 +13,12 @@ from app.services.account_lockout_service import account_lockout
 from app.core.security import create_access_token, create_refresh_token, get_current_user, revoke_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-import logging
 from app.core.config import settings
 
 # Bearer token dependency for logout
 bearer_scheme = HTTPBearer()
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Rate limiting constants
 REGISTER_RATE_LIMIT = "5/minute"
@@ -68,7 +68,7 @@ async def register_user(request: Request, user_data: UserCreate):
     except APIException:
         raise
     except Exception as e:
-        logging.error(f"Unhandled exception during user registration: {e}", exc_info=True)
+        logger.error("registration_error", error=str(e), exc_info=True)
         raise APIException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred during registration."
@@ -94,7 +94,7 @@ async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
 
             # Check per-email rate limit
             if email_count >= MAX_OTP_VERIFICATION_ATTEMPTS:
-                logger.warning(f"[VERIFY_OTP] Per-email rate limit exceeded for {email_lower[:3]}***")
+                logger.warning("otp_verify_rate_limit", email=email_lower)
                 raise APIException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail=f"Too many verification attempts for this email. Please wait {OTP_VERIFICATION_CACHE_TTL // 60} minutes."
@@ -105,7 +105,7 @@ async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     except APIException:
         raise
     except Exception as e:
-        logger.debug(f"[VERIFY_OTP] Cache not available for per-email rate limit: {e}")
+        logger.debug("otp_verify_cache_unavailable", error=str(e))
 
     user = await user_service.get_user_by_email(otp_data.email)
     if not user:
@@ -195,7 +195,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     is_locked, lock_info = account_lockout.is_locked(email)
     if is_locked:
         minutes_remaining = (lock_info or 0) // 60 + 1
-        logger.warning(f"[LOGIN] Blocked login attempt for locked account: {email[:3]}***")
+        logger.warning("login_blocked_locked_account", email=email)
         raise APIException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Account temporarily locked due to too many failed attempts. Try again in {minutes_remaining} minutes."
@@ -252,8 +252,8 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     # Log the request for abuse tracking
     client_ip = request.client.host if request.client else "unknown"
     email_lower = reset_data.email.lower().strip()
-    logger.info(f"[FORGOT_PASSWORD] Request from IP: {client_ip} for email: {email_lower[:3]}***")
-    
+    logger.info("forgot_password_request", client_ip=client_ip, email=email_lower)
+
     # Per-email rate limiting using Redis/cache (if available)
     # Check if this email has exceeded limits
     email_key = f"forgot_password_email:{email_lower}"
@@ -264,10 +264,10 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
             # Get current count for this email
             count_str = await backend.get(email_key)
             email_count = int(count_str) if count_str else 0
-            
+
             # Check per-email rate limit
             if email_count >= MAX_FORGOT_PASSWORD_EMAILS_PER_DAY:
-                logger.warning(f"[FORGOT_PASSWORD] Email rate limit exceeded for {email_lower[:3]}*** (IP: {client_ip})")
+                logger.warning("forgot_password_rate_limit", email=email_lower, client_ip=client_ip)
                 return {
                     "success": True,
                     "message": "If an account exists with this email, a password reset link has been sent."
@@ -276,24 +276,24 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
             # Increment count with TTL
             await backend.set(email_key, str(email_count + 1), expire=FORGOT_PASSWORD_CACHE_TTL)
     except Exception as e:
-        logger.debug(f"[FORGOT_PASSWORD] Cache not available for email rate limit: {e}")
-    
+        logger.debug("forgot_password_cache_unavailable", error=str(e))
+
     user = await user_service.get_user_by_email(reset_data.email)
-    
+
     # Always return success to prevent email enumeration
     if not user:
-        logger.info(f"[FORGOT_PASSWORD] No user found for email (IP: {client_ip})")
+        logger.info("forgot_password_user_not_found", client_ip=client_ip)
         return {
             "success": True,
             "message": "If an account exists with this email, a password reset link has been sent."
         }
-    
+
     success, message = await password_reset_service.create_and_send_reset_token(user)
-    
+
     if success:
-        logger.info(f"[FORGOT_PASSWORD] Reset token sent successfully for user (IP: {client_ip})")
+        logger.info("forgot_password_token_sent", client_ip=client_ip)
     else:
-        logger.warning(f"[FORGOT_PASSWORD] Failed to send reset token (IP: {client_ip}): {message}")
+        logger.warning("forgot_password_send_failed", client_ip=client_ip, message=message)
     
     return {
         "success": True,
@@ -310,28 +310,27 @@ async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     """
     # Log for abuse tracking
     client_ip = request.client.host if request.client else "unknown"
-    token_preview = reset_data.token[:8] + "..." if len(reset_data.token) > 8 else reset_data.token
-    logger.info(f"[RESET_PASSWORD] Attempt from IP: {client_ip}, token: {token_preview}")
-    
+    logger.info("reset_password_attempt", client_ip=client_ip, token=reset_data.token)
+
     user, message = await password_reset_service.verify_reset_token(reset_data.token)
-    
+
     if not user:
-        logger.warning(f"[RESET_PASSWORD] Invalid token attempt from IP: {client_ip}")
+        logger.warning("reset_password_invalid_token", client_ip=client_ip)
         raise APIException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message
         )
-    
+
     success, result_message = await password_reset_service.reset_password(user, reset_data.new_password)
-    
+
     if not success:
-        logger.error(f"[RESET_PASSWORD] Password reset failed for user (IP: {client_ip}): {result_message}")
+        logger.error("reset_password_failed", client_ip=client_ip, message=result_message)
         raise APIException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result_message
         )
-    
-    logger.info(f"[RESET_PASSWORD] Password reset successful (IP: {client_ip})")
+
+    logger.info("reset_password_success", client_ip=client_ip)
     return {
         "success": True,
         "message": "Password reset successfully. You can now login with your new password."
@@ -414,20 +413,20 @@ async def logout(
         success = revoke_token(token)
 
         if success:
-            logger.info("[LOGOUT] Token successfully revoked")
+            logger.info("logout_success")
             return {
                 "success": True,
                 "message": "Successfully logged out. Token has been revoked."
             }
         else:
             # Token couldn't be revoked (likely missing jti), but still log out client-side
-            logger.warning("[LOGOUT] Token revocation failed, but allowing logout")
+            logger.warning("logout_revocation_failed")
             return {
                 "success": True,
                 "message": "Logged out. Please clear your local tokens."
             }
     except Exception as e:
-        logger.error(f"[LOGOUT] Error during logout: {e}")
+        logger.error("logout_error", error=str(e))
         # Even on error, we should allow the client to clear tokens
         return {
             "success": True,

@@ -1,15 +1,15 @@
 import os
 import base64
-import logging
 import re
 from uuid import uuid4
 from fastapi import BackgroundTasks
 from app.services.base_service import BaseService
 from app.schemas.beta_feedback import BetaFeedback, BetaFeedbackIn
 from app.core.config import settings
+from app.core.logger import get_logger
 from app.db.session import get_database
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Maximum file size for screenshots (5MB)
 MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024
@@ -76,7 +76,7 @@ class FeedbackService(BaseService):
             try:
                 screenshot_data = _validate_base64_image(feedback_data.screenshot)
             except ValueError as e:
-                logger.warning(f"[FEEDBACK_SERVICE] Invalid screenshot upload: {e}")
+                logger.warning("feedback_invalid_screenshot", error=str(e))
                 raise ValueError(f"Screenshot validation failed: {e}")
 
             screenshot_filename = f"{uuid4()}.png"
@@ -103,7 +103,7 @@ class FeedbackService(BaseService):
         from email.mime.multipart import MIMEMultipart
 
         if not all([settings.EMAIL_HOST, settings.EMAIL_PORT, settings.EMAIL_USER, settings.EMAIL_PASSWORD, settings.EMAIL_TO]):
-            logger.info("[FEEDBACK_SERVICE] Email settings are not configured. Skipping email notification.")
+            logger.info("feedback_email_skipped", reason="email_not_configured")
             return
 
         message = MIMEMultipart()
@@ -128,9 +128,9 @@ class FeedbackService(BaseService):
             server.starttls()
             server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
             server.sendmail(settings.EMAIL_USER, settings.EMAIL_TO, message.as_string())
-            logger.info("[FEEDBACK_SERVICE] Feedback email sent successfully.")
+            logger.info("feedback_email_sent", feedback_type=feedback.feedback_type)
         except Exception as e:
-            logger.error(f"[FEEDBACK_SERVICE] Failed to send feedback email: {e}")
+            logger.error("feedback_email_failed", error=str(e))
         finally:
             if server:
                 try:

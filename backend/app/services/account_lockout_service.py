@@ -5,13 +5,13 @@ Implements account lockout after multiple failed login attempts using
 an in-memory cache with automatic cleanup. For production with multiple
 instances, replace with Redis.
 """
-
-import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
 import threading
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Configuration
 MAX_FAILED_ATTEMPTS = 5
@@ -53,7 +53,7 @@ class AccountLockoutService:
                     'locked_until': None
                 }
                 remaining = MAX_FAILED_ATTEMPTS - 1
-                logger.info(f"[LOCKOUT] First failed attempt for {email_lower[:3]}***")
+                logger.info("lockout_first_attempt", email=email_lower)
                 return False, remaining
 
             record = self._attempts[email_lower]
@@ -61,7 +61,7 @@ class AccountLockoutService:
             # Check if currently locked
             if record['locked_until'] and now < record['locked_until']:
                 seconds_remaining = int((record['locked_until'] - now).total_seconds())
-                logger.warning(f"[LOCKOUT] Login attempt while locked: {email_lower[:3]}***")
+                logger.warning("lockout_attempt_while_locked", email=email_lower)
                 return True, seconds_remaining
 
             # Check if window has expired, reset if so
@@ -82,15 +82,19 @@ class AccountLockoutService:
                 record['locked_until'] = now + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
                 seconds_remaining = LOCKOUT_DURATION_MINUTES * 60
                 logger.warning(
-                    f"[LOCKOUT] Account locked due to {record['attempts']} failed attempts: "
-                    f"{email_lower[:3]}*** for {LOCKOUT_DURATION_MINUTES} minutes"
+                    "account_locked",
+                    email=email_lower,
+                    attempts=record['attempts'],
+                    lockout_minutes=LOCKOUT_DURATION_MINUTES
                 )
                 return True, seconds_remaining
 
             remaining = MAX_FAILED_ATTEMPTS - record['attempts']
             logger.info(
-                f"[LOCKOUT] Failed attempt {record['attempts']}/{MAX_FAILED_ATTEMPTS} "
-                f"for {email_lower[:3]}***"
+                "lockout_failed_attempt",
+                email=email_lower,
+                attempt=record['attempts'],
+                max_attempts=MAX_FAILED_ATTEMPTS
             )
             return False, remaining
 
@@ -124,7 +128,7 @@ class AccountLockoutService:
         with self._lock:
             if email_lower in self._attempts:
                 del self._attempts[email_lower]
-                logger.info(f"[LOCKOUT] Cleared attempts for {email_lower[:3]}***")
+                logger.info("lockout_cleared", email=email_lower)
 
     def _cleanup_expired(self) -> None:
         """Remove expired entries to prevent memory bloat."""
@@ -149,7 +153,7 @@ class AccountLockoutService:
             del self._attempts[key]
 
         if expired_keys:
-            logger.debug(f"[LOCKOUT] Cleaned up {len(expired_keys)} expired entries")
+            logger.debug("lockout_cleanup", expired_count=len(expired_keys))
 
 
 # Singleton instance

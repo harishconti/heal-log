@@ -3,15 +3,15 @@ Email Service - Async email sending for OTP and password reset.
 
 Priority: Resend API > OAuth 2.0 > Basic SMTP > Console logging (dev only)
 """
-import logging
 import os
 from typing import Optional, Tuple
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Try to import resend
 try:
@@ -19,7 +19,7 @@ try:
     RESEND_AVAILABLE = True
 except ImportError:
     RESEND_AVAILABLE = False
-    logger.warning("[EMAIL_SERVICE] Resend package not installed. Install with: pip install resend")
+    logger.warning("resend_not_installed", message="Install with: pip install resend")
 
 
 class EmailService:
@@ -49,21 +49,21 @@ class EmailService:
         ])
         
         if self.resend_configured:
-            logger.info("[EMAIL_SERVICE] Resend API configured - using HTTP API")
+            logger.info("email_service_init", provider="resend_api")
         elif self.oauth_configured:
-            logger.info("[EMAIL_SERVICE] OAuth 2.0 configured - using XOAUTH2")
+            logger.info("email_service_init", provider="oauth_xoauth2")
         elif self.smtp_configured:
-            logger.info("[EMAIL_SERVICE] Basic SMTP configured")
+            logger.info("email_service_init", provider="basic_smtp")
         else:
-            logger.warning("[EMAIL_SERVICE] No email configured. Emails will be logged to console.")
-    
+            logger.warning("email_service_init", provider="console_only", message="No email configured")
+
     def _get_oauth_service(self):
         """Lazy load OAuth service to avoid import errors if not configured"""
         try:
             from app.services.oauth_email_service import oauth_email_service
             return oauth_email_service
         except ImportError as e:
-            logger.warning(f"[EMAIL_SERVICE] Could not import OAuth service: {e}")
+            logger.warning("oauth_service_import_failed", error=str(e))
             return None
     
     async def send_email(
@@ -81,10 +81,10 @@ class EmailService:
         # Try Resend API first (works on cloud platforms like Railway)
         if self.resend_configured:
             try:
-                logger.info(f"[EMAIL_SERVICE] Attempting Resend API send to {to_email}")
+                logger.info("email_send_attempt", provider="resend", to_email=to_email)
                 # Use verified heallog.com domain
                 from_email = "HealLog <support@heallog.com>"
-                
+
                 result = resend.Emails.send({
                     "from": from_email,
                     "to": to_email,
@@ -92,15 +92,15 @@ class EmailService:
                     "html": html_content,
                     "text": text_content or ""
                 })
-                
+
                 if result and result.get("id"):
-                    logger.info(f"[EMAIL_SERVICE] Resend email sent successfully to {to_email}, id: {result.get('id')}")
+                    logger.info("email_sent", provider="resend", to_email=to_email, email_id=result.get("id"))
                     return True
                 else:
-                    logger.warning(f"[EMAIL_SERVICE] Resend returned unexpected result: {result}. Trying fallback...")
+                    logger.warning("email_send_unexpected_result", provider="resend", result=str(result))
             except Exception as e:
-                logger.warning(f"[EMAIL_SERVICE] Resend error: {e}. Trying fallback...")
-        
+                logger.warning("email_send_error", provider="resend", error=str(e))
+
         # Try OAuth second
         if self.oauth_configured:
             oauth_service = self._get_oauth_service()
@@ -113,17 +113,17 @@ class EmailService:
                         text_body=text_content or ""
                     )
                     if success:
-                        logger.info(f"[EMAIL_SERVICE] OAuth email sent to {to_email}")
+                        logger.info("email_sent", provider="oauth", to_email=to_email)
                         return True
                     else:
-                        logger.warning(f"[EMAIL_SERVICE] OAuth failed: {message}. Trying fallback...")
+                        logger.warning("email_send_failed", provider="oauth", message=message)
                 except Exception as e:
-                    logger.warning(f"[EMAIL_SERVICE] OAuth error: {e}. Trying fallback...")
-        
+                    logger.warning("email_send_error", provider="oauth", error=str(e))
+
         # Fallback to basic SMTP
         if self.smtp_configured:
             try:
-                logger.info(f"[EMAIL_SERVICE] Attempting SMTP send to {to_email} via {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+                logger.info("email_send_attempt", provider="smtp", to_email=to_email, host=settings.EMAIL_HOST, port=settings.EMAIL_PORT)
                 message = MIMEMultipart("alternative")
                 message["From"] = settings.EMAIL_FROM
                 message["To"] = to_email
@@ -136,7 +136,7 @@ class EmailService:
                 # Port 465 uses implicit TLS (use_tls=True)
                 # Port 587 uses STARTTLS (start_tls=True)
                 use_ssl = settings.EMAIL_PORT == 465
-                
+
                 await aiosmtplib.send(
                     message,
                     hostname=settings.EMAIL_HOST,
@@ -146,35 +146,35 @@ class EmailService:
                     use_tls=use_ssl,
                     start_tls=not use_ssl
                 )
-                logger.info(f"[EMAIL_SERVICE] SMTP email sent successfully to {to_email}")
+                logger.info("email_sent", provider="smtp", to_email=to_email)
                 return True
             except aiosmtplib.SMTPAuthenticationError as e:
                 logger.error(
-                    f"[EMAIL_SERVICE] SMTP authentication failed: {str(e)}. "
-                    "If using Gmail, ensure you're using an App Password (not your regular password) "
-                    "and that 2-Step Verification is enabled. Generate App Password at: "
-                    "https://myaccount.google.com/apppasswords"
+                    "smtp_auth_failed",
+                    error=str(e),
+                    hint="If using Gmail, ensure App Password is used with 2-Step Verification enabled"
                 )
             except aiosmtplib.SMTPConnectError as e:
                 logger.error(
-                    f"[EMAIL_SERVICE] SMTP connection failed to {settings.EMAIL_HOST}:{settings.EMAIL_PORT}: {str(e)}. "
-                    "Check that EMAIL_HOST and EMAIL_PORT are correct."
+                    "smtp_connect_failed",
+                    host=settings.EMAIL_HOST,
+                    port=settings.EMAIL_PORT,
+                    error=str(e)
                 )
             except Exception as e:
-                logger.error(f"[EMAIL_SERVICE] SMTP failed with unexpected error: {type(e).__name__}: {str(e)}")
-        
+                logger.error("smtp_error", error_type=type(e).__name__, error=str(e))
+
         # Final fallback: console logging (development mode only)
         if settings.ENV == "development":
-            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Would send email to: {to_email}")
-            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Subject: {subject}")
-            logger.info(f"[EMAIL_SERVICE] [DEV MODE] Content:\n{text_content or html_content[:500]}...")
+            logger.info("email_dev_mode", to_email=to_email, subject=subject)
             return True  # Return True in dev mode to not break flow
         else:
             # In production, fail if no email method worked
             logger.error(
-                f"[EMAIL_SERVICE] PRODUCTION ERROR: Failed to send email to {to_email}. "
-                f"OAuth configured: {self.oauth_configured}, SMTP configured: {self.smtp_configured}. "
-                "Check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD environment variables."
+                "email_send_failed_all_providers",
+                to_email=to_email,
+                oauth_configured=self.oauth_configured,
+                smtp_configured=self.smtp_configured
             )
             return False
     

@@ -3,12 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle2, User, Mail, Phone, Stethoscope, Lock, Sparkles, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, User, Mail, Phone, Lock, Sparkles } from 'lucide-react';
 import { authApi } from '../../api';
-import { Button, Input, Select } from '../../components/ui';
 import { SPECIALTY_OPTIONS } from '../../constants';
 import { getErrorMessage } from '../../utils/errorUtils';
-import { cn } from '@/utils';
 
 const registerSchema = z
   .object({
@@ -69,110 +67,125 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 p-8 sm:p-10 border border-gray-100">
       {/* Header with Pro Badge */}
-      <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1.5">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Create your account
-            </h2>
-            <p className="text-gray-500 text-sm">
-              Start managing your patients today
-            </p>
-          </div>
-          {/* Pro Badge - Modern floating style */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
+          {/* Pro Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-full text-xs font-semibold text-amber-700 border border-amber-200/60 shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />
             PRO
           </div>
         </div>
+        <p className="text-gray-500 text-sm">
+          Already have an account? <Link to="/login" className="text-primary-600 font-medium hover:underline">Sign in</Link>
+        </p>
       </div>
 
       {/* Error message */}
       {error && (
-        <div className="p-4 bg-danger-50 border border-danger-200 rounded-xl animate-slide-up flex items-start gap-3">
-          <div className="w-5 h-5 rounded-full bg-danger-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-danger-600 text-xs font-bold">!</span>
-          </div>
-          <p className="text-sm text-danger-700 font-medium leading-relaxed">{error}</p>
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          <p className="text-sm font-medium text-red-800">{error}</p>
         </div>
       )}
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Desktop: Name + Email on one row. Mobile: Stacked */}
+        {/* Name + Email row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Input
-            label="Full name"
-            type="text"
-            autoComplete="name"
-            placeholder="Dr. John Smith"
-            error={errors.full_name?.message}
-            icon={<User className="w-5 h-5" />}
-            required
-            {...register('full_name')}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <User size={18} />
+              </div>
+              <input
+                type="text"
+                placeholder="Dr. John Smith"
+                className={`block w-full pl-10 pr-3 py-2.5 bg-gray-50 border ${errors.full_name ? 'border-red-300' : 'border-gray-200'} rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm`}
+                {...register('full_name')}
+              />
+            </div>
+            {errors.full_name && <p className="mt-1 text-xs text-red-500">{errors.full_name.message}</p>}
+          </div>
 
-          <Input
-            label="Email address"
-            type="email"
-            autoComplete="email"
-            placeholder="doctor@example.com"
-            error={errors.email?.message}
-            icon={<Mail className="w-5 h-5" />}
-            required
-            {...register('email')}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Mail size={18} />
+              </div>
+              <input
+                type="email"
+                placeholder="doctor@example.com"
+                className={`block w-full pl-10 pr-3 py-2.5 bg-gray-50 border ${errors.email ? 'border-red-300' : 'border-gray-200'} rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm`}
+                {...register('email')}
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          </div>
         </div>
 
-        {/* Desktop: Phone + Specialty on one row. Mobile: Stacked */}
+        {/* Phone + Specialty row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Input
-            label="Phone number"
-            type="tel"
-            autoComplete="tel"
-            placeholder="+1 (555) 123-4567"
-            error={errors.phone?.message}
-            icon={<Phone className="w-5 h-5" />}
-            required
-            {...register('phone')}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Phone size={18} />
+              </div>
+              <input
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                className={`block w-full pl-10 pr-3 py-2.5 bg-gray-50 border ${errors.phone ? 'border-red-300' : 'border-gray-200'} rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm`}
+                {...register('phone')}
+              />
+            </div>
+            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
+          </div>
 
-          <Select
-            label="Specialty"
-            options={SPECIALTY_OPTIONS}
-            error={errors.medical_specialty?.message}
-            {...register('medical_specialty')}
-            /* Optional field */
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Specialty</label>
+            <select
+              className={`block w-full px-3 py-2.5 bg-gray-50 border ${errors.medical_specialty ? 'border-red-300' : 'border-gray-200'} rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm`}
+              {...register('medical_specialty')}
+            >
+              <option value="">Select specialty</option>
+              {SPECIALTY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errors.medical_specialty && <p className="mt-1 text-xs text-red-500">{errors.medical_specialty.message}</p>}
+          </div>
         </div>
 
-        <Input
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          autoComplete="new-password"
-          placeholder="Create a strong password"
-          error={errors.password?.message}
-          icon={<Lock className="w-5 h-5" />}
-          suffixIcon={
+        {/* Password */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <Lock size={16} />
+            </div>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create a strong password"
+              className={`block w-full pl-10 pr-10 py-2.5 bg-gray-50 border ${errors.password ? 'border-red-300' : 'border-gray-200'} rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm`}
+              {...register('password')}
+            />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-primary-600 transition-colors focus:outline-none p-1 rounded-md hover:bg-gray-50"
-              tabIndex={-1}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-          }
-          required
-          {...register('password')}
-        />
+          </div>
+          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+        </div>
 
         {/* Password strength indicator */}
         {password && (
@@ -182,16 +195,14 @@ export function RegisterPage() {
               {passwordRequirements.map((req, idx) => (
                 <div
                   key={idx}
-                  className={cn(
-                    'flex items-center gap-1.5 text-xs transition-colors duration-200',
+                  className={`flex items-center gap-1.5 text-xs transition-colors duration-200 ${
                     req.regex.test(password) ? 'text-emerald-600' : 'text-gray-400'
-                  )}
+                  }`}
                 >
                   <CheckCircle2
-                    className={cn(
-                      'h-3.5 w-3.5 transition-colors duration-200',
+                    className={`h-3.5 w-3.5 transition-colors duration-200 ${
                       req.regex.test(password) ? 'text-emerald-500' : 'text-gray-300'
-                    )}
+                    }`}
                   />
                   {req.label}
                 </div>
@@ -200,52 +211,43 @@ export function RegisterPage() {
           </div>
         )}
 
-        {/* Enhanced CTA Button */}
-        <Button
+        {/* Submit Button */}
+        <button
           type="submit"
-          size="lg"
-          fullWidth
-          className={cn(
-            'h-12 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl',
-            'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
-            'hover:-translate-y-0.5 transition-all duration-300',
-            'active:translate-y-0 active:shadow-md'
-          )}
-          loading={isSubmitting}
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-primary-700 hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <CheckCircle2 className="w-4 h-4" />
-          Create account
-        </Button>
-
-        {/* Security indicator */}
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>256-bit SSL encrypted</span>
-        </div>
+          {isSubmitting ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              Create account
+            </>
+          )}
+        </button>
       </form>
 
-      {/* Divider */}
-      <div className="relative py-2">
+      {/* Social Login Section */}
+      <div className="relative mt-8">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
+          <div className="w-full border-t border-gray-200"></div>
         </div>
-        <div className="relative flex justify-center">
-          <span className="px-4 bg-white text-sm text-gray-400">
-            Already have an account?
-          </span>
+        <div className="relative flex justify-center text-xs">
+          <span className="px-2 bg-white text-gray-500">Or continue with</span>
         </div>
       </div>
 
-      {/* Login link */}
-      <Button
-        variant="outline"
-        size="lg"
-        fullWidth
-        className="h-12 rounded-xl border-2 border-gray-200 hover:border-primary-300 hover:bg-primary-50/50 transition-all duration-200"
-        onClick={() => navigate('/login')}
-      >
-        Sign in
-      </Button>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5 mr-2" />
+          Google
+        </button>
+        <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <img src="https://www.svgrepo.com/show/452263/microsoft.svg" alt="Microsoft" className="h-5 w-5 mr-2" />
+          Microsoft
+        </button>
+      </div>
     </div>
   );
 }

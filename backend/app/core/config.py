@@ -1,6 +1,6 @@
 import os
 import logging
-from pydantic import validator, Field, root_validator
+from pydantic import validator, Field, model_validator
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from typing import Optional
@@ -98,14 +98,14 @@ class Settings(BaseSettings):
     EMAIL_TO: Optional[str] = None
     EMAIL_FROM: Optional[str] = "HealLog <support@heallog.com>"
 
-    @root_validator
-    def validate_email_configuration(cls, values):
+    @model_validator(mode='after')
+    def validate_email_configuration(self):
         """Ensure email settings are complete if any are provided"""
         email_fields = {
-            'EMAIL_HOST': values.get('EMAIL_HOST'),
-            'EMAIL_PORT': values.get('EMAIL_PORT'),
-            'EMAIL_USER': values.get('EMAIL_USER'),
-            'EMAIL_PASSWORD': values.get('EMAIL_PASSWORD'),
+            'EMAIL_HOST': self.EMAIL_HOST,
+            'EMAIL_PORT': self.EMAIL_PORT,
+            'EMAIL_USER': self.EMAIL_USER,
+            'EMAIL_PASSWORD': self.EMAIL_PASSWORD,
         }
 
         # Check if any email field is configured
@@ -119,7 +119,7 @@ class Settings(BaseSettings):
                 f"Email functionality may not work properly."
             )
 
-        return values
+        return self
 
     # OTP Settings
     OTP_EXPIRE_MINUTES: int = 5

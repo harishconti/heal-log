@@ -74,31 +74,7 @@ export default function TabsLayout() {
               />
             </View>
           ),
-          tabBarAccessibilityLabel: 'Home tab - Dashboard and overview',
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Patients',
-          tabBarIcon: ({ color, size, focused }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                focused && { backgroundColor: theme.colors.primaryMuted },
-              ]}
-              accessibilityLabel="Patients tab"
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-            >
-              <Ionicons
-                name={focused ? 'people' : 'people-outline'}
-                size={size}
-                color={color}
-              />
-            </View>
-          ),
-          tabBarAccessibilityLabel: 'Patients tab - View and manage patient records',
+          tabBarAccessibilityLabel: 'Home tab - Patient list',
         }}
       />
       <Tabs.Screen
@@ -129,7 +105,7 @@ export default function TabsLayout() {
               />
             </View>
           ),
-          tabBarAccessibilityLabel: 'Settings tab - App preferences and configuration',
+          tabBarAccessibilityLabel: 'Settings tab - App preferences',
         }}
       />
       <Tabs.Screen
@@ -138,29 +114,35 @@ export default function TabsLayout() {
           tabPress: (e) => {
             e.preventDefault();
             triggerHaptic();
-            router.push('/profile');
+            router.push('/upgrade');
           },
         }}
         options={{
-          title: 'Pro',
+          title: '',
           tabBarIcon: ({ color, size, focused }) => (
             <View
               style={[
-                styles.iconContainer,
-                focused && { backgroundColor: theme.colors.primaryMuted },
+                styles.proIconContainer,
+                { backgroundColor: focused ? theme.colors.primary : theme.colors.primaryMuted },
               ]}
               accessibilityLabel="Pro tab"
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
             >
               <Ionicons
-                name={focused ? 'diamond' : 'diamond-outline'}
-                size={size}
-                color={color}
+                name="diamond"
+                size={20}
+                color={focused ? '#fff' : theme.colors.primary}
               />
             </View>
           ),
-          tabBarAccessibilityLabel: 'Pro tab - Profile and subscription',
+          tabBarAccessibilityLabel: 'Pro tab - Subscription and plans',
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
@@ -172,6 +154,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 32,
     borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  proIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },

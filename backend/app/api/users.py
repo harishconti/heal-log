@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request
 
 from app.core.exceptions import NotFoundException, BadRequestException, InternalServerException
 from app.core.security import get_current_user, require_role
@@ -33,7 +33,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
     Get the current authenticated user's information.
     """
     if not current_user:
-        raise NotFoundException(detail="User not found")
+        raise NotFoundException(resource="User")
 
     return current_user
 
@@ -62,7 +62,7 @@ async def update_user_me(
 
         if not user:
             logger.error("user_profile_not_found", user_id=str(current_user.id))
-            raise NotFoundException(detail="User not found")
+            raise NotFoundException(resource="User")
 
         logger.info("user_profile_updated", user_id=str(current_user.id))
         return user

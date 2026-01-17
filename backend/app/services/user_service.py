@@ -162,7 +162,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         # Revoke all existing tokens for this user (force re-login on all devices)
         # Lazy import to avoid circular dependency
         from app.core.security import revoke_all_user_tokens
-        revoke_all_user_tokens(str(user.id))
+        await revoke_all_user_tokens(str(user.id))
 
         logger.info("password_change_success", user_id=str(user.id))
         return True

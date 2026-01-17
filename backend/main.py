@@ -14,6 +14,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from contextlib import asynccontextmanager
 from app.middleware.logging import LoggingMiddleware
+from app.middleware.auth import AuthMiddleware
 
 from app import api
 from app.core.config import settings
@@ -63,6 +64,11 @@ async def lifespan(app: FastAPI):
     else:
         logging.warning("REDIS_URL not set. Using InMemoryBackend for cache.")
         FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+
+    # Initialize token blacklist service (Redis-backed or in-memory fallback)
+    from app.services.token_blacklist_service import token_blacklist
+    await token_blacklist.initialize()
+    logging.info("Token blacklist service initialized.")
 
     await connect_to_mongo()
     db = await get_database()
@@ -272,11 +278,19 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 
 
 # --- Middleware ---
-# Order matters: Request size first (reject early), then security headers, CSRF, logging
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(CSRFProtectionMiddleware)
-app.add_middleware(RequestSizeLimitMiddleware)
+# Middleware applied bottom-to-top (last added = first executed)
+# Execution order for incoming requests:
+# 1. CORS (outermost - handles preflight)
+# 2. Security Headers (add headers to all responses)
+# 3. CSRF Protection (validate origin/referer)
+# 4. Request Size Limit (reject oversized requests early)
+# 5. Auth (decode JWT once, set context)
+# 6. Logging (innermost - logs with auth context)
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(AuthMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware)
+app.add_middleware(CSRFProtectionMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS Configuration - restrict methods and headers to only what's needed
 ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]

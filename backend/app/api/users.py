@@ -1,11 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, status, Request
 
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, BadRequestException, InternalServerException
 from app.core.security import get_current_user, require_role
 from app.core.limiter import limiter
 from app.core.logger import get_logger
+from app.core.constants import RATE_LIMIT_PASSWORD_CHANGE
 from app.schemas.role import UserRole
 from app.schemas.user import User, UserResponse, UserUpdate, UserPasswordUpdate
 from app.services.user_service import user_service
@@ -13,9 +14,6 @@ from app.services.user_service import user_service
 logger = get_logger(__name__)
 
 router = APIRouter()
-
-# Rate limit for password changes: 3 per hour to prevent brute force
-PASSWORD_CHANGE_RATE_LIMIT = "3/hour"
 
 @router.get("/", response_model=List[UserResponse])
 async def read_users(
@@ -73,13 +71,10 @@ async def update_user_me(
         raise
     except Exception as e:
         logger.error("user_profile_update_error", user_id=str(current_user.id), error=str(e), exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update user profile. Please try again later."
-        )
+        raise InternalServerException("Failed to update user profile. Please try again later.")
 
 @router.post("/me/password")
-@limiter.limit(PASSWORD_CHANGE_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_PASSWORD_CHANGE)
 async def change_password(
     request: Request,
     password_in: UserPasswordUpdate,
@@ -93,7 +88,4 @@ async def change_password(
         await user_service.change_password(current_user, password_in.current_password, password_in.new_password)
         return {"message": "Password updated successfully"}
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise BadRequestException(message=str(e))

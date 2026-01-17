@@ -86,82 +86,47 @@ def decode_access_token(token: str) -> Optional[dict]:
         return None
 
 # --- Dependency to Get Current User ---
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
+async def get_current_user() -> User:
     """
-    Dependency to get the current user from a JWT token.
-    Raises HTTPException for invalid credentials.
+    Dependency to get the current authenticated user.
+
+    Uses the AuthContext populated by AuthMiddleware (which has already
+    decoded and validated the JWT). This eliminates redundant JWT decoding.
+
+    Raises HTTPException for unauthenticated or invalid requests.
+
+    Returns:
+        The authenticated User object from the database.
     """
-    try:
-        # Step 1: Decode JWT
-        logger.info("[AUTH] Decoding JWT token...")
-        payload = jwt.decode(
-            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        jti: str = payload.get("jti")
-        iat_timestamp = payload.get("iat")
+    from app.core.auth_context import get_auth_context
 
-        if user_id is None:
-            logger.error("[AUTH] Token payload missing 'sub' (user_id)")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials: user ID not in token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    context = get_auth_context()
 
-        # Step 2: Check if token is blacklisted (revoked)
-        if jti:
-            iat = datetime.fromtimestamp(iat_timestamp, tz=timezone.utc) if iat_timestamp else None
-            if token_blacklist.is_token_blacklisted(jti, user_id, iat):
-                logger.warning(f"[AUTH] Token has been revoked. User ID: {user_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token has been revoked",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-        logger.info(f"[AUTH] Token decoded successfully. User ID: {user_id}")
-
-        # Step 3: Fetch user from database
-        logger.info(f"[AUTH] Fetching user from database...")
-        user = await user_service.get_user_by_id(user_id)
-
-        if not user:
-            logger.error(f"[AUTH] User not found in database. User ID: {user_id}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-        logger.info(f"[AUTH] User authenticated successfully: {user.email}")
-        return user
-
-    except jwt.ExpiredSignatureError:
-        logger.warning("[AUTH] Token has expired")
+    # Check if authenticated
+    if not context.authenticated:
+        error_detail = context.error or "Authentication required"
+        logger.warning("auth_required", error=error_detail)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
+            detail=error_detail,
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.PyJWTError as e:
-        logger.error(f"[AUTH] JWT validation error: {str(e)}", exc_info=True)
+
+    # Fetch user from database
+    user = await user_service.get_user_by_id(context.user_id)
+
+    if not user:
+        logger.error("user_not_found_in_db", user_id=context.user_id)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    except Exception as e:
-        # Log the actual error for debugging
-        logger.error(f"[AUTH] Unexpected authentication error: {str(e)}", exc_info=True)
-        logger.error(f"[AUTH] Error type: {type(e).__name__}")
-        logger.error(f"[AUTH] User ID attempted: {payload.get('sub') if 'payload' in locals() else 'N/A'}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred during authentication: {str(e)}"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
 
+    logger.debug("user_authenticated", user_id=context.user_id, email=context.email)
+    return user
 
-def revoke_token(token: str) -> bool:
+
+async def revoke_token(token: str) -> bool:
     """
     Revoke a specific token by adding it to the blacklist.
     Call this on logout or when a token should be invalidated.
@@ -178,124 +143,156 @@ def revoke_token(token: str) -> bool:
             return False
 
         exp = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc) if exp_timestamp else None
-        token_blacklist.blacklist_token(jti, exp)
+        await token_blacklist.blacklist_token(jti, exp)
         return True
     except jwt.PyJWTError as e:
         logger.error(f"[AUTH] Failed to revoke token: {e}")
         return False
 
 
-def revoke_all_user_tokens(user_id: str) -> None:
+async def revoke_all_user_tokens(user_id: str) -> None:
     """
     Revoke all tokens for a user. Call this on password change.
     """
-    token_blacklist.blacklist_user_tokens(user_id, datetime.now(timezone.utc))
+    await token_blacklist.blacklist_user_tokens(user_id, datetime.now(timezone.utc))
 
 # --- Dependency to Require "Pro" User ---
-async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
+async def require_pro_user() -> User:
     """
     Dependency to ensure the current user has a "PRO" subscription plan.
-    Raises HTTPException if the user is not a pro user.
+
+    Uses the AuthContext populated by AuthMiddleware.
+    Raises HTTPException if the user is not authenticated or not a PRO user.
+
+    Returns:
+        The authenticated PRO User object from the database.
     """
-    try:
-        payload = jwt.decode(
-            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        user_plan: str = payload.get("plan")
+    from app.core.auth_context import get_auth_context
 
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials: user ID not in token",
-            )
+    context = get_auth_context()
 
-        if user_plan != UserPlan.PRO:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This feature requires a PRO subscription.",
-            )
-
-        user = await user_service.get_user_by_id(user_id)
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-        return user
-    except jwt.ExpiredSignatureError:
+    # Check if authenticated
+    if not context.authenticated:
+        error_detail = context.error or "Authentication required"
+        logger.warning("pro_auth_required", error=error_detail)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error_detail,
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.PyJWTError:
+
+    # Check if PRO user
+    if context.plan != UserPlan.PRO:
+        logger.warning("pro_plan_required", user_id=context.user_id, plan=context.plan)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This feature requires a PRO subscription.",
         )
+
+    # Fetch user from database
+    user = await user_service.get_user_by_id(context.user_id)
+
+    if not user:
+        logger.error("pro_user_not_found_in_db", user_id=context.user_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    logger.debug("pro_user_authenticated", user_id=context.user_id)
+    return user
 
 # --- Dependency Factory for Role-Based Access ---
-async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2)) -> Optional[User]:
+async def get_optional_current_user() -> Optional[User]:
     """
-    Dependency to get the current user from a JWT token if present.
-    Returns the user ID if the token is valid, otherwise returns None.
-    Does not raise HTTPException for missing or invalid tokens.
+    Dependency to get the current user if authenticated.
+
+    Uses the AuthContext populated by AuthMiddleware.
+    Returns None for unauthenticated requests instead of raising HTTPException.
+
+    Returns:
+        The authenticated User object from the database, or None if not authenticated.
     """
-    if credentials is None:
-        return None
-    try:
-        payload = jwt.decode(
-            credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            return None
+    from app.core.auth_context import get_auth_context
 
-        user = await user_service.get_user_by_id(user_id)
-        if not user:
-            return None
+    context = get_auth_context()
 
-        return user
-    except (jwt.PyJWTError, HTTPException):
-        # Broadly catch JWT errors or HTTPExceptions from nested dependencies
-        # and return None, effectively making authentication optional.
+    # Return None if not authenticated
+    if not context.authenticated:
+        logger.debug("optional_auth_not_present")
         return None
+
+    # Fetch user from database
+    user = await user_service.get_user_by_id(context.user_id)
+
+    if not user:
+        logger.warning("optional_user_not_found_in_db", user_id=context.user_id)
+        return None
+
+    logger.debug("optional_user_authenticated", user_id=context.user_id)
+    return user
 
 
 def require_role(required_role: UserRole):
     """
     Dependency factory to ensure the user has a specific role.
+
+    Uses the AuthContext populated by AuthMiddleware.
+    Returns a dependency function that can be used with FastAPI's Depends().
+
+    Args:
+        required_role: The UserRole required to access the endpoint.
+
+    Returns:
+        A dependency function that validates the user's role.
+
+    Example:
+        @router.get("/admin")
+        async def admin_only(user: User = Depends(require_role(UserRole.ADMIN))):
+            ...
     """
-    async def role_checker(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
+    async def role_checker() -> User:
         """
         Checks if the user has the required role.
         """
-        try:
-            payload = jwt.decode(
-                credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
-            user_id: str = payload.get("sub")
-            user_role: str = payload.get("role")
+        from app.core.auth_context import get_auth_context
 
-            if user_id is None:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication credentials: user ID not in token",
-                )
+        context = get_auth_context()
 
-            if user_role != required_role:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Insufficient permissions. {required_role.value.capitalize()} role required.",
-                )
-
-            user = await user_service.get_user_by_id(user_id)
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-            return user
-        except jwt.ExpiredSignatureError:
+        # Check if authenticated
+        if not context.authenticated:
+            error_detail = context.error or "Authentication required"
+            logger.warning("role_auth_required", required_role=required_role.value, error=error_detail)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=error_detail,
+                headers={"WWW-Authenticate": "Bearer"},
             )
-        except jwt.PyJWTError:
+
+        # Check if user has required role
+        if context.role != required_role:
+            logger.warning(
+                "role_insufficient_permissions",
+                user_id=context.user_id,
+                user_role=context.role,
+                required_role=required_role.value
+            )
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. {required_role.value.capitalize()} role required.",
             )
+
+        # Fetch user from database
+        user = await user_service.get_user_by_id(context.user_id)
+
+        if not user:
+            logger.error("role_user_not_found_in_db", user_id=context.user_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        logger.debug("role_user_authenticated", user_id=context.user_id, role=context.role)
+        return user
+
     return role_checker

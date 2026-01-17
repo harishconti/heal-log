@@ -14,22 +14,22 @@ from app.core.security import create_access_token, create_refresh_token, get_cur
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from app.core.config import settings
+from app.core.constants import (
+    RATE_LIMIT_REGISTER,
+    RATE_LIMIT_VERIFY_OTP,
+    RATE_LIMIT_RESEND_OTP,
+    RATE_LIMIT_LOGIN,
+    RATE_LIMIT_FORGOT_PASSWORD,
+    RATE_LIMIT_FORGOT_PASSWORD_DAILY,
+    RATE_LIMIT_RESET_PASSWORD,
+    RATE_LIMIT_RESET_PASSWORD_DAILY,
+    RATE_LIMIT_REFRESH_TOKEN
+)
 
 # Bearer token dependency for logout
 bearer_scheme = HTTPBearer()
 
 logger = get_logger(__name__)
-
-# Rate limiting constants
-REGISTER_RATE_LIMIT = "5/minute"
-VERIFY_OTP_RATE_LIMIT = "10/minute"
-RESEND_OTP_RATE_LIMIT = "3/minute"
-LOGIN_RATE_LIMIT = "5/minute"
-FORGOT_PASSWORD_RATE_LIMIT = "5/10minutes"
-FORGOT_PASSWORD_DAILY_LIMIT = "10/day"
-RESET_PASSWORD_RATE_LIMIT = "5/10minutes"
-RESET_PASSWORD_DAILY_LIMIT = "15/day"
-REFRESH_TOKEN_RATE_LIMIT = "20/minute"
 
 # Per-email rate limiting constants
 MAX_OTP_VERIFICATION_ATTEMPTS = 5
@@ -40,7 +40,7 @@ FORGOT_PASSWORD_CACHE_TTL = 86400  # 24 hours in seconds
 router = APIRouter()
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
-@limiter.limit(REGISTER_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_REGISTER)
 async def register_user(request: Request, user_data: UserCreate):
     """
     Register a new user. Sends OTP for email verification.
@@ -75,7 +75,7 @@ async def register_user(request: Request, user_data: UserCreate):
         )
 
 @router.post("/verify-otp", response_model=dict)
-@limiter.limit(VERIFY_OTP_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_VERIFY_OTP)
 async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     """
     Verify email using OTP. Returns tokens on success.
@@ -142,7 +142,7 @@ async def verify_otp(request: Request, otp_data: OTPVerifyRequest):
     }
 
 @router.post("/resend-otp", response_model=dict)
-@limiter.limit(RESEND_OTP_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_RESEND_OTP)
 async def resend_otp(request: Request, otp_data: OTPResendRequest):
     """
     Resend OTP for email verification. Has a 60-second cooldown.
@@ -182,7 +182,7 @@ async def resend_otp(request: Request, otp_data: OTPResendRequest):
     }
 
 @router.post("/login", response_model=dict)
-@limiter.limit(LOGIN_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_LOGIN)
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Authenticate a user and return tokens and user info.
@@ -192,7 +192,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     email = form_data.username.lower().strip()
 
     # Check if account is locked
-    is_locked, lock_info = account_lockout.is_locked(email)
+    is_locked, lock_info = await account_lockout.is_locked(email)
     if is_locked:
         minutes_remaining = (lock_info or 0) // 60 + 1
         logger.warning("login_blocked_locked_account", email=email)
@@ -204,7 +204,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     user = await user_service.authenticate(form_data.username, form_data.password)
     if not user:
         # Record failed attempt and check if now locked
-        is_now_locked, info = account_lockout.record_failed_attempt(email)
+        is_now_locked, info = await account_lockout.record_failed_attempt(email)
         if is_now_locked:
             minutes_remaining = (info or 0) // 60 + 1
             raise APIException(
@@ -217,7 +217,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         )
 
     # Clear lockout on successful authentication
-    account_lockout.clear_attempts(email)
+    await account_lockout.clear_attempts(email)
 
     # Check if user is verified
     if not user.is_verified:
@@ -240,8 +240,8 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     }
 
 @router.post("/forgot-password", response_model=dict)
-@limiter.limit(FORGOT_PASSWORD_RATE_LIMIT)
-@limiter.limit(FORGOT_PASSWORD_DAILY_LIMIT)
+@limiter.limit(RATE_LIMIT_FORGOT_PASSWORD)
+@limiter.limit(RATE_LIMIT_FORGOT_PASSWORD_DAILY)
 async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     """
     Initiate password reset. Sends reset token via email.
@@ -301,8 +301,8 @@ async def forgot_password(request: Request, reset_data: PasswordResetRequest):
     }
 
 @router.post("/reset-password", response_model=dict)
-@limiter.limit(RESET_PASSWORD_RATE_LIMIT)
-@limiter.limit(RESET_PASSWORD_DAILY_LIMIT)
+@limiter.limit(RATE_LIMIT_RESET_PASSWORD)
+@limiter.limit(RATE_LIMIT_RESET_PASSWORD_DAILY)
 async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     """
     Reset password using the token from email.
@@ -337,7 +337,7 @@ async def reset_password(request: Request, reset_data: PasswordResetConfirm):
     }
 
 @router.post("/refresh", response_model=Token)
-@limiter.limit(REFRESH_TOKEN_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_REFRESH_TOKEN)
 async def refresh_access_token(request: Request, refresh_token_data: RefreshToken):
     """
     Refresh an access token using a valid refresh token.
@@ -410,7 +410,7 @@ async def logout(
 
     try:
         # Revoke the access token
-        success = revoke_token(token)
+        success = await revoke_token(token)
 
         if success:
             logger.info("logout_success")

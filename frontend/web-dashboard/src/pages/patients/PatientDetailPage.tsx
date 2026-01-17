@@ -358,7 +358,7 @@ export function PatientDetailPage() {
             <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>
+            <Button variant="danger" onClick={handleDelete} loading={isDeleting}>
               Yes, Delete Patient
             </Button>
           </div>
@@ -400,7 +400,7 @@ export function PatientDetailPage() {
             <Button variant="outline" onClick={() => setShowNoteModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddNote} isLoading={isAddingNote} disabled={!noteContent.trim()}>
+            <Button onClick={handleAddNote} loading={isAddingNote} disabled={!noteContent.trim()}>
               Save Note
             </Button>
           </div>

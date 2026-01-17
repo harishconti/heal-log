@@ -24,6 +24,7 @@ const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({
   compact = false,
 }) => {
   const { theme, fontScale } = useTheme();
+  const styles = getStyles(theme);
   const { syncState, loading, settings, lastSyncTime } = useAppStore();
 
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -299,7 +300,7 @@ const SyncProgressIndicator: React.FC<SyncProgressIndicatorProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginVertical: 8,

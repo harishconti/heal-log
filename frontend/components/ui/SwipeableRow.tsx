@@ -57,6 +57,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   const { theme } = useTheme();
   const { settings } = useAppStore();
   const swipeableRef = useRef<Swipeable>(null);
+  const styles = getStyles(theme);
 
   const triggerHaptic = () => {
     if (settings.hapticEnabled) {
@@ -236,7 +237,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   swipeableContainer: {
     overflow: 'hidden',
   },
@@ -256,9 +257,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   actionLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.xs,
     marginTop: 4,
-    fontWeight: '500',
+    fontWeight: theme.typography.weights.medium,
   },
   // Visual affordance for swipeable rows
   swipeIndicator: {
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
   swipeIndicatorDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: theme.borderRadius.sm,
     opacity: 0.4,
   },
 });

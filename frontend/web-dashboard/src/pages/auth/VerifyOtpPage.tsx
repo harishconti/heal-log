@@ -150,7 +150,7 @@ export function VerifyOtpPage() {
         <Button
           type="submit"
           className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
-          isLoading={isSubmitting}
+          loading={isSubmitting}
         >
           Verify email
         </Button>

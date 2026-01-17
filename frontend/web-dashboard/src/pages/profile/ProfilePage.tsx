@@ -250,7 +250,7 @@ export function ProfilePage() {
               </div>
 
               <div className="flex justify-end pt-4 border-t border-gray-50">
-                <Button type="submit" isLoading={isUpdatingProfile} size="lg" className="min-w-[140px]">
+                <Button type="submit" loading={isUpdatingProfile} size="lg" className="min-w-[140px]">
                   Save Changes
                 </Button>
               </div>
@@ -404,7 +404,7 @@ export function ProfilePage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isChangingPassword}>
+            <Button type="submit" loading={isChangingPassword}>
               Update Password
             </Button>
           </div>

@@ -19,6 +19,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
   const [isExpanded, setIsExpanded] = React.useState(showExpandedByDefault);
   const { isConnected, isInternetReachable, type } = useNetwork();
   const { theme } = useTheme();
+  const styles = getStyles(theme);
   const { loading, lastSyncTime, errors } = useAppStore();
 
   const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -178,7 +179,7 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     width: '100%',
     paddingVertical: 12,

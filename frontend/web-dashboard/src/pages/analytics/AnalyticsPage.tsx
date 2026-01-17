@@ -90,7 +90,7 @@ export function AnalyticsPage() {
             onChange={(e) => setDays(parseInt(e.target.value))}
             options={ANALYTICS_PERIOD_OPTIONS}
           />
-          <Button variant="outline" onClick={handleExport} isLoading={isExporting}>
+          <Button variant="outline" onClick={handleExport} loading={isExporting}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>

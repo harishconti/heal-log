@@ -151,7 +151,7 @@ export function LoginPage() {
         <Button
           type="submit"
           className="w-full h-[44px] text-[14px] font-semibold bg-[#2563eb] hover:bg-[#1d4ed8] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-          isLoading={isSubmitting}
+          loading={isSubmitting}
         >
           Sign in
         </Button>

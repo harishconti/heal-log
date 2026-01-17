@@ -229,7 +229,7 @@ export function PatientsListPage() {
           data={patients}
           columns={columns}
           keyExtractor={(item) => item.id}
-          isLoading={isLoading}
+          loading={isLoading}
           pagination={{
             page: pagination.page,
             pageSize: pagination.pageSize,

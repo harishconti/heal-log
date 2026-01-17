@@ -66,6 +66,7 @@ function CachedImageComponent({
   // Apply responsive scaling if enabled
   const fontScale = PixelRatio.getFontScale();
   const finalSize = responsive ? getResponsiveSize(size, fontScale) : size;
+  const styles = getStyles();
 
   // Get cached or create new URI
   const imageUri = useMemo(() => {
@@ -132,7 +133,7 @@ function CachedImageComponent({
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = () => StyleSheet.create({
   placeholder: {
     justifyContent: 'center',
     alignItems: 'center',

@@ -66,6 +66,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   submitButtonText
 }) => {
   const { theme } = useTheme();
+  const styles = getStyles(theme);
   const { settings } = useAppStore();
   
   const { control, handleSubmit, formState: { errors, isDirty }, setValue, watch } = useForm<PatientFormValues>({
@@ -394,7 +395,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },

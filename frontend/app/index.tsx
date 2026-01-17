@@ -333,29 +333,14 @@ function Index({ patients, groups, totalPatientCount }) {
       recordSyncAttempt(true);
       setLastSyncTime(new Date().toISOString());
 
-      // Show success feedback when manually triggered
       if (showRefresh) {
         triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-        Alert.alert(
-          'Sync Complete',
-          'Your data has been saved and synced successfully.',
-          [{ text: 'OK' }]
-        );
       }
 
     } catch (error) {
       console.log('Sync failed, using local DB:', error);
       setOffline(true);
       recordSyncAttempt(false);
-
-      // Show error feedback when manually triggered
-      if (showRefresh) {
-        Alert.alert(
-          'Sync Failed',
-          'Unable to sync with server. Your changes are saved locally and will sync when connection is restored.',
-          [{ text: 'OK' }]
-        );
-      }
     } finally {
       setLoading('sync', false);
       setRefreshing(false);

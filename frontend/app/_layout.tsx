@@ -9,7 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from "@react-native-community/netinfo";
 import { trackOfflineOnlineTime } from '@/services/analytics';
 import { NetworkProvider } from '@/contexts/NetworkContext';
-import OfflineIndicator from '@/components/core/OfflineIndicator';
 import { initializeBackgroundSync, cleanupBackgroundSync } from '@/services/backgroundSync';
 
 // Dynamic status bar component that adapts to theme
@@ -86,7 +85,6 @@ const AppLayout = () => {
   return (
     <View style={{ flex: 1 }}>
       <DynamicStatusBar />
-      <OfflineIndicator />
       <Stack
         screenOptions={{
           headerShown: false,

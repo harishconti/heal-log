@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, StatusBar, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
@@ -16,9 +16,25 @@ import appJson from '@/app.json';
 
 const SettingsScreen = () => {
     const { theme, fontScale } = useTheme();
-    const { settings, updateSettings } = useAppStore();
+    const { settings, updateSettings, lastSyncTime } = useAppStore();
     const { token } = useAuth();
     const router = useRouter();
+
+    const formattedLastSync = useMemo(() => {
+        if (!lastSyncTime) return 'Never synced';
+        const date = new Date(lastSyncTime);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }, [lastSyncTime]);
 
     const [biometricCapabilities, setBiometricCapabilities] = useState<BiometricCapabilities | null>(null);
     const [biometricLoading, setBiometricLoading] = useState(false);
@@ -227,6 +243,28 @@ const SettingsScreen = () => {
                         )}
                     </Card>
                 )}
+
+                {/* Data Sync Section */}
+                <Card style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name="cloud-outline" size={18} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.sectionTitle}>Data Sync</Text>
+                    </View>
+
+                    <View style={styles.syncInfoRow}>
+                        <View style={styles.syncInfoLeft}>
+                            <Text style={styles.syncInfoLabel}>Last Synced</Text>
+                            <Text style={styles.syncInfoValue}>{formattedLastSync}</Text>
+                        </View>
+                        <Ionicons
+                            name={lastSyncTime ? 'checkmark-circle' : 'time-outline'}
+                            size={24}
+                            color={lastSyncTime ? theme.colors.success : theme.colors.textSecondary}
+                        />
+                    </View>
+                </Card>
 
                 {/* Preferences Section */}
                 <Card style={styles.sectionCard}>
@@ -507,6 +545,25 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
         fontSize: 12 * fontScale,
         color: theme.colors.textSecondary,
         marginTop: 8,
+    },
+    syncInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 8,
+    },
+    syncInfoLeft: {
+        flex: 1,
+    },
+    syncInfoLabel: {
+        fontSize: 14 * fontScale,
+        color: theme.colors.textSecondary,
+        marginBottom: 4,
+    },
+    syncInfoValue: {
+        fontSize: 16 * fontScale,
+        fontWeight: '600',
+        color: theme.colors.text,
     },
 });
 

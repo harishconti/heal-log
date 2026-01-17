@@ -13,11 +13,14 @@ import {
   Check,
   Eye,
   EyeOff,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  KeyRound
 } from 'lucide-react';
 import { CardHeader, Button, Input, Badge, Modal, Card } from '../../components/ui';
 import { useAuthStore } from '../../store';
 import { userApi } from '../../api/user';
+import { cn } from '@/utils';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -159,7 +162,12 @@ export function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-left">
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className={cn(
+                  'p-3 bg-gray-50 rounded-xl border border-gray-100',
+                  'hover:bg-violet-50 hover:border-violet-100',
+                  'hover:shadow-md hover:shadow-violet-500/5',
+                  'transition-all duration-200 cursor-default'
+                )}>
                   <div className="flex items-center gap-2 mb-1">
                     <Stethoscope className="w-4 h-4 text-violet-500" />
                     <span className="text-xs font-semibold text-gray-500 uppercase">Specialty</span>
@@ -168,7 +176,12 @@ export function ProfilePage() {
                     {user?.medical_specialty || '-'}
                   </p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className={cn(
+                  'p-3 bg-gray-50 rounded-xl border border-gray-100',
+                  'hover:bg-amber-50 hover:border-amber-100',
+                  'hover:shadow-md hover:shadow-amber-500/5',
+                  'transition-all duration-200 cursor-default'
+                )}>
                   <div className="flex items-center gap-2 mb-1">
                     <Calendar className="w-4 h-4 text-amber-500" />
                     <span className="text-xs font-semibold text-gray-500 uppercase">Joined</span>
@@ -181,24 +194,40 @@ export function ProfilePage() {
             </div>
           </Card>
 
-           {/* Security Quick Link */}
-           <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
-                <Shield className="w-24 h-24" />
+          {/* Security Quick Link - Light Theme */}
+          <Card className={cn(
+            'overflow-hidden relative group',
+            'bg-gradient-to-br from-primary-50 to-primary-100/50',
+            'border-primary-100 hover:border-primary-200',
+            'hover:shadow-lg hover:shadow-primary-500/10',
+            'transition-all duration-300'
+          )}>
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Shield className="w-20 h-20 text-primary-600" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Lock className="w-5 h-5 text-primary-600" />
+                </div>
+                <h3 className="font-bold text-lg text-gray-900">Security</h3>
               </div>
-              <div className="relative z-10">
-                <h3 className="font-bold text-lg mb-2">Security</h3>
-                <p className="text-gray-300 text-sm mb-6 max-w-[200px]">
-                  Secure your account with a strong password.
-                </p>
-                <Button
-                  onClick={() => setShowPasswordModal(true)}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-none"
-                >
-                  Change Password
-                </Button>
-              </div>
-           </Card>
+              <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+                Keep your account secure with a strong password.
+              </p>
+              <Button
+                onClick={() => setShowPasswordModal(true)}
+                variant="outline"
+                className={cn(
+                  'w-full border-primary-200 text-primary-700 hover:bg-primary-100',
+                  'hover:border-primary-300 transition-all'
+                )}
+              >
+                <KeyRound className="w-4 h-4 mr-2" />
+                Change Password
+              </Button>
+            </div>
+          </Card>
         </div>
 
         {/* Right Column: Edit Form & Subscription */}
@@ -261,17 +290,26 @@ export function ProfilePage() {
           <Card>
             <CardHeader title="Subscription Plan" />
             <div className="flex flex-col sm:flex-row gap-6 items-start">
-               <div className={`
-                 w-full sm:w-auto p-6 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center sm:min-w-[160px]
-                 ${isPro ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100' : 'bg-gray-50 border border-gray-100'}
-               `}>
-                  <div className={`p-3 rounded-xl mb-3 ${isPro ? 'bg-amber-100' : 'bg-gray-200'}`}>
-                    <Crown className={`w-6 h-6 ${isPro ? 'text-amber-600' : 'text-gray-500'}`} />
+               <div className={cn(
+                 'w-full sm:w-auto p-6 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center sm:min-w-[160px]',
+                 'transition-all duration-300 group/plan',
+                 isPro
+                   ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-200'
+                   : 'bg-gray-50 border border-gray-100 hover:shadow-lg hover:shadow-gray-500/10 hover:border-gray-200'
+               )}>
+                  <div className={cn(
+                    'p-3 rounded-xl mb-3 transition-transform group-hover/plan:scale-110',
+                    isPro ? 'bg-amber-100' : 'bg-gray-200'
+                  )}>
+                    <Crown className={cn('w-6 h-6', isPro ? 'text-amber-600' : 'text-gray-500')} />
                   </div>
-                  <p className={`font-bold text-lg ${isPro ? 'text-amber-900' : 'text-gray-700'}`}>
+                  <p className={cn('font-bold text-lg', isPro ? 'text-amber-900' : 'text-gray-700')}>
                     {isPro ? 'Pro Plan' : 'Basic Plan'}
                   </p>
-                  <p className={`text-xs font-medium mt-1 uppercase tracking-wide ${isPro ? 'text-amber-700' : 'text-gray-500'}`}>
+                  <p className={cn(
+                    'text-xs font-medium mt-1 uppercase tracking-wide',
+                    isPro ? 'text-amber-700' : 'text-gray-500'
+                  )}>
                     {user?.subscription_status || 'Active'}
                   </p>
                </div>
@@ -298,7 +336,14 @@ export function ProfilePage() {
 
                   {!isPro && (
                     <Link to="/upgrade">
-                      <Button className="w-full sm:w-auto shadow-lg shadow-primary-500/20 mt-2">
+                      <Button
+                        className={cn(
+                          'w-full sm:w-auto mt-2',
+                          'bg-gradient-to-r from-primary-600 to-primary-700',
+                          'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
+                          'hover:-translate-y-0.5 transition-all duration-300'
+                        )}
+                      >
                         <Sparkles className="h-4 w-4 mr-2" />
                         Upgrade to Pro - $9.99/mo
                       </Button>

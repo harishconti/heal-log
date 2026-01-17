@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, type ReactNode, useId } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '@/utils';
 
 interface ModalProps {
   isOpen: boolean;
@@ -157,7 +158,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', ariaDescr
       <div className="flex min-h-full items-center justify-center p-4">
         {/* Backdrop with blur */}
         <div
-          className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm animate-fade-in"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -165,19 +166,27 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', ariaDescr
         {/* Modal panel */}
         <div
           ref={modalRef}
-          className={`
-            relative bg-white rounded-2xl shadow-xl
-            ${sizes[size]} w-full p-6 z-10
-            transform transition-all
-          `}
+          className={cn(
+            'relative bg-white rounded-2xl shadow-2xl',
+            'w-full p-6 z-10',
+            'ring-1 ring-gray-200',
+            'animate-scale-in',
+            sizes[size]
+          )}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 id={titleId} className="text-lg font-semibold text-gray-900">{title}</h2>
+          {/* Header with border */}
+          <div className="flex items-center justify-between pb-4 mb-5 border-b border-gray-100">
+            <h2 id={titleId} className="text-xl font-bold text-gray-900">{title}</h2>
             <button
               ref={closeButtonRef}
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"
+              className={cn(
+                'p-2 text-gray-400 rounded-xl',
+                'hover:text-gray-600 hover:bg-gray-100',
+                'hover:shadow-sm active:scale-95',
+                'transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+              )}
               aria-label="Close modal"
               type="button"
             >

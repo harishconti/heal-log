@@ -19,6 +19,7 @@ import { usePatient } from '../../hooks';
 import { patientsApi, type CreateNoteData } from '../../api/patients';
 import type { ClinicalNote } from '../../types';
 import { sanitizeContent } from '../../utils/sanitize';
+import { cn } from '@/utils';
 
 export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -157,10 +158,18 @@ export function PatientDetailPage() {
           {/* Quick Info Card */}
           <Card>
             <CardHeader title="Information" className="mb-6" />
-            <div className="space-y-5">
+            <div className="space-y-3">
               {patient.phone && (
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/50">
-                  <Phone className="h-5 w-5 text-primary-500 mt-0.5" />
+                <div className={cn(
+                  'flex items-start gap-3 p-3 rounded-xl',
+                  'bg-gray-50/50 border border-transparent',
+                  'hover:bg-primary-50/50 hover:border-primary-100',
+                  'hover:shadow-md hover:shadow-primary-500/5',
+                  'transition-all duration-200 cursor-default group/info'
+                )}>
+                  <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover/info:scale-110 transition-transform">
+                    <Phone className="h-4 w-4 text-primary-600" />
+                  </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</p>
                     <span className="text-gray-900 font-medium">{patient.phone}</span>
@@ -168,8 +177,16 @@ export function PatientDetailPage() {
                 </div>
               )}
               {patient.email && (
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/50">
-                  <Mail className="h-5 w-5 text-primary-500 mt-0.5" />
+                <div className={cn(
+                  'flex items-start gap-3 p-3 rounded-xl',
+                  'bg-gray-50/50 border border-transparent',
+                  'hover:bg-primary-50/50 hover:border-primary-100',
+                  'hover:shadow-md hover:shadow-primary-500/5',
+                  'transition-all duration-200 cursor-default group/info'
+                )}>
+                  <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover/info:scale-110 transition-transform">
+                    <Mail className="h-4 w-4 text-primary-600" />
+                  </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</p>
                     <span className="text-gray-900 font-medium break-all">{patient.email}</span>
@@ -177,8 +194,16 @@ export function PatientDetailPage() {
                 </div>
               )}
               {(patient.address || patient.location) && (
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/50">
-                  <MapPin className="h-5 w-5 text-primary-500 mt-0.5" />
+                <div className={cn(
+                  'flex items-start gap-3 p-3 rounded-xl',
+                  'bg-gray-50/50 border border-transparent',
+                  'hover:bg-primary-50/50 hover:border-primary-100',
+                  'hover:shadow-md hover:shadow-primary-500/5',
+                  'transition-all duration-200 cursor-default group/info'
+                )}>
+                  <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover/info:scale-110 transition-transform">
+                    <MapPin className="h-4 w-4 text-primary-600" />
+                  </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</p>
                     <span className="text-gray-900 font-medium">
@@ -189,8 +214,16 @@ export function PatientDetailPage() {
                   </div>
                 </div>
               )}
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/50">
-                <Calendar className="h-5 w-5 text-primary-500 mt-0.5" />
+              <div className={cn(
+                'flex items-start gap-3 p-3 rounded-xl',
+                'bg-gray-50/50 border border-transparent',
+                'hover:bg-amber-50/50 hover:border-amber-100',
+                'hover:shadow-md hover:shadow-amber-500/5',
+                'transition-all duration-200 cursor-default group/info'
+              )}>
+                <div className="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover/info:scale-110 transition-transform">
+                  <Calendar className="h-4 w-4 text-amber-600" />
+                </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Registered</p>
                   <span className="text-gray-900 font-medium">
@@ -240,7 +273,14 @@ export function PatientDetailPage() {
               title="Clinical Notes"
               subtitle={`${notes.length} history records`}
               action={
-                <Button onClick={() => setShowNoteModal(true)} className="shadow-md shadow-primary-500/20">
+                <Button
+                  onClick={() => setShowNoteModal(true)}
+                  className={cn(
+                    'bg-gradient-to-r from-primary-600 to-primary-700',
+                    'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
+                    'hover:-translate-y-0.5 transition-all duration-300'
+                  )}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Note
                 </Button>
@@ -284,11 +324,20 @@ export function PatientDetailPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-6 relative before:absolute before:left-8 before:top-4 before:bottom-4 before:w-px before:bg-gray-200">
-                {notes.map((note) => (
+              <div className="space-y-6 relative before:absolute before:left-8 before:top-4 before:bottom-4 before:w-px before:bg-gradient-to-b before:from-primary-200 before:via-primary-100 before:to-gray-100">
+                {notes.map((note, index) => (
                   <div key={note.id} className="relative pl-20 group">
                     {/* Timeline dot */}
-                    <div className="absolute left-[26px] top-6 w-3 h-3 bg-white border-[3px] border-primary-500 rounded-full z-10 group-hover:scale-125 transition-transform shadow-sm"></div>
+                    <div className={cn(
+                      'absolute left-[26px] top-6 w-3 h-3 bg-white border-[3px] rounded-full z-10',
+                      'transition-all duration-300 shadow-sm',
+                      'group-hover:scale-150 group-hover:shadow-md',
+                      note.visit_type === 'emergency'
+                        ? 'border-danger-500 group-hover:shadow-danger-500/30'
+                        : note.visit_type === 'follow-up'
+                        ? 'border-warning-500 group-hover:shadow-warning-500/30'
+                        : 'border-primary-500 group-hover:shadow-primary-500/30'
+                    )}></div>
 
                     {/* Timestamp */}
                     <div className="absolute left-0 top-5 w-16 text-right">
@@ -300,7 +349,16 @@ export function PatientDetailPage() {
                       </p>
                     </div>
 
-                    <div className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative">
+                    <div className={cn(
+                      'bg-white border rounded-2xl p-5 relative',
+                      'transition-all duration-300',
+                      'hover:shadow-lg hover:-translate-y-0.5',
+                      note.visit_type === 'emergency'
+                        ? 'border-danger-100 hover:border-danger-200 hover:shadow-danger-500/10'
+                        : note.visit_type === 'follow-up'
+                        ? 'border-warning-100 hover:border-warning-200 hover:shadow-warning-500/10'
+                        : 'border-gray-200 hover:border-primary-200 hover:shadow-primary-500/10'
+                    )}>
                       <div className="flex items-center justify-between mb-3">
                         <Badge
                           variant={
@@ -314,6 +372,11 @@ export function PatientDetailPage() {
                         >
                           {note.visit_type}
                         </Badge>
+                        {index === 0 && (
+                          <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                            Latest
+                          </span>
+                        )}
                       </div>
                       <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-[15px]">
                         {sanitizeContent(note.content)}

@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle, Send } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, Send, ShieldCheck } from 'lucide-react';
 import { authApi } from '../../api';
 import { Button, Input } from '../../components/ui';
+import { cn } from '@/utils';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -40,17 +41,25 @@ export function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="text-center py-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-100">
-          <CheckCircle className="h-8 w-8 text-emerald-600" />
+      <div className="text-center py-4 space-y-6">
+        <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-emerald-100/50 ring-4 ring-emerald-50">
+          <CheckCircle className="h-10 w-10 text-emerald-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-        <p className="text-gray-500 mb-8 leading-relaxed">
-          If an account exists with that email, we've sent password reset instructions.
-        </p>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
+          <p className="text-gray-500 leading-relaxed max-w-xs mx-auto">
+            If an account exists with that email, we've sent password reset instructions.
+          </p>
+        </div>
         <Link
           to="/login"
-          className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-all duration-200"
+          className={cn(
+            'inline-flex items-center justify-center gap-2.5 w-full h-12',
+            'bg-gray-100 text-gray-700 font-semibold rounded-xl',
+            'hover:bg-gray-200 hover:shadow-md',
+            'hover:-translate-y-0.5 transition-all duration-300',
+            'active:translate-y-0 active:shadow-sm'
+          )}
         >
           <ArrowLeft className="h-4 w-4" />
           Back to login
@@ -60,20 +69,25 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-7">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-primary-100">
-          <Mail className="h-8 w-8 text-primary-600" />
+      <div className="text-center space-y-5">
+        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-primary-100/50 ring-4 ring-primary-50">
+          <Mail className="h-10 w-10 text-primary-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset your password</h2>
-        <p className="text-gray-500">Enter your email and we'll send you reset instructions</p>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Reset your password</h2>
+          <p className="text-gray-500">Enter your email and we'll send you reset instructions</p>
+        </div>
       </div>
 
       {/* Error message */}
       {error && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-50/50 border border-red-100 rounded-xl">
-          <p className="text-sm text-red-600 font-medium">{error}</p>
+        <div className="p-4 bg-danger-50 border border-danger-200 rounded-xl animate-slide-up flex items-start gap-3">
+          <div className="w-5 h-5 rounded-full bg-danger-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-danger-600 text-xs font-bold">!</span>
+          </div>
+          <p className="text-sm text-danger-700 font-medium leading-relaxed">{error}</p>
         </div>
       )}
 
@@ -85,24 +99,39 @@ export function ForgotPasswordPage() {
           autoComplete="email"
           placeholder="doctor@example.com"
           error={errors.email?.message}
+          icon={<Mail className="w-5 h-5" />}
+          required
           {...register('email')}
         />
 
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
+          size="lg"
+          fullWidth
+          className={cn(
+            'h-12 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl',
+            'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
+            'hover:-translate-y-0.5 transition-all duration-300',
+            'active:translate-y-0 active:shadow-md'
+          )}
           loading={isSubmitting}
         >
           <Send className="h-4 w-4" />
           Send reset link
         </Button>
+
+        {/* Security indicator */}
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Secure password reset</span>
+        </div>
       </form>
 
       {/* Back to login */}
-      <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+      <div className="pt-4 border-t border-gray-100 text-center">
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 font-medium transition-colors"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-primary-600 font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to login

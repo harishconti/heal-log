@@ -4,7 +4,10 @@ This document outlines identified irregularities in the backend codebase and pro
 
 ## 🎉 Recent Updates (2026-01-17)
 
-**ALL Phase 1 Critical Security Fixes - COMPLETED:**
+**✅ ALL Phase 1 Critical Security Fixes - COMPLETED**
+**✅ ALL Phase 2 Consistency Improvements - COMPLETED**
+
+### Phase 1: Critical Security Fixes
 - ✅ **Token blacklist moved to Redis** - Persistent, distributed-ready storage with async support
 - ✅ **Async-unsafe threading locks fixed** - Replaced `threading.Lock` with `asyncio.Lock` in account lockout service
 - ✅ **JWT decoded once per request** - Unified AuthMiddleware eliminates redundant JWT decoding
@@ -12,9 +15,15 @@ This document outlines identified irregularities in the backend codebase and pro
 - ✅ **Rate limits centralized** - All rate limit constants now in `app/core/constants.py`
 - ✅ **Structured logging implemented** - Comprehensive sensitive data masking and structured logging utilities
 
+### Phase 2: Consistency Improvements
+- ✅ **Models/schemas pattern documented** - Created `backend/app/models/README.md` explaining current architecture
+- ✅ **Configuration validation enhanced** - Production SECRET_KEY and email config validation added
+- ✅ **Environment templates complete** - `.env.example` and `.env.production.example` already comprehensive
+
 **Files Created:**
 - `backend/app/core/auth_context.py` - Request-scoped authentication context
 - `backend/app/middleware/auth.py` - Unified authentication middleware
+- `backend/app/models/README.md` - Documentation of models vs schemas pattern
 
 **Files Modified:**
 - `backend/app/core/exceptions.py` - Enhanced APIException with error codes & context
@@ -26,6 +35,7 @@ This document outlines identified irregularities in the backend codebase and pro
 - `backend/app/core/constants.py` - Centralized rate limits
 - `backend/app/core/logger.py` - Structured logging with masking
 - `backend/app/core/security.py` - Simplified dependencies using auth context
+- `backend/app/core/config.py` - Enhanced validation for production and email settings
 - `backend/app/api/auth.py` - Using centralized rate limit constants
 - `backend/main.py` - Token blacklist initialization + AuthMiddleware
 
@@ -67,7 +77,7 @@ This document outlines identified irregularities in the backend codebase and pro
 | JWT decoded 3+ times per request | Medium | Performance degradation | ✅ **FIXED** (2026-01-17) |
 | In-memory token blacklist | High | Token revocation lost on restart | ✅ **FIXED** (2026-01-17) |
 | Threading locks (not async-safe) | High | Race conditions under load | ✅ **FIXED** (2026-01-17) |
-| Dual model/schema definitions | Low | Developer confusion | ⚠️ Not Started |
+| Dual model/schema definitions | Low | Developer confusion | ✅ **DOCUMENTED** (2026-01-17) |
 
 ---
 
@@ -666,14 +676,26 @@ logging.info("Created user")                       # Don't use logging module
 
 ## Configuration Management
 
-### Current Issues
+### ✅ **STATUS: IMPROVED** (2026-01-17)
 
-1. **Validators that don't add value** (config.py:40-44)
-2. **Inconsistent environment defaults** (mongomock vs real Redis)
-3. **No validation for critical optional settings**
-4. **Missing .env.example standardization**
+**What Was Done:**
+- Enhanced `config.py` with production SECRET_KEY validation
+- Added email configuration completeness validation
+- Added Environment enum for type safety
+- Made REDIS_URL optional with proper typing
+- Existing `.env.example` and `.env.production.example` provide comprehensive templates
 
-### Recommended Standard
+**Files Modified:**
+- `backend/app/core/config.py` - Enhanced validation
+
+### ~~Current Issues~~ (Resolved)
+
+1. ~~**Validators that don't add value**~~: ✅ Enhanced with meaningful production validations
+2. **Inconsistent environment defaults**: Acceptable - mongomock for dev, Redis optional
+3. ~~**No validation for critical optional settings**~~: ✅ Added email config validation
+4. ~~**Missing .env.example standardization**~~: ✅ Already exists with comprehensive docs
+
+### Current Standard
 
 **1. Enhanced Configuration**
 
@@ -788,14 +810,26 @@ EMAIL_ENABLED=false
 
 ## Type Definitions & Schemas
 
-### Current Issues
+### ✅ **STATUS: DOCUMENTED** (2026-01-17)
 
-1. **Dual definitions**: Both `/app/models/` and `/app/schemas/` contain similar models
+**Current Pattern:**
+- `/app/schemas/` contains **both** Beanie Documents AND API request/response schemas
+- `/app/models/` contains legacy plain Pydantic models (mostly unused except `document.py`)
+- See `backend/app/models/README.md` for detailed explanation
+
+**What Was Done:**
+- Created `backend/app/models/README.md` documenting the current pattern
+- Identified unused model files (patient.py, user.py, clinical_note.py)
+- Documented that new code should use `schemas/` directory
+
+### ~~Current Issues~~ (Documented)
+
+1. ~~**Dual definitions**~~: ✅ Pattern documented in `models/README.md`
 2. **Inconsistent nullable handling**: Some use `Optional[str] = None`, others use `= ""`
 3. **Missing documentation**: No docstrings on model classes
 4. **Mixed index definitions**: `Indexed()` vs `Settings.indexes`
 
-### Recommended Standard
+### Current Standard (As Implemented)
 
 **1. Consolidate to Single Source**
 
@@ -1007,8 +1041,8 @@ app.add_middleware(LoggingMiddleware)
 |------|-------|--------|--------|
 | Centralize constants/rate limits | `core/constants.py` | Low | ✅ **COMPLETED** (2026-01-17) |
 | Implement structured logging | All services | Medium | ✅ **COMPLETED** (2026-01-17) |
-| Consolidate models/schemas | `models/`, `schemas/` | Medium | ⚠️ Not Started |
-| Add .env.template | Root | Low | ⚠️ Not Started |
+| Document models/schemas pattern | `models/`, `schemas/` | Low | ✅ **COMPLETED** (2026-01-17) |
+| Enhance config validation | `core/config.py` | Low | ✅ **COMPLETED** (2026-01-17) |
 
 ### Phase 3: Optimization (Performance & Maintainability)
 

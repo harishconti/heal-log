@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider, useInitializeTheme, useTheme } from '@/contexts/ThemeContext';
@@ -83,7 +84,7 @@ const AppLayout = () => {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <DynamicStatusBar />
       <Stack
         screenOptions={{
@@ -106,7 +107,7 @@ const AppLayout = () => {
         <Stack.Screen name="patient/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="edit-patient/[id]" options={{ headerShown: false }} />
       </Stack>
-    </View>
+    </GestureHandlerRootView>
   );
 };
 

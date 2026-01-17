@@ -136,7 +136,6 @@ export default function AnalyticsScreen() {
                     {/* Patient Growth Section */}
                     <View
                         style={styles.section}
-                        accessibilityRole="region"
                         accessibilityLabel="Patient Growth Chart"
                     >
                         <View style={styles.sectionHeader}>
@@ -168,7 +167,6 @@ export default function AnalyticsScreen() {
                     {/* Weekly Activity Section */}
                     <View
                         style={styles.section}
-                        accessibilityRole="region"
                         accessibilityLabel="Weekly Activity Chart"
                     >
                         <View style={styles.sectionHeader}>
@@ -198,7 +196,6 @@ export default function AnalyticsScreen() {
                     {/* Patient Demographics Section */}
                     <View
                         style={styles.section}
-                        accessibilityRole="region"
                         accessibilityLabel="Patient Demographics"
                     >
                         <View style={styles.sectionHeader}>
@@ -232,7 +229,6 @@ export default function AnalyticsScreen() {
                     {/* Notes Activity Section */}
                     <View
                         style={styles.section}
-                        accessibilityRole="region"
                         accessibilityLabel="Notes Activity"
                     >
                         <View style={styles.sectionHeader}>

@@ -112,7 +112,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
         # Step 2: Check if token is blacklisted (revoked)
         if jti:
             iat = datetime.fromtimestamp(iat_timestamp, tz=timezone.utc) if iat_timestamp else None
-            if token_blacklist.is_token_blacklisted(jti, user_id, iat):
+            if await token_blacklist.is_token_blacklisted(jti, user_id, iat):
                 logger.warning(f"[AUTH] Token has been revoked. User ID: {user_id}")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -161,7 +161,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(r
         )
 
 
-def revoke_token(token: str) -> bool:
+async def revoke_token(token: str) -> bool:
     """
     Revoke a specific token by adding it to the blacklist.
     Call this on logout or when a token should be invalidated.
@@ -178,18 +178,18 @@ def revoke_token(token: str) -> bool:
             return False
 
         exp = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc) if exp_timestamp else None
-        token_blacklist.blacklist_token(jti, exp)
+        await token_blacklist.blacklist_token(jti, exp)
         return True
     except jwt.PyJWTError as e:
         logger.error(f"[AUTH] Failed to revoke token: {e}")
         return False
 
 
-def revoke_all_user_tokens(user_id: str) -> None:
+async def revoke_all_user_tokens(user_id: str) -> None:
     """
     Revoke all tokens for a user. Call this on password change.
     """
-    token_blacklist.blacklist_user_tokens(user_id, datetime.now(timezone.utc))
+    await token_blacklist.blacklist_user_tokens(user_id, datetime.now(timezone.utc))
 
 # --- Dependency to Require "Pro" User ---
 async def require_pro_user(credentials: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:

@@ -2,6 +2,24 @@
 
 This document outlines identified irregularities in the backend codebase and provides recommendations for standardized patterns to improve maintainability, consistency, and reliability.
 
+## 🎉 Recent Updates (2026-01-17)
+
+**Phase 1 Critical Fixes - Partially Completed:**
+- ✅ **Token blacklist moved to Redis** - Persistent, distributed-ready storage with async support
+- ✅ **Async-unsafe threading locks fixed** - Replaced `threading.Lock` with `asyncio.Lock` in account lockout service
+- ✅ **Rate limits centralized** - All rate limit constants now in `app/core/constants.py`
+- ✅ **Structured logging implemented** - Comprehensive sensitive data masking and structured logging utilities
+
+**Files Modified:**
+- `backend/app/services/token_blacklist_service.py` - Redis backend with fallback
+- `backend/app/services/account_lockout_service.py` - Async-safe locks
+- `backend/app/core/constants.py` - Centralized rate limits
+- `backend/app/core/logger.py` - Structured logging with masking
+- `backend/app/api/auth.py` - Using centralized rate limit constants
+- `backend/app/api/users.py` - Using centralized rate limit constants
+- `backend/app/core/security.py` - Updated for async token blacklist
+- `backend/main.py` - Token blacklist initialization
+
 ---
 
 ## Table of Contents
@@ -34,13 +52,13 @@ This document outlines identified irregularities in the backend codebase and pro
 
 ### Critical Issues Requiring Attention
 
-| Issue | Risk Level | Impact |
-|-------|------------|--------|
-| Mixed error response formats | High | Inconsistent client experience |
-| JWT decoded 3+ times per request | Medium | Performance degradation |
-| In-memory token blacklist | High | Token revocation lost on restart |
-| Threading locks (not async-safe) | High | Race conditions under load |
-| Dual model/schema definitions | Low | Developer confusion |
+| Issue | Risk Level | Impact | Status |
+|-------|------------|--------|--------|
+| Mixed error response formats | High | Inconsistent client experience | ⚠️ Not Started |
+| JWT decoded 3+ times per request | Medium | Performance degradation | ⚠️ Not Started |
+| In-memory token blacklist | High | Token revocation lost on restart | ✅ **FIXED** (2026-01-17) |
+| Threading locks (not async-safe) | High | Race conditions under load | ✅ **FIXED** (2026-01-17) |
+| Dual model/schema definitions | Low | Developer confusion | ⚠️ Not Started |
 
 ---
 
@@ -203,12 +221,16 @@ Request Flow:
 | `require_pro_user` | No | No | No |
 | `require_role` | Partial | No | No |
 
-**Issue 3: In-Memory Token Blacklist**
+**~~Issue 3: In-Memory Token Blacklist~~** ✅ **FIXED** (2026-01-17)
 
 ```python
-# token_blacklist_service.py:29
-# Dictionary storage - not persistent!
-_blacklisted_tokens: Dict[str, datetime] = {}
+# token_blacklist_service.py - UPDATED
+# Now uses Redis for persistence with in-memory fallback
+# - Async-safe with asyncio.Lock
+# - Redis backend for distributed deployments
+# - Automatic TTL handling
+# - Graceful fallback to in-memory if Redis unavailable
+# - Initialized in main.py lifespan
 ```
 
 ### Recommended Standard
@@ -358,12 +380,13 @@ patient = await Patient.find_one(...)
 collection = database.get_collection("feedbacks")
 ```
 
-**Issue 3: Account Lockout Uses Threading Locks**
+**~~Issue 3: Account Lockout Uses Threading Locks~~** ✅ **FIXED** (2026-01-17)
 
 ```python
 # account_lockout_service.py:32
-# threading.Lock() is not async-safe!
-self._lock = threading.Lock()
+# FIXED: Replaced threading.Lock() with asyncio.Lock()
+self._lock = asyncio.Lock()
+# All methods updated to async with proper async with self._lock usage
 ```
 
 ### Recommended Standard
@@ -496,9 +519,23 @@ class QueryBuilder:
 
 ## Logging Standards
 
-### Current Issues
+### ✅ **STATUS: IMPLEMENTED** (2026-01-17)
 
-**Inconsistent Prefixes:**
+**Implementation Details:**
+- Created `app/core/logger.py` with structured logging utilities
+- Implemented sensitive data masking for emails, phones, IPs, tokens, and IDs
+- Added `LoggerMixin` class for consistent logging across services
+- Created processors for automatic context propagation and data masking
+- All logging now uses structured format with automatic sensitive field detection
+
+**Files Modified:**
+- Created: `backend/app/core/logger.py` (331 lines)
+- Configured: Structlog with custom processors
+- Features: Email masking, phone masking, IP masking, token masking, context propagation
+
+### ~~Current Issues~~ (Resolved)
+
+~~**Inconsistent Prefixes:**~~
 ```python
 # Some services
 logger.info(f"[USER_SERVICE] Creating user...")    # With prefix
@@ -511,7 +548,7 @@ structlog.info("request_completed", status=200)    # Key-value
 logger.info(f"OTP created for user {user_id}")     # Interpolated
 ```
 
-**Sensitive Data Exposure:**
+~~**Sensitive Data Exposure:**~~
 ```python
 # Inconsistent masking
 logger.warning(f"...for {email[:3]}***")  # Masked
@@ -789,9 +826,9 @@ status: str = "active"
 ### Current Issues
 
 1. **Flat API structure**: 18 files in `/api/` without versioning
-2. **Rate limits scattered**: Defined in multiple files
+2. ~~**Rate limits scattered**: Defined in multiple files~~ ✅ **FIXED** (2026-01-17) - Centralized in `constants.py`
 3. **Service instantiation inconsistent**: Mix of singletons, instances, and async refs
-4. **No constants centralization**
+4. ~~**No constants centralization**~~ ✅ **FIXED** (2026-01-17) - Rate limits now in `app/core/constants.py`
 
 ### Recommended Structure
 
@@ -905,21 +942,21 @@ app.add_middleware(LoggingMiddleware)
 
 ### Phase 1: Critical (Security & Reliability)
 
-| Task | Files | Effort |
-|------|-------|--------|
-| Move token blacklist to Redis | `token_blacklist_service.py` | Low |
-| Fix async-unsafe threading locks | `account_lockout_service.py` | Low |
-| Unify JWT processing to single point | `middleware/auth.py`, `security.py` | Medium |
-| Standardize error responses | All API files | Medium |
+| Task | Files | Effort | Status |
+|------|-------|--------|--------|
+| Move token blacklist to Redis | `token_blacklist_service.py` | Low | ✅ **COMPLETED** (2026-01-17) |
+| Fix async-unsafe threading locks | `account_lockout_service.py` | Low | ✅ **COMPLETED** (2026-01-17) |
+| Unify JWT processing to single point | `middleware/auth.py`, `security.py` | Medium | ⚠️ Not Started |
+| Standardize error responses | All API files | Medium | ⚠️ Not Started |
 
 ### Phase 2: Consistency (Developer Experience)
 
-| Task | Files | Effort |
-|------|-------|--------|
-| Centralize constants/rate limits | `core/constants.py` | Low |
-| Implement structured logging | All services | Medium |
-| Consolidate models/schemas | `models/`, `schemas/` | Medium |
-| Add .env.template | Root | Low |
+| Task | Files | Effort | Status |
+|------|-------|--------|--------|
+| Centralize constants/rate limits | `core/constants.py` | Low | ✅ **COMPLETED** (2026-01-17) |
+| Implement structured logging | All services | Medium | ✅ **COMPLETED** (2026-01-17) |
+| Consolidate models/schemas | `models/`, `schemas/` | Medium | ⚠️ Not Started |
+| Add .env.template | Root | Low | ⚠️ Not Started |
 
 ### Phase 3: Optimization (Performance & Maintainability)
 

@@ -7,31 +7,35 @@ instances, replace with Redis.
 """
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
-import threading
+import asyncio
 
 from app.core.logger import get_logger
+from app.core.constants import (
+    MAX_FAILED_LOGIN_ATTEMPTS,
+    LOCKOUT_DURATION_MINUTES,
+    LOCKOUT_ATTEMPT_WINDOW_MINUTES
+)
 
 logger = get_logger(__name__)
 
-# Configuration
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_DURATION_MINUTES = 15
-ATTEMPT_WINDOW_MINUTES = 15  # Track attempts within this window
+# Use centralized constants from app.core.constants
+MAX_FAILED_ATTEMPTS = MAX_FAILED_LOGIN_ATTEMPTS
+ATTEMPT_WINDOW_MINUTES = LOCKOUT_ATTEMPT_WINDOW_MINUTES
 
 
 class AccountLockoutService:
     """
     Tracks failed login attempts and enforces account lockout.
 
-    Thread-safe implementation using a lock for concurrent access.
+    Async-safe implementation using asyncio.Lock for concurrent access.
     """
 
     def __init__(self):
         # Structure: {email: {'attempts': int, 'first_attempt': datetime, 'locked_until': datetime | None}}
         self._attempts: dict = {}
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
 
-    def record_failed_attempt(self, email: str) -> Tuple[bool, Optional[int]]:
+    async def record_failed_attempt(self, email: str) -> Tuple[bool, Optional[int]]:
         """
         Record a failed login attempt.
 
@@ -43,7 +47,7 @@ class AccountLockoutService:
         email_lower = email.lower().strip()
         now = datetime.now(timezone.utc)
 
-        with self._lock:
+        async with self._lock:
             self._cleanup_expired()
 
             if email_lower not in self._attempts:
@@ -98,7 +102,7 @@ class AccountLockoutService:
             )
             return False, remaining
 
-    def is_locked(self, email: str) -> Tuple[bool, Optional[int]]:
+    async def is_locked(self, email: str) -> Tuple[bool, Optional[int]]:
         """
         Check if an account is locked.
 
@@ -108,7 +112,7 @@ class AccountLockoutService:
         email_lower = email.lower().strip()
         now = datetime.now(timezone.utc)
 
-        with self._lock:
+        async with self._lock:
             if email_lower not in self._attempts:
                 return False, None
 
@@ -119,13 +123,13 @@ class AccountLockoutService:
 
             return False, None
 
-    def clear_attempts(self, email: str) -> None:
+    async def clear_attempts(self, email: str) -> None:
         """
         Clear failed attempts after successful login.
         """
         email_lower = email.lower().strip()
 
-        with self._lock:
+        async with self._lock:
             if email_lower in self._attempts:
                 del self._attempts[email_lower]
                 logger.info("lockout_cleared", email=email_lower)

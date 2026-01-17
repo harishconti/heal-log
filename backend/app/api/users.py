@@ -6,6 +6,7 @@ from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user, require_role
 from app.core.limiter import limiter
 from app.core.logger import get_logger
+from app.core.constants import RATE_LIMIT_PASSWORD_CHANGE
 from app.schemas.role import UserRole
 from app.schemas.user import User, UserResponse, UserUpdate, UserPasswordUpdate
 from app.services.user_service import user_service
@@ -13,9 +14,6 @@ from app.services.user_service import user_service
 logger = get_logger(__name__)
 
 router = APIRouter()
-
-# Rate limit for password changes: 3 per hour to prevent brute force
-PASSWORD_CHANGE_RATE_LIMIT = "3/hour"
 
 @router.get("/", response_model=List[UserResponse])
 async def read_users(
@@ -79,7 +77,7 @@ async def update_user_me(
         )
 
 @router.post("/me/password")
-@limiter.limit(PASSWORD_CHANGE_RATE_LIMIT)
+@limiter.limit(RATE_LIMIT_PASSWORD_CHANGE)
 async def change_password(
     request: Request,
     password_in: UserPasswordUpdate,

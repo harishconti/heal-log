@@ -64,6 +64,11 @@ async def lifespan(app: FastAPI):
         logging.warning("REDIS_URL not set. Using InMemoryBackend for cache.")
         FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
 
+    # Initialize token blacklist service (Redis-backed or in-memory fallback)
+    from app.services.token_blacklist_service import token_blacklist
+    await token_blacklist.initialize()
+    logging.info("Token blacklist service initialized.")
+
     await connect_to_mongo()
     db = await get_database()
     await init_beanie(

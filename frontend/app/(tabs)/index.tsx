@@ -46,7 +46,6 @@ import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
 import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
-import SyncProgressIndicator from '@/components/core/SyncProgressIndicator';
 
 // The raw UI component
 function Index({ patients, groups, totalPatientCount }) {
@@ -61,8 +60,6 @@ function Index({ patients, groups, totalPatientCount }) {
     searchQuery,
     selectedFilter,
     loading,
-    isOffline,
-    lastSyncTime,
     setSearchQuery,
     setSelectedFilter,
     setLoading,
@@ -163,29 +160,14 @@ function Index({ patients, groups, totalPatientCount }) {
       recordSyncAttempt(true);
       setLastSyncTime(new Date().toISOString());
 
-      // Show success feedback when manually triggered
       if (showRefresh) {
         triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-        Alert.alert(
-          'Sync Complete',
-          'Your data has been saved and synced successfully.',
-          [{ text: 'OK' }]
-        );
       }
 
     } catch (error) {
       console.log('Sync failed, using local DB:', error);
       setOffline(true);
       recordSyncAttempt(false);
-
-      // Show error feedback when manually triggered
-      if (showRefresh) {
-        Alert.alert(
-          'Sync Failed',
-          'Unable to sync with server. Your changes are saved locally and will sync when connection is restored.',
-          [{ text: 'OK' }]
-        );
-      }
     } finally {
       setLoading('sync', false);
       setRefreshing(false);
@@ -636,18 +618,6 @@ function Index({ patients, groups, totalPatientCount }) {
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => handleSync(true)}
-            disabled={refreshing || loading.sync}
-            accessibilityLabel={isOffline ? "Sync data, currently offline" : "Sync data"}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: refreshing || loading.sync }}
-            accessibilityHint="Syncs your data with the server"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name={refreshing || loading.sync ? "sync-circle" : isOffline ? "cloud-offline" : "cloud-done"} size={24} color={isOffline ? theme.colors.warning : theme.colors.surface} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
             onPress={navigateToProfile}
             accessibilityLabel="View profile"
             accessibilityRole="button"
@@ -668,13 +638,6 @@ function Index({ patients, groups, totalPatientCount }) {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Sync Progress Indicator with retry functionality */}
-      <SyncProgressIndicator
-        onRetry={() => handleSync(true)}
-        onDismiss={() => {}}
-        compact={false}
-      />
 
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
@@ -854,22 +817,6 @@ function Index({ patients, groups, totalPatientCount }) {
           {filteredPatients.length} of {totalPatientCount} patients
           {activeAdvancedFilterCount > 0 && ` (${activeAdvancedFilterCount} filter${activeAdvancedFilterCount > 1 ? 's' : ''})`}
         </Text>
-        <View style={styles.syncStatusContainer}>
-          <Ionicons
-            name={isOffline ? 'cloud-offline' : 'cloud-done'}
-            size={14}
-            color={isOffline ? theme.colors.warning : theme.colors.success}
-            style={styles.syncIcon}
-          />
-          <Text style={[styles.syncTimeText, { color: isOffline ? theme.colors.warning : theme.colors.textSecondary }]}>
-            {isOffline
-              ? 'Offline - Changes saved locally'
-              : lastSyncTime
-                ? `Synced ${new Date(lastSyncTime).toLocaleTimeString()}`
-                : 'Not synced yet'
-            }
-          </Text>
-        </View>
         {user?.plan && (
           <Text style={[styles.planText, { color: theme.colors.primary }]}>
             {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
@@ -1072,16 +1019,6 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
     fontSize: 13 * fontScale,
     fontWeight: '600',
     letterSpacing: -0.1,
-  },
-  syncStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  syncIcon: {
-    marginRight: 4,
-  },
-  syncTimeText: {
-    fontSize: 12 * fontScale,
   },
   patientsList: {
     paddingHorizontal: 16,

@@ -1,3 +1,12 @@
+"""
+Logging configuration for the application.
+
+This module provides:
+- Context variables for request/user tracking across async call stack
+- JSON formatter for production logs
+- Standard logging setup with file rotation
+- Integration with structlog for structured logging
+"""
 import logging
 import sys
 import json
@@ -57,7 +66,13 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 def setup_logging():
+    """
+    Configure application logging with file rotation and optional Sentry integration.
+
+    Also configures structlog for structured logging with sensitive data masking.
+    """
     log_level = logging.DEBUG if settings.ENV == "development" else logging.INFO
+    is_production = settings.ENV == "production"
 
     root_logger = logging.getLogger()
     if root_logger.hasHandlers():
@@ -72,7 +87,7 @@ def setup_logging():
     file_handler.setLevel(log_level)
 
     # Formatter
-    if settings.ENV == "production":
+    if is_production:
         formatter = JsonFormatter()
     else:
         formatter = logging.Formatter(
@@ -94,4 +109,8 @@ def setup_logging():
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
-    logging.info("Logging configured successfully.")
+    # Configure structlog for structured logging with sensitive data masking
+    from app.core.logger import configure_structlog
+    configure_structlog(json_format=is_production)
+
+    logging.info("Logging configured successfully with structured logging support.")

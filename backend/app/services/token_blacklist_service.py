@@ -9,13 +9,13 @@ Usage:
     - Call `blacklist_token(jti, exp)` on logout or password change
     - Call `is_token_blacklisted(jti)` in authentication middleware
 """
-
-import logging
 from datetime import datetime, timezone
 from typing import Dict, Optional
 import threading
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class TokenBlacklistService:
@@ -44,7 +44,7 @@ class TokenBlacklistService:
 
             # Add to blacklist with expiration
             self._blacklist[jti] = exp or datetime.max.replace(tzinfo=timezone.utc)
-            logger.info(f"Token blacklisted: {jti[:8]}...")
+            logger.info("token_blacklisted", token_jti=jti)
 
     def blacklist_user_tokens(self, user_id: str, issued_before: datetime) -> None:
         """
@@ -61,7 +61,7 @@ class TokenBlacklistService:
             # this timestamp should be considered invalid
             marker_key = f"user_invalidated:{user_id}"
             self._blacklist[marker_key] = issued_before
-            logger.info(f"All tokens for user {user_id} issued before {issued_before} invalidated")
+            logger.info("user_tokens_invalidated", user_id=user_id, issued_before=issued_before.isoformat())
 
     def is_token_blacklisted(self, jti: str, user_id: Optional[str] = None,
                               issued_at: Optional[datetime] = None) -> bool:
@@ -107,13 +107,13 @@ class TokenBlacklistService:
             del self._blacklist[key]
 
         if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired blacklist entries")
+            logger.debug("blacklist_cleanup", expired_count=len(expired_keys))
 
     def clear(self) -> None:
         """Clear all blacklisted tokens. Use with caution."""
         with self._lock:
             self._blacklist.clear()
-            logger.warning("Token blacklist cleared")
+            logger.warning("blacklist_cleared")
 
 
 # Singleton instance

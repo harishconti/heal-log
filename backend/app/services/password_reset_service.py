@@ -6,15 +6,15 @@ token theft from database compromise.
 """
 import secrets
 import hashlib
-import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
 from app.schemas.user import User
 from app.core.config import settings
 from app.core.hashing import get_password_hash
+from app.core.logger import get_logger
 from app.services.email_service import email_service
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _hash_token(token: str) -> str:
@@ -60,7 +60,7 @@ class PasswordResetService:
         user.password_reset_expires_at = expires_at
         await user.save()
 
-        logger.info(f"[PASSWORD_RESET] Reset token created for user {user.email}, expires at {expires_at}")
+        logger.info("password_reset_token_created", email=user.email, expires_at=expires_at.isoformat())
 
         # Send email with plain token (user needs this to reset)
         email_sent = await email_service.send_password_reset_email(
@@ -120,11 +120,11 @@ class PasswordResetService:
             user.updated_at = datetime.now(timezone.utc)
             
             await user.save()
-            
-            logger.info(f"[PASSWORD_RESET] Password reset successfully for user {user.email}")
+
+            logger.info("password_reset_success", email=user.email)
             return True, "Password reset successfully"
         except Exception as e:
-            logger.error(f"[PASSWORD_RESET] Failed to reset password for {user.email}: {str(e)}")
+            logger.error("password_reset_failed", email=user.email, error=str(e))
             return False, "Failed to reset password"
 
 

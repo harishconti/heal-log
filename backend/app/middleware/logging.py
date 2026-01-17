@@ -1,12 +1,12 @@
 import time
 import uuid
-import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 import jwt
 from app.core.config import settings
 from app.core.logging_config import set_request_id, set_context_user_id
+from app.core.logger import get_logger
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -19,7 +19,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     """
     def __init__(self, app: ASGIApp):
         super().__init__(app)
-        self.logger = structlog.get_logger(__name__)
+        self.logger = get_logger(__name__)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         request_id = str(uuid.uuid4())

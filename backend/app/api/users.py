@@ -1,15 +1,16 @@
 from typing import List
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user, require_role
 from app.core.limiter import limiter
+from app.core.logger import get_logger
 from app.schemas.role import UserRole
 from app.schemas.user import User, UserResponse, UserUpdate, UserPasswordUpdate
 from app.services.user_service import user_service
 
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -48,30 +49,30 @@ async def update_user_me(
     """
     try:
         # Log the update attempt
-        logging.info(f"[UPDATE_USER] User {current_user.id} attempting profile update")
-        logging.debug(f"[UPDATE_USER] Update data: {user_in.dict(exclude_none=True)}")
-        
+        logger.info("user_profile_update_attempt", user_id=str(current_user.id))
+        logger.debug("user_profile_update_data", fields=list(user_in.dict(exclude_none=True).keys()))
+
         # Convert UserUpdate to dict, excluding None values
         update_data = user_in.dict(exclude_none=True)
-        
+
         if not update_data:
-            logging.warning(f"[UPDATE_USER] No fields to update for user {current_user.id}")
+            logger.warning("user_profile_no_fields", user_id=str(current_user.id))
             return current_user
-        
+
         # Update user
         user = await user_service.update(current_user.id, update_data)
-        
+
         if not user:
-            logging.error(f"[UPDATE_USER] User {current_user.id} not found during update")
+            logger.error("user_profile_not_found", user_id=str(current_user.id))
             raise NotFoundException(detail="User not found")
-        
-        logging.info(f"[UPDATE_USER] User {current_user.id} profile updated successfully")
+
+        logger.info("user_profile_updated", user_id=str(current_user.id))
         return user
-        
+
     except NotFoundException:
         raise
     except Exception as e:
-        logging.error(f"[UPDATE_USER] Error updating user {current_user.id}: {str(e)}", exc_info=True)
+        logger.error("user_profile_update_error", user_id=str(current_user.id), error=str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update user profile. Please try again later."

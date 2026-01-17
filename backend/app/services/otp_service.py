@@ -7,14 +7,14 @@ SECURITY:
 """
 import secrets
 import hashlib
-import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
 from app.schemas.user import User
 from app.core.config import settings
+from app.core.logger import get_logger
 from app.services.email_service import email_service
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _hash_otp(otp_code: str) -> str:
@@ -56,7 +56,7 @@ class OTPService:
         user.otp_attempts = 0
         await user.save()
 
-        logger.info(f"[OTP_SERVICE] OTP created for user {user.email}, expires at {expires_at}")
+        logger.info("otp_created", email=user.email, expires_at=expires_at.isoformat())
 
         # Send email with plain OTP (user needs this to verify)
         email_sent = await email_service.send_otp_email(
@@ -123,7 +123,7 @@ class OTPService:
         user.otp_attempts = 0
         await user.save()
 
-        logger.info(f"[OTP_SERVICE] User {user.email} verified successfully")
+        logger.info("otp_verified", email=user.email)
         return True, "Email verified successfully"
     
     def can_resend_otp(self, user: User) -> Tuple[bool, int]:

@@ -39,7 +39,7 @@ interface Stats {
 
 export default function ProfileScreen() {
   const { theme, fontScale } = useTheme();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const router = useRouter();
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -245,6 +245,28 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to log out. Please try again.');
+            }
+          }
+        },
+      ]
+    );
+  };
+
   const formatPatientCount = (count: number): string => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(0)}k+`;
@@ -418,6 +440,35 @@ export default function ProfileScreen() {
                 thumbColor="#fff"
               />
             </View>
+          </Card>
+        </View>
+
+        {/* Account & Settings Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account & Settings</Text>
+          <Card style={styles.settingsCard}>
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push('/notifications')}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="notifications" size={22} color={theme.colors.textSecondary} />
+                <Text style={styles.settingsItemText}>Notifications</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+            <View style={styles.settingsItemDivider} />
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push('/privacy')}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="lock-closed" size={22} color={theme.colors.textSecondary} />
+                <Text style={styles.settingsItemText}>Privacy & Security</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+            <View style={styles.settingsItemDivider} />
+            <TouchableOpacity style={styles.settingsItem} onPress={handleLogout}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="log-out-outline" size={22} color={theme.colors.error} />
+                <Text style={[styles.settingsItemText, { color: theme.colors.error }]}>Log Out</Text>
+              </View>
+            </TouchableOpacity>
           </Card>
         </View>
 
@@ -710,5 +761,31 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   walkInsLabel: {
     fontSize: 15 * fontScale,
     color: theme.colors.text,
+  },
+  settingsCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  settingsItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  settingsItemText: {
+    fontSize: 16 * fontScale,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  settingsItemDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginLeft: 52,
   },
 });

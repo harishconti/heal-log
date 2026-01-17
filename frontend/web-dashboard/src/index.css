@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  /* Healthcare Blue palette - Aligned with mobile app (#1A8CFF) */
+  /* =============================================
+     HealLog Design System Tokens v1.0
+     Based on Design Report - January 2026
+     ============================================= */
+
+  /* Healthcare Blue palette - Primary Brand Color (#1A8CFF) */
   --color-primary-50: #e8f4ff;
   --color-primary-100: #d1e9ff;
   --color-primary-200: #a3d3ff;
@@ -13,23 +18,25 @@
   --color-primary-800: #003880;
   --color-primary-900: #001c4d;
 
-  /* Refined semantic colors - Aligned with mobile */
+  /* Semantic Colors - Success (Confirmations, validated fields) */
   --color-success-50: #f0fdf4;
   --color-success-100: #dcfce7;
   --color-success-500: #10b981;
   --color-success-600: #059669;
 
+  /* Semantic Colors - Warning (Alerts, cautions) */
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;
   --color-warning-500: #f59e0b;
   --color-warning-600: #d97706;
 
+  /* Semantic Colors - Danger (Errors, destructive actions) */
   --color-danger-50: #fef2f2;
   --color-danger-100: #fee2e2;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
 
-  /* Neutral grays - Slightly cooler for modern feel */
+  /* Neutral Grays - Cool tone for modern feel */
   --color-gray-25: #fcfcfd;
   --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
@@ -42,28 +49,57 @@
   --color-gray-800: #1e293b;
   --color-gray-900: #0f172a;
 
-  /* Spacing System */
-  --spacing-1: 0.25rem;
-  --spacing-2: 0.5rem;
-  --spacing-3: 0.75rem;
-  --spacing-4: 1rem;
-  --spacing-5: 1.25rem;
-  --spacing-6: 1.5rem;
-  --spacing-8: 2rem;
-  --spacing-10: 2.5rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
+  /* 8px Base Grid Spacing System */
+  --spacing-1: 0.25rem;   /* 4px - Micro spacing */
+  --spacing-2: 0.5rem;    /* 8px - Tight spacing */
+  --spacing-3: 0.75rem;   /* 12px - Small spacing */
+  --spacing-4: 1rem;      /* 16px - Standard unit */
+  --spacing-5: 1.25rem;   /* 20px */
+  --spacing-6: 1.5rem;    /* 24px - Card padding */
+  --spacing-8: 2rem;      /* 32px - Major sections */
+  --spacing-10: 2.5rem;   /* 40px - Large sections */
+  --spacing-12: 3rem;     /* 48px - Containers */
+  --spacing-16: 4rem;     /* 64px - Page margins */
 
-  /* Font Sizes */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  --font-size-5xl: 3rem;
+  /* Typography - Font Sizes */
+  --font-size-xs: 0.75rem;      /* 12px - Caption, small labels */
+  --font-size-sm: 0.875rem;     /* 14px - Body regular, buttons */
+  --font-size-base: 1rem;       /* 16px - Body large */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.25rem;      /* 20px - Section title H4 */
+  --font-size-2xl: 1.5rem;      /* 24px */
+  --font-size-3xl: 1.875rem;    /* 30px - Subheading H3 */
+  --font-size-4xl: 2.25rem;     /* 36px - Headline H2 */
+  --font-size-5xl: 3rem;        /* 48px - Display H1 */
+
+  /* Shadow & Depth System (6-level elevation) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.10);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.14);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.30);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* Border Radius Scale */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* Z-Index Scale */
+  --z-0: 0;
+  --z-10: 10;     /* Elevated cards */
+  --z-20: 20;     /* Dropdown menus */
+  --z-30: 30;     /* Fixed navigation */
+  --z-40: 40;     /* Modal backdrop */
+  --z-50: 50;     /* Modal dialogs */
+  --z-60: 60;     /* Tooltips */
+  --z-70: 70;     /* Notifications/Toasts */
+  --z-80: 80;     /* Skip links */
 }
 
 /* Base Styles */
@@ -91,12 +127,22 @@ body {
     text-wrap: balance;
   }
 
+  /* Glass morphism effect - for cards and overlays */
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
 
+  /* Enhanced glass morphism for login card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Scrollbar utilities */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -104,6 +150,28 @@ body {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Focus ring utilities */
+  .focus-ring {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
+
+  /* Elevation shadow utilities */
+  .elevation-1 { box-shadow: var(--shadow-xs); }
+  .elevation-2 { box-shadow: var(--shadow-sm); }
+  .elevation-3 { box-shadow: var(--shadow-md); }
+  .elevation-4 { box-shadow: var(--shadow-lg); }
+  .elevation-5 { box-shadow: var(--shadow-xl); }
+
+  /* Button gradient utilities */
+  .btn-gradient-primary {
+    background: linear-gradient(to bottom, var(--color-primary-600), var(--color-primary-700));
+  }
+
+  .btn-gradient-primary:hover {
+    background: linear-gradient(to bottom, var(--color-primary-700), var(--color-primary-800));
   }
 }
 
@@ -118,6 +186,31 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -126,7 +219,48 @@ body {
   animation: slideUp 0.4s ease-out forwards;
 }
 
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Transitions */
 .transition-all-200 {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-all-300 {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-transform-200 {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Interactive state utilities */
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.active-press:active {
+  transform: translateY(0) scale(0.98);
 }

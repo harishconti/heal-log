@@ -1,9 +1,10 @@
 import os
 import logging
-from pydantic import validator, Field
+from pydantic import validator, Field, root_validator
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from typing import Optional
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,12 @@ if ENV == "development":
     else:
         logger.warning("Running in development, but .env file not found.")
 
+class Environment(str, Enum):
+    """Valid environment values"""
+    DEVELOPMENT = "development"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
 class Settings(BaseSettings):
     # --- Core Settings ---
     SECRET_KEY: str
@@ -35,12 +42,37 @@ class Settings(BaseSettings):
     DB_NAME: str
 
     # --- Cache Settings ---
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: Optional[str] = "redis://localhost:6379"
 
-    @validator("MONGO_URL", "DB_NAME", "SECRET_KEY", "REDIS_URL")
+    @validator("MONGO_URL", "DB_NAME", "SECRET_KEY")
     def not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError("Environment variable cannot be empty")
+        return v
+
+    @validator("SECRET_KEY")
+    def validate_secret_key_strength(cls, v, values):
+        """Validate SECRET_KEY meets security requirements in production"""
+        env = values.get('ENV', 'development')
+        if env == "production":
+            if len(v) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be at least 32 characters in production. "
+                    "Generate one using: openssl rand -hex 32"
+                )
+            # Check for common insecure defaults
+            insecure_defaults = [
+                "your-secret-key",
+                "secret",
+                "changeme",
+                "your_production_secret_key_here",
+                "your-secret-key-here"
+            ]
+            if any(default in v.lower() for default in insecure_defaults):
+                raise ValueError(
+                    "SECRET_KEY appears to be a default/placeholder value. "
+                    "Generate a secure key using: openssl rand -hex 32"
+                )
         return v
 
     # --- CORS Settings ---
@@ -65,7 +97,30 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: Optional[str] = None
     EMAIL_TO: Optional[str] = None
     EMAIL_FROM: Optional[str] = "HealLog <support@heallog.com>"
-    
+
+    @root_validator
+    def validate_email_configuration(cls, values):
+        """Ensure email settings are complete if any are provided"""
+        email_fields = {
+            'EMAIL_HOST': values.get('EMAIL_HOST'),
+            'EMAIL_PORT': values.get('EMAIL_PORT'),
+            'EMAIL_USER': values.get('EMAIL_USER'),
+            'EMAIL_PASSWORD': values.get('EMAIL_PASSWORD'),
+        }
+
+        # Check if any email field is configured
+        configured_fields = {k: v for k, v in email_fields.items() if v is not None}
+
+        # If some but not all email fields are set, that's a configuration error
+        if configured_fields and len(configured_fields) != len(email_fields):
+            missing = [k for k, v in email_fields.items() if v is None]
+            logger.warning(
+                f"Incomplete email configuration. Missing: {', '.join(missing)}. "
+                f"Email functionality may not work properly."
+            )
+
+        return values
+
     # OTP Settings
     OTP_EXPIRE_MINUTES: int = 5
     OTP_MAX_ATTEMPTS: int = 3

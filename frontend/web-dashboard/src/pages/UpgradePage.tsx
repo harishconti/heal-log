@@ -127,7 +127,7 @@ export function UpgradePage() {
             {error && (
               <p className="text-sm text-red-600 mb-3">{error}</p>
             )}
-            <Button size="lg" onClick={handleUpgrade} isLoading={isLoading}>
+            <Button size="lg" onClick={handleUpgrade} loading={isLoading}>
               <Sparkles className="h-4 w-4" />
               Upgrade Now
             </Button>

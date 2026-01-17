@@ -123,6 +123,7 @@ export default SkeletonLoader;
  */
 export const PatientCardSkeleton: React.FC = () => {
   const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <View style={[styles.patientCard, { backgroundColor: theme.colors.surface }]}>
@@ -155,6 +156,7 @@ export const PatientCardSkeleton: React.FC = () => {
  */
 export const ProfileSkeleton: React.FC = () => {
   const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <View>
@@ -192,6 +194,9 @@ export const ProfileSkeleton: React.FC = () => {
  * Multiple patient card skeletons for list loading state
  */
 export const PatientListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <View style={styles.listContainer}>
       {Array.from({ length: count }).map((_, index) => (
@@ -206,6 +211,7 @@ export const PatientListSkeleton: React.FC<{ count?: number }> = ({ count = 5 })
  */
 export const SearchBarSkeleton: React.FC = () => {
   const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
@@ -220,6 +226,9 @@ export const SearchBarSkeleton: React.FC = () => {
  * Filter chips skeleton
  */
 export const FilterChipsSkeleton: React.FC = () => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <View style={styles.filterContainer}>
       {[60, 80, 70, 90].map((width, i) => (
@@ -239,6 +248,9 @@ export const FilterChipsSkeleton: React.FC = () => {
  * Full page skeleton for initial patient list loading
  */
 export const FullPageSkeleton: React.FC = () => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <View style={styles.fullPage}>
       <SearchBarSkeleton />
@@ -248,7 +260,7 @@ export const FullPageSkeleton: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: Theme) => StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -260,12 +272,18 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 14,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderRadius: theme.borderRadius.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   filterContainer: {
     flexDirection: 'row',
@@ -277,16 +295,22 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   patientCard: {
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.lg,
     marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   cardContent: {
-    padding: 16,
+    padding: theme.spacing.md,
   },
   patientInfo: {
     flexDirection: 'row',
@@ -333,7 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   statsSection: {
-    padding: 16,
+    padding: theme.spacing.md,
     marginBottom: 16,
   },
   sectionTitle: {
@@ -346,8 +370,8 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
   },
 });

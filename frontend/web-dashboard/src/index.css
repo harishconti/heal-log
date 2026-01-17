@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  /* Modern Indigo/Blue color palette - Softer and more refined */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  /* Healthcare Blue palette - Aligned with mobile app (#1A8CFF) */
+  --color-primary-50: #e8f4ff;
+  --color-primary-100: #d1e9ff;
+  --color-primary-200: #a3d3ff;
+  --color-primary-300: #75bdff;
+  --color-primary-400: #47a7ff;
+  --color-primary-500: #1a8cff;
+  --color-primary-600: #0070e6;
+  --color-primary-700: #0054b3;
+  --color-primary-800: #003880;
+  --color-primary-900: #001c4d;
 
-  /* Refined semantic colors */
+  /* Refined semantic colors - Aligned with mobile */
   --color-success-50: #f0fdf4;
   --color-success-100: #dcfce7;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
 
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;

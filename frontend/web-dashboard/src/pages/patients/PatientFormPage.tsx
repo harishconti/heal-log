@@ -328,7 +328,7 @@ export function PatientFormPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" size="lg" isLoading={isSubmitting} className="min-w-[160px] shadow-lg shadow-primary-500/20">
+          <Button type="submit" size="lg" loading={isSubmitting} className="min-w-[160px] shadow-lg shadow-primary-500/20">
             {isEditing ? 'Save Changes' : 'Create Patient'}
           </Button>
         </div>

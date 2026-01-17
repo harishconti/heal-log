@@ -18,6 +18,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
 }) => {
   const { isConnected, isInternetReachable } = useNetwork();
   const { theme, isDark } = useTheme();
+  const styles = getStyles(theme);
   const { loading, lastSyncTime, errors } = useAppStore();
 
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -205,7 +206,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginVertical: 8,

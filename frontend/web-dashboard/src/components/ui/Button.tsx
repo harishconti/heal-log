@@ -3,12 +3,12 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
   size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
+  loading?: boolean;
   rounded?: 'default' | 'full';
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', isLoading, disabled, rounded = 'default', children, ...props }, ref) => {
+  ({ className = '', variant = 'primary', size = 'md', loading, disabled, rounded = 'default', children, ...props }, ref) => {
     const baseStyles = `
       inline-flex items-center justify-center font-semibold
       transition-all duration-200 ease-out
@@ -62,10 +62,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={`${baseStyles} ${radiusStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-        disabled={disabled || isLoading}
+        disabled={disabled || loading}
         {...props}
       >
-        {isLoading && (
+        {loading && (
           <svg
             className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"

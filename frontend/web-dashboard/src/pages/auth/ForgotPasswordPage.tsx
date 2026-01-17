@@ -91,7 +91,7 @@ export function ForgotPasswordPage() {
         <Button
           type="submit"
           className="w-full h-12 text-base font-semibold shadow-lg shadow-primary-500/25"
-          isLoading={isSubmitting}
+          loading={isSubmitting}
         >
           <Send className="h-4 w-4" />
           Send reset link

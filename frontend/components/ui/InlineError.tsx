@@ -30,6 +30,7 @@ export const InlineError: React.FC<InlineErrorProps> = ({
   style,
 }) => {
   const { theme, fontScale } = useTheme();
+  const styles = getStyles(theme);
 
   const getColors = () => {
     switch (type) {
@@ -117,18 +118,21 @@ export const InlineError: React.FC<InlineErrorProps> = ({
 /**
  * ErrorBanner - Full-width error banner for screen-level errors
  */
-export const ErrorBanner: React.FC<InlineErrorProps> = (props) => (
-  <InlineError {...props} style={[styles.banner, props.style]} />
-);
+export const ErrorBanner: React.FC<InlineErrorProps> = (props) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
 
-const styles = StyleSheet.create({
+  return <InlineError {...props} style={[styles.banner, props.style]} />;
+};
+
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    marginVertical: 8,
+    marginVertical: theme.spacing.xs,
   },
   banner: {
     borderRadius: 0,
@@ -143,7 +147,7 @@ const styles = StyleSheet.create({
   },
   message: {
     flex: 1,
-    fontWeight: '500',
+    fontWeight: theme.typography.weights.medium,
   },
   actions: {
     flexDirection: 'row',

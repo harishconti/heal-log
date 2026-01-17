@@ -3,25 +3,27 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle2, User, Mail, Phone, Lock, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, User, Mail, Phone, Lock, ShieldCheck } from 'lucide-react';
 import { authApi } from '../../api';
 import { SPECIALTY_OPTIONS } from '../../constants';
 import { getErrorMessage } from '../../utils/errorUtils';
 
-const registerSchema = z
-  .object({
-    full_name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Please enter a valid email'),
-    phone: z.string().optional(),
-    medical_specialty: z.string().optional(),
-    password: z
-      .string()
-      .min(12, 'Password must be at least 12 characters')
-      .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-      .regex(/[a-z]/, 'Password must contain a lowercase letter')
-      .regex(/[0-9]/, 'Password must contain a number')
-      .regex(/[^A-Za-z0-9]/, 'Password must contain a special character'),
-  });
+const registerSchema = z.object({
+  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email'),
+  phone: z.string().optional(),
+  medical_specialty: z.string().optional(),
+  password: z
+    .string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[0-9]/, 'Password must contain a number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain a special character'),
+  terms: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to the Terms and Privacy Policy' }),
+  }),
+});
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -46,6 +48,9 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      terms: false as unknown as true,
+    },
   });
 
   const password = watch('password', '');
@@ -68,18 +73,11 @@ export function RegisterPage() {
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 p-8 sm:p-10 border border-gray-100">
-      {/* Header with Pro Badge */}
+      {/* Header */}
       <div className="mb-8">
-        <div className="flex items-start justify-between mb-2">
-          <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
-          {/* Pro Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-full text-xs font-semibold text-amber-700 border border-amber-200/60 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" />
-            PRO
-          </div>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h2>
         <p className="text-gray-500 text-sm">
-          Already have an account? <Link to="/login" className="text-primary-600 font-medium hover:underline">Sign in</Link>
+          Already have an account? <Link to="/login" className="text-primary-600 font-medium hover:underline">Log in</Link>
         </p>
       </div>
 
@@ -211,6 +209,22 @@ export function RegisterPage() {
           </div>
         )}
 
+        {/* Terms Checkbox */}
+        <div className="flex items-start">
+          <div className="flex items-center h-5">
+            <input
+              id="terms"
+              type="checkbox"
+              className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              {...register('terms')}
+            />
+          </div>
+          <label htmlFor="terms" className="ml-2 text-sm text-gray-500">
+            I agree to the <a href="#" className="text-primary-600 hover:underline">Terms of Service</a> and <a href="#" className="text-primary-600 hover:underline">Privacy Policy</a>
+          </label>
+        </div>
+        {errors.terms && <p className="text-xs text-red-500">{errors.terms.message}</p>}
+
         {/* Submit Button */}
         <button
           type="submit"
@@ -220,12 +234,15 @@ export function RegisterPage() {
           {isSubmitting ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
-            <>
-              <CheckCircle2 className="w-4 h-4" />
-              Create account
-            </>
+            'Create Account'
           )}
         </button>
+
+        {/* SSL Encryption Badge */}
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mt-4">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>256-bit SSL encrypted</span>
+        </div>
       </form>
 
       {/* Social Login Section */}

@@ -2,7 +2,7 @@
   "expo": {
     "name": "HealLog",
     "slug": "heallog",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "frontend",
@@ -24,7 +24,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.heallog.app",
-      "versionCode": 58,
+      "versionCode": 59,
       "edgeToEdgeEnabled": true
     },
     "androidStatusBar": {

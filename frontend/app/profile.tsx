@@ -40,6 +40,7 @@ interface Stats {
 export default function ProfileScreen() {
   const { theme, fontScale } = useTheme();
   const { user, refreshUser, logout } = useAuth();
+  const { lastSyncTime } = useAppStore();
   const router = useRouter();
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -279,6 +280,22 @@ export default function ProfileScreen() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const formatLastSyncTime = (dateString: string | null): string => {
+    if (!dateString) return 'Never synced';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -470,6 +487,16 @@ export default function ProfileScreen() {
               </View>
             </TouchableOpacity>
           </Card>
+        </View>
+
+        {/* Last Sync Section */}
+        <View style={styles.syncSection}>
+          <View style={styles.syncInfo}>
+            <Ionicons name="sync-outline" size={16} color={theme.colors.textSecondary} />
+            <Text style={[styles.syncText, { color: theme.colors.textSecondary }]}>
+              Last synced: {formatLastSyncTime(lastSyncTime)}
+            </Text>
+          </View>
         </View>
 
         <View style={{ height: 40 }} />
@@ -787,5 +814,19 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
     height: 1,
     backgroundColor: theme.colors.border,
     marginLeft: 52,
+  },
+  syncSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  syncInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  syncText: {
+    fontSize: 13 * fontScale,
   },
 });

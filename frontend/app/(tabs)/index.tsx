@@ -497,14 +497,6 @@ function Index({ patients, groups, totalPatientCount }) {
     if (selectedFilter && selectedFilter !== 'all') {
       if (selectedFilter === 'favorites') {
         result = result.filter(p => p.isFavorite);
-      } else if (selectedFilter === 'critical') {
-        result = result.filter(p =>
-          p.group?.toLowerCase() === 'cardiology' ||
-          p.group?.toLowerCase() === 'emergency'
-        );
-      } else if (selectedFilter === 'department') {
-        // Show all when department is selected - could be expanded with a modal picker
-        result = result;
       } else {
         result = result.filter(p => p.group === selectedFilter);
       }
@@ -612,38 +604,40 @@ function Index({ patients, groups, totalPatientCount }) {
 
       {/* Filter Tabs */}
       <View style={styles.filterTabsContainer}>
-        {[
-          { filter: 'all', label: 'All Patients' },
-          { filter: 'favorites', label: 'Favorites' },
-          { filter: 'critical', label: 'Critical' },
-          { filter: 'department', label: 'Department' },
-        ].map((item) => (
-          <TouchableOpacity
-            key={item.filter}
-            style={[
-              styles.filterTab,
-              selectedFilter === item.filter && styles.filterTabActive,
-            ]}
-            onPress={() => {
-              triggerHaptic();
-              setSelectedFilter(item.filter);
-            }}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: selectedFilter === item.filter }}
-          >
-            <Text
+        <FlashList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={filterButtons}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              key={item.filter}
               style={[
-                styles.filterTabText,
-                { color: selectedFilter === item.filter ? theme.colors.primary : theme.colors.textSecondary },
+                styles.filterTab,
+                selectedFilter === item.filter && styles.filterTabActive,
               ]}
+              onPress={() => {
+                triggerHaptic();
+                setSelectedFilter(item.filter);
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedFilter === item.filter }}
             >
-              {item.label}
-            </Text>
-            {selectedFilter === item.filter && (
-              <View style={[styles.filterTabIndicator, { backgroundColor: theme.colors.primary }]} />
-            )}
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.filterTabText,
+                  { color: selectedFilter === item.filter ? theme.colors.primary : theme.colors.textSecondary },
+                ]}
+              >
+                {item.label}
+              </Text>
+              {selectedFilter === item.filter && (
+                <View style={[styles.filterTabIndicator, { backgroundColor: theme.colors.primary }]} />
+              )}
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item.filter}
+          estimatedItemSize={100}
+        />
       </View>
 
       {/* Patient Count and New Patient Button */}
@@ -860,13 +854,13 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   },
   // Filter tabs
   filterTabsContainer: {
-    flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 16,
-    gap: 24,
+    minHeight: 36,
   },
   filterTab: {
     paddingBottom: 8,
+    paddingRight: 20,
     position: 'relative',
   },
   filterTabActive: {},

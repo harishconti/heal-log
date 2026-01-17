@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request
 
 from app.core.exceptions import NotFoundException, BadRequestException, InternalServerException
 from app.core.security import get_current_user, require_role

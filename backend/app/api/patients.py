@@ -1,7 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, status, Query, Request
 from typing import List, Optional, Literal
 from datetime import datetime
 from app.core.security import get_current_user, require_pro_user, require_role
+from app.core.exceptions import (
+    ValidationException,
+    NotFoundException,
+    BadRequestException,
+    InternalServerException
+)
+from app.core.logger import get_logger
 from app.schemas.role import UserRole
 from app.services.patient_service import patient_service
 from app.core.limiter import limiter
@@ -10,7 +17,8 @@ from app.schemas.patient import (
 )
 from app.schemas.clinical_note import NoteCreate, ClinicalNoteResponse
 from app.schemas.user import User
-import logging
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -28,13 +36,10 @@ async def create_patient(
         patient = await patient_service.create(patient_data, current_user.id)
         return patient
     except (ValueError, KeyError) as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise ValidationException(field="patient_data", message=str(e))
     except Exception as e:
-        logging.error(f"Error creating patient for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while creating the patient."
-        )
+        logger.error("patient_create_failed", user_id=str(current_user.id), error=str(e))
+        raise InternalServerException("An unexpected error occurred while creating the patient.")
 
 @router.get("/", response_model=List[PatientResponse])
 @limiter.limit("60/minute")
@@ -84,13 +89,10 @@ async def get_all_patients(
         )
         return patients
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise BadRequestException(message=str(e))
     except Exception as e:
-        logging.error(f"Error fetching patients for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching patients."
-        )
+        logger.error(f"Error fetching patients for user {current_user.id}: {e}", exc_info=True)
+        raise InternalServerException("An unexpected error occurred while fetching patients.")
 
 # --- Utility Routes (MUST be defined BEFORE /{id} routes to avoid path conflicts) ---
 
@@ -104,13 +106,10 @@ async def get_patient_groups(request: Request, current_user: User = Depends(get_
         groups = await patient_service.get_patient_groups(current_user.id)
         return {"success": True, "groups": groups}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise BadRequestException(message=str(e))
     except Exception as e:
-        logging.error(f"Error fetching groups for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching groups."
-        )
+        logger.error(f"Error fetching groups for user {current_user.id}: {e}", exc_info=True)
+        raise InternalServerException("An unexpected error occurred while fetching groups.")
 
 @router.get("/stats/", response_model=dict)
 @limiter.limit("30/minute")
@@ -122,13 +121,10 @@ async def get_statistics(request: Request, current_user: User = Depends(get_curr
         stats = await patient_service.get_user_stats(current_user.id)
         return {"success": True, "stats": stats}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise BadRequestException(message=str(e))
     except Exception as e:
-        logging.error(f"Error fetching stats for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching statistics."
-        )
+        logger.error(f"Error fetching stats for user {current_user.id}: {e}", exc_info=True)
+        raise InternalServerException("An unexpected error occurred while fetching statistics.")
 
 @router.get("/pro-feature/", response_model=dict)
 @limiter.limit("30/minute")
@@ -152,7 +148,7 @@ async def get_patient_by_id(
     """
     patient = await patient_service.get(id, user_id=current_user.id)
     if not patient:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     return patient
 
 @router.put("/{id}", response_model=PatientResponse)
@@ -168,7 +164,7 @@ async def update_patient(
     """
     patient = await patient_service.update(id, patient_data, current_user.id)
     if not patient:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     return patient
 
 @router.delete("/{id}", response_model=dict)
@@ -183,7 +179,7 @@ async def delete_patient(
     """
     success = await patient_service.delete(id, current_user.id)
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     return {"success": True, "message": "Patient deleted successfully"}
 
 # --- Notes Routes ---
@@ -201,7 +197,7 @@ async def add_patient_note(
     """
     note = await patient_service.add_note_to_patient(id, note_data, current_user.id)
     if not note:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     return note
 
 @router.get("/{id}/notes", response_model=List[ClinicalNoteResponse])
@@ -218,7 +214,7 @@ async def get_patient_notes(
     """
     notes = await patient_service.get_patient_notes(id, current_user.id, skip=skip, limit=limit)
     if notes is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     return notes
 
 
@@ -235,7 +231,7 @@ async def delete_patient_note(
     """
     result = await patient_service.delete_patient_note(id, note_id, current_user.id)
     if result is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+        raise NotFoundException(resource="Patient")
     if result is False:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+        raise NotFoundException(resource="Note")
     return {"success": True, "message": "Note deleted successfully"}

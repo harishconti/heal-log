@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
+from fastapi import APIRouter, Depends, status, Request, Query
 from typing import List
 from app.core.security import require_pro_user
+from app.core.exceptions import BadRequestException, NotFoundException, InternalServerException
+from app.core.logger import get_logger
 from app.services import document_service
 from app.schemas.document import DocumentCreate, Document
 from app.schemas.user import User
 from app.core.limiter import limiter
-import logging
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -23,13 +26,10 @@ async def upload_document(
         document = await document_service.create_document(doc_data, current_user.id)
         return document
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise BadRequestException(message=str(e))
     except Exception as e:
-        logging.error(f"Error creating document for user {current_user.id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while creating the document record."
-        )
+        logger.error("document_create_failed", user_id=str(current_user.id), error=str(e))
+        raise InternalServerException("An unexpected error occurred while creating the document record.")
 
 @router.get("/{patient_id}", response_model=List[Document])
 @limiter.limit("30/minute")
@@ -50,10 +50,7 @@ async def get_patient_documents(
         )
         return documents
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise NotFoundException(resource="Patient", identifier=patient_id)
     except Exception as e:
-        logging.error(f"Error fetching documents for patient {patient_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching documents."
-        )
+        logger.error("documents_fetch_failed", patient_id=patient_id, error=str(e))
+        raise InternalServerException("An unexpected error occurred while fetching documents.")

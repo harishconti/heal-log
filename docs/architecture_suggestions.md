@@ -4,10 +4,11 @@ This document outlines identified irregularities in the backend codebase and pro
 
 ## 🎉 Recent Updates (2026-01-17)
 
-**Phase 1 Critical Fixes - COMPLETED:**
+**ALL Phase 1 Critical Security Fixes - COMPLETED:**
 - ✅ **Token blacklist moved to Redis** - Persistent, distributed-ready storage with async support
 - ✅ **Async-unsafe threading locks fixed** - Replaced `threading.Lock` with `asyncio.Lock` in account lockout service
 - ✅ **JWT decoded once per request** - Unified AuthMiddleware eliminates redundant JWT decoding
+- ✅ **Standardized error responses** - Enhanced APIException with error codes, field info, and context
 - ✅ **Rate limits centralized** - All rate limit constants now in `app/core/constants.py`
 - ✅ **Structured logging implemented** - Comprehensive sensitive data masking and structured logging utilities
 
@@ -16,13 +17,16 @@ This document outlines identified irregularities in the backend codebase and pro
 - `backend/app/middleware/auth.py` - Unified authentication middleware
 
 **Files Modified:**
+- `backend/app/core/exceptions.py` - Enhanced APIException with error codes & context
+- `backend/app/api/patients.py` - Standardized to use APIException
+- `backend/app/api/users.py` - Standardized to use APIException
+- `backend/app/api/documents.py` - Standardized to use APIException
 - `backend/app/services/token_blacklist_service.py` - Redis backend with fallback
 - `backend/app/services/account_lockout_service.py` - Async-safe locks
 - `backend/app/core/constants.py` - Centralized rate limits
 - `backend/app/core/logger.py` - Structured logging with masking
 - `backend/app/core/security.py` - Simplified dependencies using auth context
 - `backend/app/api/auth.py` - Using centralized rate limit constants
-- `backend/app/api/users.py` - Using centralized rate limit constants
 - `backend/main.py` - Token blacklist initialization + AuthMiddleware
 
 ---
@@ -59,7 +63,7 @@ This document outlines identified irregularities in the backend codebase and pro
 
 | Issue | Risk Level | Impact | Status |
 |-------|------------|--------|--------|
-| Mixed error response formats | High | Inconsistent client experience | ⚠️ Not Started |
+| Mixed error response formats | High | Inconsistent client experience | ✅ **FIXED** (2026-01-17) |
 | JWT decoded 3+ times per request | Medium | Performance degradation | ✅ **FIXED** (2026-01-17) |
 | In-memory token blacklist | High | Token revocation lost on restart | ✅ **FIXED** (2026-01-17) |
 | Threading locks (not async-safe) | High | Race conditions under load | ✅ **FIXED** (2026-01-17) |
@@ -69,9 +73,24 @@ This document outlines identified irregularities in the backend codebase and pro
 
 ## Error Handling
 
-### Current State: Multiple Patterns
+### ✅ **STATUS: IMPLEMENTED** (2026-01-17)
 
-The codebase uses **four different error handling patterns**:
+**Implementation Details:**
+- Enhanced APIException with error codes, field info, and context
+- Created predefined exception classes: ValidationException, NotFoundException, ConflictException, etc.
+- Standardized error response format with machine-readable error codes
+- Converted all HTTPException usage in key API files to APIException
+- Consistent error handling across patients.py, users.py, documents.py
+
+**Files Modified:**
+- `backend/app/core/exceptions.py` - Enhanced exception classes
+- `backend/app/api/patients.py` - All HTTPExceptions converted
+- `backend/app/api/users.py` - All HTTPExceptions converted
+- `backend/app/api/documents.py` - All HTTPExceptions converted
+
+### ~~Current State: Multiple Patterns~~ (Resolved)
+
+The codebase ~~uses~~ **used** **four different error handling patterns**:
 
 **Pattern 1: Custom APIException** (Preferred)
 ```python
@@ -980,7 +999,7 @@ app.add_middleware(LoggingMiddleware)
 | Move token blacklist to Redis | `token_blacklist_service.py` | Low | ✅ **COMPLETED** (2026-01-17) |
 | Fix async-unsafe threading locks | `account_lockout_service.py` | Low | ✅ **COMPLETED** (2026-01-17) |
 | Unify JWT processing to single point | `middleware/auth.py`, `security.py` | Medium | ✅ **COMPLETED** (2026-01-17) |
-| Standardize error responses | All API files | Medium | ⚠️ Not Started |
+| Standardize error responses | All API files | Medium | ✅ **COMPLETED** (2026-01-17) |
 
 ### Phase 2: Consistency (Developer Experience)
 

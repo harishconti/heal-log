@@ -209,17 +209,6 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
       accessibilityHint={accessibilityHint || getDefaultAccessibilityHint()}
       accessibilityRole="button"
     >
-      {/* Visual swipe affordance indicator */}
-      {(leftActions.length > 0 || rightActions.length > 0) && (
-        <View style={styles.swipeIndicator}>
-          {leftActions.length > 0 && (
-            <View style={[styles.swipeIndicatorDot, { backgroundColor: theme.colors.primary }]} />
-          )}
-          {rightActions.length > 0 && (
-            <View style={[styles.swipeIndicatorDot, { backgroundColor: theme.colors.error }]} />
-          )}
-        </View>
-      )}
       <Swipeable
         ref={swipeableRef}
         friction={friction}
@@ -260,21 +249,6 @@ const getStyles = (theme: any) => StyleSheet.create({
     fontSize: theme.typography.sizes.xs,
     marginTop: 4,
     fontWeight: theme.typography.weights.medium,
-  },
-  // Visual affordance for swipeable rows
-  swipeIndicator: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    gap: 4,
-    zIndex: 1,
-  },
-  swipeIndicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: theme.borderRadius.sm,
-    opacity: 0.4,
   },
 });
 

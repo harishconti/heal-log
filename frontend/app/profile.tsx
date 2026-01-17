@@ -39,7 +39,8 @@ interface Stats {
 
 export default function ProfileScreen() {
   const { theme, fontScale } = useTheme();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
+  const { lastSyncTime } = useAppStore();
   const router = useRouter();
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -245,6 +246,28 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to log out. Please try again.');
+            }
+          }
+        },
+      ]
+    );
+  };
+
   const formatPatientCount = (count: number): string => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(0)}k+`;
@@ -255,6 +278,22 @@ export default function ProfileScreen() {
   const formatNextPaymentDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const formatLastSyncTime = (dateString: string | null): string => {
+    if (!dateString) return 'Never synced';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
   };
 
   if (isLoading) {
@@ -419,6 +458,45 @@ export default function ProfileScreen() {
               />
             </View>
           </Card>
+        </View>
+
+        {/* Account & Settings Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account & Settings</Text>
+          <Card style={styles.settingsCard}>
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push('/notifications')}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="notifications" size={22} color={theme.colors.textSecondary} />
+                <Text style={styles.settingsItemText}>Notifications</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+            <View style={styles.settingsItemDivider} />
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push('/privacy')}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="lock-closed" size={22} color={theme.colors.textSecondary} />
+                <Text style={styles.settingsItemText}>Privacy & Security</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+            <View style={styles.settingsItemDivider} />
+            <TouchableOpacity style={styles.settingsItem} onPress={handleLogout}>
+              <View style={styles.settingsItemLeft}>
+                <Ionicons name="log-out-outline" size={22} color={theme.colors.error} />
+                <Text style={[styles.settingsItemText, { color: theme.colors.error }]}>Log Out</Text>
+              </View>
+            </TouchableOpacity>
+          </Card>
+        </View>
+
+        {/* Last Sync Section */}
+        <View style={styles.syncSection}>
+          <View style={styles.syncInfo}>
+            <Ionicons name="sync-outline" size={16} color={theme.colors.textSecondary} />
+            <Text style={[styles.syncText, { color: theme.colors.textSecondary }]}>
+              Last synced: {formatLastSyncTime(lastSyncTime)}
+            </Text>
+          </View>
         </View>
 
         <View style={{ height: 40 }} />
@@ -710,5 +788,45 @@ const createStyles = (theme: any, fontScale: number) => StyleSheet.create({
   walkInsLabel: {
     fontSize: 15 * fontScale,
     color: theme.colors.text,
+  },
+  settingsCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  settingsItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  settingsItemText: {
+    fontSize: 16 * fontScale,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  settingsItemDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginLeft: 52,
+  },
+  syncSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  syncInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  syncText: {
+    fontSize: 13 * fontScale,
   },
 });

@@ -40,11 +40,9 @@ import Patient from '@/models/Patient';
 import withObservables from '@nozbe/with-observables';
 import { Q } from '@nozbe/watermelondb';
 
-// Optimized image component
-import { CachedImage } from '@/components/ui/CachedImage';
+// UI Components
 import SwipeableRow from '@/components/ui/SwipeableRow';
 import LongPressMenu, { MenuOption } from '@/components/ui/LongPressMenu';
-import AdvancedSearchPanel, { SearchFilters } from '@/components/core/AdvancedSearchPanel';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 // The raw UI component
@@ -68,17 +66,6 @@ function Index({ patients, groups, totalPatientCount }) {
   } = useAppStore();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState<SearchFilters>({
-    query: '',
-    condition: '',
-    diagnosis: '',
-    dateFrom: null,
-    dateTo: null,
-    group: '',
-    favoritesOnly: false,
-    recentlyAdded: false,
-  });
 
   // Pagination state for lazy loading
   const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_SIZE);
@@ -296,43 +283,86 @@ function Index({ patients, groups, totalPatientCount }) {
     router.push('/profile');
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   const addNewPatient = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     trackFeatureAdoption('add-patient');
     router.push('/add-patient');
   };
 
-  // Helper function to get badge color based on group
-  const getGroupBadgeStyle = (group: string | undefined) => {
-    const groupLower = (group || 'general').toLowerCase();
+  // Helper function to get badge color based on status/group
+  const getStatusBadgeStyle = (group: string | undefined) => {
+    const groupLower = (group || 'stable').toLowerCase();
     const colorMap: Record<string, { bg: string; text: string }> = {
+      critical: { bg: '#FEE2E2', text: '#DC2626' },
       cardiology: { bg: '#FEE2E2', text: '#DC2626' },
       emergency: { bg: '#FEE2E2', text: '#DC2626' },
+      'post-op': { bg: '#DBEAFE', text: '#2563EB' },
+      post_surgical: { bg: '#DBEAFE', text: '#2563EB' },
+      'follow-up': { bg: '#F3F4F6', text: '#4B5563' },
       neurology: { bg: '#FEF3C7', text: '#D97706' },
-      orthopedics: { bg: '#DBEAFE', text: '#2563EB' },
-      physiotherapy: { bg: '#D1FAE5', text: '#059669' },
-      post_surgical: { bg: '#E0E7FF', text: '#4F46E5' },
-      pediatrics: { bg: '#FCE7F3', text: '#DB2777' },
-      dermatology: { bg: '#FED7AA', text: '#EA580C' },
-      psychiatry: { bg: '#E9D5FF', text: '#9333EA' },
-      endocrinology: { bg: '#CCFBF1', text: '#0D9488' },
-      pulmonology: { bg: '#CFFAFE', text: '#0891B2' },
-      obstetric_cardiology: { bg: '#FEE2E2', text: '#DC2626' },
-      general: { bg: theme.colors.primaryMuted, text: theme.colors.primary },
+      stable: { bg: '#D1FAE5', text: '#059669' },
+      general: { bg: '#D1FAE5', text: '#059669' },
     };
-    return colorMap[groupLower] || colorMap.general;
+    return colorMap[groupLower] || colorMap.stable;
   };
 
-  // Format group name for display
-  const formatGroupName = (group: string | undefined): string => {
-    if (!group) return 'General';
-    return group.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  // Format status name for display
+  const formatStatusName = (group: string | undefined): string => {
+    if (!group) return 'STABLE';
+    const statusMap: Record<string, string> = {
+      cardiology: 'CRITICAL',
+      emergency: 'CRITICAL',
+      post_surgical: 'POST-OP',
+      general: 'STABLE',
+    };
+    return statusMap[group.toLowerCase()] || group.toUpperCase().replace('_', '-');
+  };
+
+  // Get initials from name
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Get avatar background color based on name
+  const getAvatarColor = (name: string): string => {
+    const colors = ['#E8F4FF', '#FCE7F3', '#D1FAE5', '#FEF3C7', '#E9D5FF', '#DBEAFE'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  // Format last visit date
+  const formatLastVisit = (date: Date | null | undefined): string => {
+    if (!date) return 'No visits yet';
+    const now = new Date();
+    const visitDate = new Date(date);
+    const diffDays = Math.floor((now.getTime() - visitDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return `Today, ${visitDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else {
+      return visitDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
   };
 
   const renderPatientCard = ({ item }: { item: Patient }) => {
     // Use optimistic state if available, otherwise use actual DB state
     const isFavorite = optimisticFavorites[item.id] ?? item.isFavorite;
-    const badgeColors = getGroupBadgeStyle(item.group);
+    const badgeColors = getStatusBadgeStyle(item.group);
+    const initials = getInitials(item.name);
+    const avatarColor = getAvatarColor(item.name);
 
     return (
       <SwipeableRow
@@ -375,33 +405,20 @@ function Index({ patients, groups, totalPatientCount }) {
               styles.patientCard,
               {
                 backgroundColor: pressed ? theme.colors.primaryMuted : theme.colors.surface,
-                // Elevated shadow on press for iOS
-                ...(pressed && Platform.OS === 'ios' ? {
-                  shadowOpacity: 0.12,
-                  shadowRadius: 12,
-                } : {}),
-                // Elevated shadow on press for Android
-                ...(pressed && Platform.OS === 'android' ? {
-                  elevation: 4,
-                } : {}),
               }
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`Patient ${item.name}, ID ${item.patientId}${item.initialComplaint ? `, ${item.initialComplaint}` : ''}`}
+            accessibilityLabel={`Patient ${item.name}`}
           >
-            {/* Modern clean card layout: Avatar | Content | Badge */}
             <View style={styles.cardRow}>
-              {/* Left: Avatar */}
-              <CachedImage
-                base64={item.photo}
-                cacheKey={`patient-${item.id}`}
-                size={52}
-                containerStyle={styles.patientAvatar}
-                placeholderColor={theme.colors.primaryMuted}
-                placeholderIconColor={theme.colors.primary}
-              />
+              {/* Left: Initials Avatar */}
+              <View style={[styles.initialsAvatar, { backgroundColor: avatarColor }]}>
+                <Text style={[styles.initialsText, { color: theme.colors.primary }]}>
+                  {initials}
+                </Text>
+              </View>
 
-              {/* Center: Name and Details */}
+              {/* Center: Name and Last Visit */}
               <View style={styles.cardCenter}>
                 <View style={styles.nameRow}>
                   <Text
@@ -413,33 +430,32 @@ function Index({ patients, groups, totalPatientCount }) {
                   {isFavorite && (
                     <Ionicons
                       name="heart"
-                      size={14}
-                      color={theme.colors.error}
+                      size={16}
+                      color="#E91E63"
                       style={styles.favoriteIcon}
                     />
                   )}
                 </View>
-                <Text
-                  style={[styles.patientMeta, { color: theme.colors.textSecondary }]}
-                  numberOfLines={1}
-                >
-                  ID: {item.patientId}
-                  {item.phone && ` • ${item.phone}`}
-                </Text>
-                {item.initialComplaint && (
+                <View style={styles.lastVisitRow}>
+                  <Ionicons
+                    name="time-outline"
+                    size={14}
+                    color={theme.colors.textSecondary}
+                    style={{ marginRight: 4 }}
+                  />
                   <Text
-                    style={[styles.patientComplaint, { color: theme.colors.textSecondary }]}
+                    style={[styles.lastVisitText, { color: theme.colors.textSecondary }]}
                     numberOfLines={1}
                   >
-                    {item.initialComplaint}
+                    Last Visit: {formatLastVisit(item.updatedAt)}
                   </Text>
-                )}
+                </View>
               </View>
 
               {/* Right: Status Badge */}
               <View style={[styles.statusBadge, { backgroundColor: badgeColors.bg }]}>
                 <Text style={[styles.statusText, { color: badgeColors.text }]}>
-                  {formatGroupName(item.group)}
+                  {formatStatusName(item.group)}
                 </Text>
               </View>
             </View>
@@ -462,35 +478,22 @@ function Index({ patients, groups, totalPatientCount }) {
     return buttons;
   }, [groups]);
 
-  // Count active advanced filters
-  const activeAdvancedFilterCount = useMemo(() => {
-    let count = 0;
-    if (advancedFilters.condition) count++;
-    if (advancedFilters.diagnosis) count++;
-    if (advancedFilters.dateFrom) count++;
-    if (advancedFilters.group) count++;
-    if (advancedFilters.favoritesOnly) count++;
-    if (advancedFilters.recentlyAdded) count++;
-    return count;
-  }, [advancedFilters]);
-
-  // Filter patients based on search and selected filter - reactive to changes
+  // Filter patients based on search and selected filter
   const filteredPatients = useMemo(() => {
     if (!patients) return [];
 
     let result = patients;
 
-    // Apply basic search filter (name, ID, phone) - use debounced query
+    // Apply basic search filter (name, ID)
     if (debouncedSearchQuery) {
       const lowerQuery = debouncedSearchQuery.toLowerCase();
       result = result.filter(p =>
         p.name?.toLowerCase().includes(lowerQuery) ||
-        p.patientId?.toLowerCase().includes(lowerQuery) ||
-        p.phone?.toLowerCase().includes(lowerQuery)
+        p.patientId?.toLowerCase().includes(lowerQuery)
       );
     }
 
-    // Apply group/favorites filter from quick filter buttons
+    // Apply filter from tab buttons
     if (selectedFilter && selectedFilter !== 'all') {
       if (selectedFilter === 'favorites') {
         result = result.filter(p => p.isFavorite);
@@ -499,57 +502,8 @@ function Index({ patients, groups, totalPatientCount }) {
       }
     }
 
-    // Apply advanced filters
-    if (advancedFilters.condition) {
-      const lowerCondition = advancedFilters.condition.toLowerCase();
-      result = result.filter(p =>
-        p.initialComplaint?.toLowerCase().includes(lowerCondition)
-      );
-    }
-
-    if (advancedFilters.diagnosis) {
-      const lowerDiagnosis = advancedFilters.diagnosis.toLowerCase();
-      result = result.filter(p =>
-        p.initialDiagnosis?.toLowerCase().includes(lowerDiagnosis)
-      );
-    }
-
-    if (advancedFilters.dateFrom) {
-      const fromTime = advancedFilters.dateFrom.getTime();
-      result = result.filter(p => {
-        const createdAt = p.createdAt?.getTime?.() || 0;
-        return createdAt >= fromTime;
-      });
-    }
-
-    if (advancedFilters.dateTo) {
-      const toTime = advancedFilters.dateTo.getTime();
-      result = result.filter(p => {
-        const createdAt = p.createdAt?.getTime?.() || 0;
-        return createdAt <= toTime;
-      });
-    }
-
-    if (advancedFilters.group) {
-      result = result.filter(p => p.group === advancedFilters.group);
-    }
-
-    if (advancedFilters.favoritesOnly) {
-      result = result.filter(p => p.isFavorite);
-    }
-
-    if (advancedFilters.recentlyAdded) {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const sevenDaysAgoTime = sevenDaysAgo.getTime();
-      result = result.filter(p => {
-        const createdAt = p.createdAt?.getTime?.() || 0;
-        return createdAt >= sevenDaysAgoTime;
-      });
-    }
-
     return result;
-  }, [patients, debouncedSearchQuery, selectedFilter, advancedFilters]);
+  }, [patients, debouncedSearchQuery, selectedFilter]);
 
   // Paginated visible patients for lazy loading
   const visiblePatients = useMemo(() => {
@@ -610,98 +564,46 @@ function Index({ patients, groups, totalPatientCount }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
+      <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle} accessibilityRole="header">HEAL LOG</Text>
-          <Text style={styles.headerSubtitle}>Welcome, {user?.full_name?.split(' ')[0]}</Text>
+          <Text style={[styles.headerDate, { color: theme.colors.textSecondary }]}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]} accessibilityRole="header">
+            {getGreeting()},
+          </Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+            Dr. {user?.full_name?.split(' ').slice(-1)[0] || 'Smith'}
+          </Text>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={navigateToProfile}
-            accessibilityLabel="View profile"
-            accessibilityRole="button"
-            accessibilityHint="Opens your profile page"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="person-circle-outline" size={24} color={theme.colors.surface} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={addNewPatient}
-            accessibilityLabel="Add new patient"
-            accessibilityRole="button"
-            accessibilityHint="Opens the add patient form"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="add" size={24} color={theme.colors.surface} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.profileContainer}
+          onPress={navigateToProfile}
+          accessibilityLabel="Edit profile"
+          accessibilityRole="button"
+        >
+          <View style={[styles.profileAvatar, { backgroundColor: theme.colors.primaryMuted }]}>
+            <Ionicons name="person" size={32} color={theme.colors.primary} />
+          </View>
+          <Text style={[styles.editProfileText, { color: theme.colors.primary }]}>Edit Profile</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Search by name, ID, phone..."
+          placeholder="Search patients by name or ID..."
           value={searchQuery}
           onChangeText={handleSearchChange}
           placeholderTextColor={theme.colors.textSecondary}
           accessibilityLabel="Search patients"
-          accessibilityHint="Search by name, ID, or phone number"
+          accessibilityHint="Search by name or ID"
         />
-        <TouchableOpacity
-          style={styles.advancedSearchButton}
-          onPress={() => {
-            triggerHaptic();
-            setShowAdvancedSearch(true);
-          }}
-          accessibilityLabel={`Advanced search filters${activeAdvancedFilterCount > 0 ? `, ${activeAdvancedFilterCount} active` : ''}`}
-          accessibilityRole="button"
-          accessibilityHint="Opens advanced search options"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name="options"
-            size={20}
-            color={activeAdvancedFilterCount > 0 ? theme.colors.primary : theme.colors.textSecondary}
-          />
-          {activeAdvancedFilterCount > 0 && (
-            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
-              <Text style={styles.filterBadgeText}>{activeAdvancedFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
 
-      {/* Active Filters Indicator */}
-      {activeAdvancedFilterCount > 0 && (
-        <View style={[styles.activeFiltersBar, { backgroundColor: theme.colors.primaryMuted }]}>
-          <Ionicons name="filter" size={14} color={theme.colors.primary} />
-          <Text style={[styles.activeFiltersText, { color: theme.colors.primary }]}>
-            {activeAdvancedFilterCount} filter{activeAdvancedFilterCount > 1 ? 's' : ''} active
-          </Text>
-          <TouchableOpacity
-            onPress={() => setAdvancedFilters({
-              query: '',
-              condition: '',
-              diagnosis: '',
-              dateFrom: null,
-              dateTo: null,
-              group: '',
-              favoritesOnly: false,
-              recentlyAdded: false,
-            })}
-            accessibilityLabel="Clear all filters"
-            accessibilityRole="button"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={[styles.clearFiltersText, { color: theme.colors.primary }]}>Clear</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <View accessibilityRole="tablist" accessibilityLabel="Patient filter tabs">
+      {/* Filter Tabs */}
+      <View style={styles.filterTabsContainer}>
         <FlashList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -709,24 +611,49 @@ function Index({ patients, groups, totalPatientCount }) {
           renderItem={({ item }) => (
             <TouchableOpacity
               key={item.filter}
-              style={[styles.filterButton, { backgroundColor: selectedFilter === item.filter ? theme.colors.primary : theme.colors.surface }]}
+              style={[
+                styles.filterTab,
+                selectedFilter === item.filter && styles.filterTabActive,
+              ]}
               onPress={() => {
                 triggerHaptic();
                 setSelectedFilter(item.filter);
               }}
               accessibilityRole="tab"
               accessibilityState={{ selected: selectedFilter === item.filter }}
-              accessibilityLabel={`${item.label} filter`}
             >
-              <Text style={[styles.filterText, { color: selectedFilter === item.filter ? theme.colors.surface : theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.filterTabText,
+                  { color: selectedFilter === item.filter ? theme.colors.primary : theme.colors.textSecondary },
+                ]}
+              >
                 {item.label}
               </Text>
+              {selectedFilter === item.filter && (
+                <View style={[styles.filterTabIndicator, { backgroundColor: theme.colors.primary }]} />
+              )}
             </TouchableOpacity>
           )}
           keyExtractor={(item) => item.filter}
-          contentContainerStyle={styles.filtersContainer}
           estimatedItemSize={100}
         />
+      </View>
+
+      {/* Patient Count and New Patient Button */}
+      <View style={styles.patientCountRow}>
+        <Text style={[styles.patientCountText, { color: theme.colors.textSecondary }]}>
+          Total: {filteredPatients.length} Patients
+        </Text>
+        <TouchableOpacity
+          style={[styles.newPatientButton, { backgroundColor: theme.colors.primary }]}
+          onPress={addNewPatient}
+          accessibilityLabel="Add new patient"
+          accessibilityRole="button"
+        >
+          <Ionicons name="add" size={20} color="#fff" />
+          <Text style={styles.newPatientButtonText}>New Patient</Text>
+        </TouchableOpacity>
       </View>
 
       {isInitialLoading ? (
@@ -812,26 +739,6 @@ function Index({ patients, groups, totalPatientCount }) {
         />
       )}
 
-      <View style={[styles.statsFooter, { borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.statsText, { color: theme.colors.textSecondary }]}>
-          {filteredPatients.length} of {totalPatientCount} patients
-          {activeAdvancedFilterCount > 0 && ` (${activeAdvancedFilterCount} filter${activeAdvancedFilterCount > 1 ? 's' : ''})`}
-        </Text>
-        {user?.plan && (
-          <Text style={[styles.planText, { color: theme.colors.primary }]}>
-            {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)} Plan
-          </Text>
-        )}
-      </View>
-
-      {/* Advanced Search Panel */}
-      <AdvancedSearchPanel
-        visible={showAdvancedSearch}
-        onClose={() => setShowAdvancedSearch(false)}
-        filters={advancedFilters}
-        onFiltersChange={setAdvancedFilters}
-        groups={groups || []}
-      />
     </SafeAreaView>
   );
 }
@@ -894,140 +801,114 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: Platform.OS === 'android' ? Math.max(topInset, 24) + 16 : 16,
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingTop: Platform.OS === 'android' ? Math.max(topInset, 24) + 20 : 20,
   },
   headerLeft: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 22 * fontScale,
-    fontWeight: 'bold',
-    color: theme.colors.surface,
-  },
-  headerSubtitle: {
+  headerDate: {
     fontSize: 14 * fontScale,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 2,
+    marginBottom: 4,
   },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 8,
+  headerTitle: {
+    fontSize: 26 * fontScale,
+    fontWeight: 'bold',
+    lineHeight: 32 * fontScale,
+  },
+  profileContainer: {
     alignItems: 'center',
   },
-  headerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  profileAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  // Modern search container
+  editProfileText: {
+    fontSize: 12 * fontScale,
+    fontWeight: '500',
+  },
+  // Search container
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 14,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
-    fontSize: 15 * fontScale,
-    letterSpacing: -0.2,
+    fontSize: 16 * fontScale,
   },
-  advancedSearchButton: {
-    padding: 10,
+  // Filter tabs
+  filterTabsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    minHeight: 36,
+  },
+  filterTab: {
+    paddingBottom: 8,
+    paddingRight: 20,
     position: 'relative',
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  filterBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  filterBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  activeFiltersBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 8,
-  },
-  activeFiltersText: {
-    flex: 1,
-    fontSize: 13 * fontScale,
+  filterTabActive: {},
+  filterTabText: {
+    fontSize: 15 * fontScale,
     fontWeight: '500',
   },
-  clearFiltersText: {
-    fontSize: 13 * fontScale,
-    fontWeight: '600',
+  filterTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    borderRadius: 1,
   },
-  filtersContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 8,
+  // Patient count row
+  patientCountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  filterButton: {
+  patientCountText: {
+    fontSize: 14 * fontScale,
+    fontWeight: '500',
+  },
+  newPatientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    marginRight: 8,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
+    gap: 6,
   },
-  filterText: {
-    fontSize: 13 * fontScale,
+  newPatientButtonText: {
+    color: '#fff',
+    fontSize: 14 * fontScale,
     fontWeight: '600',
-    letterSpacing: -0.1,
   },
   patientsList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 8,
   },
-  // Modern clean card design
+  // Patient card design
   patientCard: {
     borderRadius: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     padding: 16,
     ...Platform.select({
       ios: {
@@ -1040,23 +921,23 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
         elevation: 2,
       },
     }),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
-  // Single row layout: Avatar | Content | Badge
   cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 52,
   },
-  // Avatar styling
-  patientAvatar: {
+  // Initials avatar
+  initialsAvatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
     marginRight: 14,
-    borderWidth: 2,
-    borderColor: theme.colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initialsText: {
+    fontSize: 18 * fontScale,
+    fontWeight: '600',
   },
   // Center content area
   cardCenter: {
@@ -1068,103 +949,32 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  // Larger, bolder name
   patientName: {
     fontSize: 17 * fontScale,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontWeight: '600',
     flexShrink: 1,
   },
-  // Small favorite heart icon inline with name
   favoriteIcon: {
     marginLeft: 6,
   },
-  // Secondary meta info (ID, phone)
-  patientMeta: {
+  lastVisitText: {
     fontSize: 13 * fontScale,
-    fontWeight: '400',
-    marginBottom: 2,
-    letterSpacing: -0.1,
   },
-  // Complaint/condition text
-  patientComplaint: {
-    fontSize: 12 * fontScale,
-    fontWeight: '400',
-    fontStyle: 'italic',
-    opacity: 0.8,
-  },
-  // Pill-shaped status badge (right-aligned)
+  // Status badge
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     alignSelf: 'center',
-    minWidth: 60,
+    minWidth: 70,
     alignItems: 'center',
   },
-  // Status badge text
   statusText: {
-    fontSize: 10 * fontScale,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontSize: 11 * fontScale,
+    fontWeight: '600',
     letterSpacing: 0.3,
-  },
-  // Legacy styles for compatibility
-  cardContent: {
-    padding: 16,
-  },
-  patientInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  patientPhoto: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    marginRight: 14,
-  },
-  patientDetails: {
-    flex: 1,
-  },
-  patientId: {
-    fontSize: 13 * fontScale,
-    marginBottom: 2,
-  },
-  complaint: {
-    fontSize: 12 * fontScale,
-    fontStyle: 'italic',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  favoriteButton: {
-    padding: 4,
-    minWidth: 48,
-    minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  callButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  groupBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  groupText: {
-    fontSize: 10 * fontScale,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
   emptyState: {
     alignItems: 'center',
@@ -1226,21 +1036,6 @@ const createStyles = (theme: any, fontScale: number, topInset: number = 0) => St
   },
   loadMoreText: {
     fontSize: 12 * fontScale,
-  },
-  statsFooter: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statsText: {
-    fontSize: 14 * fontScale,
-  },
-  planText: {
-    fontSize: 12 * fontScale,
-    fontWeight: '500',
   },
   skeletonContainer: {
     flex: 1,

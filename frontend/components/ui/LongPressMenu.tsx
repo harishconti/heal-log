@@ -175,14 +175,6 @@ const LongPressMenu: React.FC<LongPressMenuProps> = ({
       >
         <Animated.View style={{ transform: [{ scale: pressScaleAnim }] }}>
           {children}
-          {/* Visual affordance indicator for long-press */}
-          {options.length > 0 && !disabled && (
-            <View style={[styles.longPressIndicator, { backgroundColor: theme.colors.textSecondary }]}>
-              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
-              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
-              <View style={[styles.longPressIndicatorDot, { backgroundColor: theme.colors.surface }]} />
-            </View>
-          )}
         </Animated.View>
       </TouchableOpacity>
 
@@ -294,23 +286,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   menuLabel: {
     fontSize: theme.typography.sizes.md,
     fontWeight: '500',
-  },
-  // Visual affordance for long-press
-  longPressIndicator: {
-    position: 'absolute',
-    bottom: theme.spacing.sm,
-    right: theme.spacing.sm,
-    flexDirection: 'row',
-    paddingHorizontal: 6,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    gap: 2,
-    opacity: 0.6,
-  },
-  longPressIndicatorDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
   },
 });
 

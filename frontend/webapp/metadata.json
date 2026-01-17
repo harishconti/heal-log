@@ -1,0 +1,7 @@
+{
+  "name": "HealLog website",
+  "description": "The intelligent dashboard for modern medical teams. Features secure login and AI-powered patient insights using Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -101,23 +101,23 @@ npm test
 heal-log/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # API route handlers (17 routers)
-│   │   ├── core/         # Config, security, exceptions, logging
+│   │   ├── api/          # API route handlers (18 routers)
+│   │   ├── core/         # Config, security, exceptions, logging, auth context
 │   │   ├── db/           # Database connection and initialization
 │   │   ├── models/       # Beanie ODM document models
-│   │   ├── schemas/      # Pydantic request/response schemas
-│   │   ├── services/     # Business logic (16 services)
-│   │   └── middleware/   # Request logging middleware
+│   │   ├── schemas/      # Pydantic request/response schemas (15 files)
+│   │   ├── services/     # Business logic (18 services)
+│   │   └── middleware/   # CORS, Auth, Logging, Security Headers, CSRF
 │   ├── tests/            # Test files (48 tests)
 │   ├── scripts/          # Database scripts
 │   ├── main.py           # Application entry
 │   └── requirements.txt
 │
 ├── frontend/
-│   ├── app/              # Expo Router pages (25+ screens)
-│   ├── components/       # React components (core, forms, ui)
-│   ├── contexts/         # React contexts
-│   ├── models/           # WatermelonDB models
+│   ├── app/              # Expo Router pages (31 screens)
+│   ├── components/       # React components (30+ components)
+│   ├── contexts/         # React contexts (5 contexts)
+│   ├── models/           # WatermelonDB models (5 models)
 │   ├── services/         # API services (12+ services)
 │   ├── store/            # Zustand store
 │   ├── constants/        # App constants

@@ -2,7 +2,7 @@
 
 HealLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
-**Current Version:** 1.3.4 | **Backend Tests:** 48 passing | **API Routers:** 17
+**Current Version:** 1.3.9 | **Backend Tests:** 48 passing | **API Routers:** 18
 
 ## Features
 
@@ -39,13 +39,13 @@ The application uses a decoupled, three-tier architecture. The core is a **FastA
 
 The backend is a FastAPI application with a modular structure. The main entrypoint is `backend/main.py`.
 
--   **`api/`**: API endpoint definitions (17 routers)
+-   **`api/`**: API endpoint definitions (18 routers)
 -   **`core/`**: Configuration, security, exceptions, and logging
 -   **`db/`**: Database session management and initialization
 -   **`models/`**: Beanie ODM document models
 -   **`schemas/`**: Pydantic request/response schemas
--   **`services/`**: Business logic (16 services)
--   **`middleware/`**: Request logging middleware
+-   **`services/`**: Business logic (18 services)
+-   **`middleware/`**: Custom middleware (CORS, Auth, Logging, Security Headers, CSRF)
 
 ### Frontend
 
@@ -271,13 +271,15 @@ REDIS_URL=redis://localhost:6379
 
 ## Project Status
 
-- **Version:** 1.3.4 (stable)
+- **Version:** 1.3.9 (stable)
 - **Tests:** 48 backend tests passing
-- **Endpoints:** All 17 API routers operational
+- **Endpoints:** All 18 API routers operational
+- **Screens:** 31 React Native screens with Expo Router
+- **Components:** 30+ reusable components
 - **Sync:** Offline-first with WatermelonDB working
 - **Auth:** OTP verification, password reset, and biometric authentication functional
-- **Security:** Rate limiting, security headers, input sanitization complete
-- **Audit:** All 14 integration issues resolved
+- **Security:** Rate limiting, security headers, input sanitization, CSRF protection complete
+- **Architecture:** All Phase 1 & 2 improvements completed (Redis token blacklist, async-safe locks, unified auth middleware)
 - **Dashboard:** Web dashboard for Pro users available
 - **Payments:** Stripe subscription integration ready
 - **Integrations:** Google Contacts sync with offline queue support

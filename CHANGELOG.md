@@ -7,7 +7,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.2] - 2026-01-11 (Current)
+## [1.3.9] - 2026-01-17 (Current)
+
+### Changed
+- Version bump for documentation updates
+
+---
+
+## [1.3.8] - 2026-01-17
+
+### Changed
+- Merged architecture improvements (Phase 2 complete)
+
+---
+
+## [1.3.7] - 2026-01-16
+
+### Added
+- Complete Phase 2 architecture improvements
+- Enhanced configuration validation for production
+
+### Changed
+- Models/schemas pattern documented in `backend/app/models/README.md`
+
+---
+
+## [1.3.6] - 2026-01-16
+
+### Added
+- Structured logging with sensitive data masking
+- Centralized rate limit constants in `app/core/constants.py`
+
+### Fixed
+- Standardized error responses across all API endpoints
+
+---
+
+## [1.3.5] - 2026-01-15
+
+### Added
+- Unified AuthMiddleware for single JWT processing per request
+- Auth context module (`app/core/auth_context.py`) for request-scoped auth data
+
+### Fixed
+- JWT decoded multiple times per request - now decoded once in middleware
+- Async-unsafe threading locks replaced with asyncio.Lock in account lockout service
+
+---
+
+## [1.3.4] - 2026-01-14
+
+### Added
+- Redis-backed token blacklist with in-memory fallback
+- Token blacklist initialization in application lifespan
+
+### Security
+- Token revocation now persists across server restarts
+
+---
+
+## [1.3.3] - 2026-01-13
+
+### Added
+- Enhanced APIException with error codes, field info, and context
+- Predefined exception classes (ValidationException, NotFoundException, ConflictException)
+
+### Changed
+- All HTTPException usages converted to APIException in patients.py, users.py, documents.py
+
+---
+
+## [1.3.2] - 2026-01-12
+
+### Added
+- Architecture suggestions document (`docs/architecture_suggestions.md`)
+- Comprehensive backend code analysis
+
+---
+
+## [1.3.1] - 2026-01-12
+
+### Fixed
+- Minor bug fixes and stability improvements
+
+---
+
+## [1.3.0] - 2026-01-12
+
+### Added
+- Phase 1 critical security fixes complete
+- Comprehensive middleware improvements
+
+---
+
+## [1.2.2] - 2026-01-11
 
 ### Changed
 - Improved Android UI/UX with comprehensive fixes
@@ -123,6 +216,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.3.9 | 2026-01-17 | Documentation updates |
+| 1.3.8 | 2026-01-17 | Architecture Phase 2 complete |
+| 1.3.5 | 2026-01-15 | Unified AuthMiddleware, async-safe locks |
+| 1.3.4 | 2026-01-14 | Redis-backed token blacklist |
+| 1.3.3 | 2026-01-13 | Enhanced APIException with error codes |
+| 1.3.0 | 2026-01-12 | Phase 1 security fixes complete |
 | 1.2.2 | 2026-01-11 | Android UI/UX improvements |
 | 1.2.1 | 2026-01-10 | Landing page redesign |
 | 1.0.9 | 2026-01-09 | Sync fixes, web dashboard, Google Contacts integration |

@@ -189,7 +189,7 @@ export function ChartCard({
   subtitle,
   action,
   children,
-  minHeight = 320,
+  minHeight: _minHeight = 320,
   className = '',
 }: ChartCardProps) {
   return (

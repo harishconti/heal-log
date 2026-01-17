@@ -159,7 +159,7 @@ export function PatientsListPage() {
           <p className="text-gray-500 mt-2 font-medium">Manage and view your patient records</p>
         </div>
         <Link to="/patients/new">
-          <Button className="h-12 px-6 shadow-lg shadow-primary-500/20" rounded="full">
+          <Button className="h-12 px-6 shadow-lg shadow-primary-500/20 rounded-full">
             <Plus className="h-5 w-5" />
             Add Patient
           </Button>
@@ -229,7 +229,7 @@ export function PatientsListPage() {
           data={patients}
           columns={columns}
           keyExtractor={(item) => item.id}
-          loading={isLoading}
+          isLoading={isLoading}
           pagination={{
             page: pagination.page,
             pageSize: pagination.pageSize,

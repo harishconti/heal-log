@@ -211,7 +211,7 @@ export function DashboardPage() {
             </p>
           </div>
           <Link to="/patients/new">
-            <Button size="lg" className="shadow-lg shadow-primary-500/20" rounded="full">
+            <Button size="lg" className="shadow-lg shadow-primary-500/20 rounded-full">
               <Plus className="h-5 w-5" />
               Add Patient
             </Button>

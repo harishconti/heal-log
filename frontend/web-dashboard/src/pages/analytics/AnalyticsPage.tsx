@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, TrendingUp, FileText, Calendar, Users } from 'lucide-react';
 import { Card, CardHeader, Button, Spinner, Select } from '../../components/ui';
 import { LineChart, BarChart, PieChart } from '../../components/charts';
 import { useAnalytics, useRequirePro } from '../../hooks';
 import { analyticsApi } from '../../api/analytics';
+import { cn } from '@/utils';
 
 // Analytics period options
 const ANALYTICS_PERIOD_OPTIONS = [
@@ -81,8 +82,8 @@ export function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-600 mt-1">Track your practice performance</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Analytics</h1>
+          <p className="text-gray-500 mt-1 font-medium">Track your practice performance</p>
         </div>
         <div className="flex items-center gap-3">
           <Select
@@ -90,18 +91,35 @@ export function AnalyticsPage() {
             onChange={(e) => setDays(parseInt(e.target.value))}
             options={ANALYTICS_PERIOD_OPTIONS}
           />
-          <Button variant="outline" onClick={handleExport} loading={isExporting}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            loading={isExporting}
+            className={cn(
+              'border-2 hover:border-primary-300 hover:bg-primary-50/50',
+              'hover:shadow-md hover:-translate-y-0.5',
+              'transition-all duration-200'
+            )}
+          >
+            <Download className={cn('h-4 w-4 mr-2', isExporting && 'animate-bounce')} />
             Export
           </Button>
         </div>
       </div>
 
       {/* Patient Growth */}
-      <Card>
+      <Card className={cn(
+        'group hover:shadow-lg hover:border-primary-200',
+        'transition-all duration-300'
+      )}>
         <CardHeader
           title="Patient Growth"
           subtitle={`New patients over the last ${days} days`}
+          action={
+            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <TrendingUp className="w-5 h-5 text-primary-600" />
+            </div>
+          }
         />
         {patientGrowth.length > 0 ? (
           <LineChart data={patientGrowth} color="#3b82f6" height={300} />
@@ -114,10 +132,18 @@ export function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Notes Activity */}
-        <Card>
+        <Card className={cn(
+          'group hover:shadow-lg hover:border-emerald-200',
+          'transition-all duration-300'
+        )}>
           <CardHeader
             title="Notes Activity"
             subtitle={`Clinical notes created over the last ${days} days`}
+            action={
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FileText className="w-5 h-5 text-emerald-600" />
+              </div>
+            }
           />
           {notesActivity.length > 0 ? (
             <LineChart data={notesActivity} color="#10b981" height={250} />
@@ -129,8 +155,19 @@ export function AnalyticsPage() {
         </Card>
 
         {/* Weekly Activity */}
-        <Card>
-          <CardHeader title="Weekly Activity" subtitle="Activity by day of week" />
+        <Card className={cn(
+          'group hover:shadow-lg hover:border-violet-200',
+          'transition-all duration-300'
+        )}>
+          <CardHeader
+            title="Weekly Activity"
+            subtitle="Activity by day of week"
+            action={
+              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Calendar className="w-5 h-5 text-violet-600" />
+              </div>
+            }
+          />
           {weeklyChartData.length > 0 ? (
             <BarChart data={weeklyChartData} color="#8b5cf6" height={250} />
           ) : (
@@ -143,8 +180,19 @@ export function AnalyticsPage() {
 
       {/* Demographics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader title="Patients by Group" subtitle="Distribution across groups" />
+        <Card className={cn(
+          'group hover:shadow-lg hover:border-amber-200',
+          'transition-all duration-300'
+        )}>
+          <CardHeader
+            title="Patients by Group"
+            subtitle="Distribution across groups"
+            action={
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="w-5 h-5 text-amber-600" />
+              </div>
+            }
+          />
           {groupsChartData.length > 0 ? (
             <PieChart data={groupsChartData} height={300} />
           ) : (
@@ -154,37 +202,52 @@ export function AnalyticsPage() {
           )}
         </Card>
 
-        <Card>
+        <Card className={cn(
+          'hover:shadow-lg hover:border-gray-300',
+          'transition-all duration-300'
+        )}>
           <CardHeader title="Group Breakdown" />
           {demographics?.by_group && demographics.by_group.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {demographics.by_group.map((item, index) => {
                 const total = demographics.by_group.reduce((sum, g) => sum + g.count, 0);
                 const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
                 const colors = [
                   'bg-primary-500',
-                  'bg-green-500',
-                  'bg-yellow-500',
-                  'bg-red-500',
-                  'bg-purple-500',
+                  'bg-emerald-500',
+                  'bg-amber-500',
+                  'bg-rose-500',
+                  'bg-violet-500',
                   'bg-pink-500',
                 ];
 
                 return (
-                  <div key={item.group || 'unassigned'} className="flex items-center gap-4">
-                    <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`} />
+                  <div
+                    key={item.group || 'unassigned'}
+                    className={cn(
+                      'flex items-center gap-4 p-3 rounded-xl',
+                      'hover:bg-gray-50 transition-colors cursor-default'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-4 h-4 rounded-lg shadow-sm',
+                      colors[index % colors.length]
+                    )} />
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-semibold text-gray-900">
                           {item.group || 'Unassigned'}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          {item.count} ({percentage}%)
+                        <span className="text-sm font-medium text-gray-600">
+                          {item.count} <span className="text-gray-400">({percentage}%)</span>
                         </span>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${colors[index % colors.length]} transition-all`}
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            colors[index % colors.length]
+                          )}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>

@@ -138,19 +138,23 @@ function FeaturePill({ text, icon: Icon, className }: FeaturePillProps) {
 
 function LoginCard() {
   return (
-    <div className="w-full max-w-md mx-auto md:mx-0 md:ml-auto">
-      {/* Glass morphism container */}
+    <div className="w-full max-w-[420px] mx-auto md:mx-0 md:ml-auto">
+      {/* Modern card container with enhanced styling */}
       <div
         className={cn(
-          'glass-card rounded-2xl shadow-xl overflow-hidden relative animate-slide-up p-8',
-          'border-l-4 border-l-primary-500'
+          'bg-white rounded-3xl shadow-2xl overflow-hidden relative animate-slide-up',
+          'p-8 sm:p-10',
+          'ring-1 ring-black/5'
         )}
       >
+        {/* Subtle top accent gradient */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700" />
+
         {/* Form Content via Outlet */}
         <Outlet />
 
         {/* Footer Links */}
-        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-center gap-6 text-xs text-gray-500 font-medium">
+        <div className="mt-8 pt-6 border-t border-gray-100 flex justify-center gap-8 text-xs text-gray-400 font-medium">
           <Link
             to="/privacy"
             className="hover:text-primary-600 transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-primary-500"

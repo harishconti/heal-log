@@ -3,12 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, ArrowRight, Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react';
+import { Mail, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuthStore } from '../../store';
-import { Button, Input } from '../../components/ui';
+import { Button, Input, Card } from '../../components/ui';
 import { getErrorMessage, getErrorStatus, isAxiosError } from '../../utils/errorUtils';
-import { cn } from '@/utils';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -69,163 +68,108 @@ export function LoginPage() {
 
   if (needsVerification) {
     return (
-      <div className="text-center py-4">
-        <div className="space-y-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-primary-100">
-            <Mail className="h-10 w-10 text-primary-600" />
-          </div>
-          <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-gray-900">Verify Your Email</h2>
-            <p className="text-gray-500 leading-relaxed">
-              We've sent a verification code to{' '}
-              <span className="font-semibold text-gray-700 block mt-1">{verificationEmail}</span>
-            </p>
-          </div>
-          <Link
-            to={`/verify-otp?email=${encodeURIComponent(verificationEmail)}`}
-            className={cn(
-              'inline-flex items-center justify-center gap-2.5 w-full h-14',
-              'bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl',
-              'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
-              'hover:-translate-y-0.5 transition-all duration-300',
-              'active:translate-y-0 active:shadow-md'
-            )}
-          >
-            Enter verification code
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+      <Card variant="elevated" padding="lg" className="text-center animate-fade-in border-0 shadow-xl shadow-primary-900/5 ring-1 ring-gray-200">
+        <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Mail className="h-8 w-8 text-primary-600" />
         </div>
-      </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your inbox</h2>
+        <p className="text-gray-500 mb-6">
+          We sent a verification code to <span className="font-medium text-gray-900">{verificationEmail}</span>
+        </p>
+        <Link to={`/verify-otp?email=${encodeURIComponent(verificationEmail)}`}>
+          <Button fullWidth>
+            Enter Code <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </Link>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-7">
-      {/* Header with Pro Badge */}
-      <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1.5">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Welcome back
-            </h2>
-            <p className="text-gray-500 text-sm">
-              Sign in to access your dashboard
-            </p>
-          </div>
-          {/* Pro Badge - Modern floating style */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-full text-xs font-semibold text-amber-700 border border-amber-200/60 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" />
-            PRO
-          </div>
-        </div>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="p-4 bg-danger-50 border border-danger-200 rounded-xl animate-slide-up flex items-start gap-3">
-          <div className="w-5 h-5 rounded-full bg-danger-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-danger-600 text-xs font-bold">!</span>
-          </div>
-          <p className="text-sm text-danger-700 font-medium leading-relaxed">{error}</p>
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="space-y-4">
-          <Input
-            label="Email address"
-            type="email"
-            autoComplete="email"
-            placeholder="doctor@example.com"
-            error={errors.email?.message}
-            icon={<Mail className="w-5 h-5" />}
-            required
-            {...register('email')}
-          />
-
-          <div className="space-y-2">
-            <Input
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              error={errors.password?.message}
-              suffixIcon={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-primary-600 transition-colors focus:outline-none p-1 rounded-md hover:bg-gray-50"
-                  tabIndex={-1}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              }
-              required
-              {...register('password')}
-            />
-            {/* Forgot password link - right aligned under password field */}
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-primary-500"
-              >
-                Forgot password?
-              </Link>
+    <>
+      {/* 1. Main Login Card */}
+      <Card variant="elevated" padding="none" className="border-0 shadow-xl shadow-primary-900/5 ring-1 ring-gray-200">
+        <div className="p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+              <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold border border-amber-100">
+                <Sparkles className="w-3 h-3" />
+                PRO
+              </div>
             </div>
+            <p className="text-gray-500 text-sm">Enter your credentials to access the workspace.</p>
           </div>
-        </div>
 
-        {/* Enhanced CTA Button */}
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-danger-50 border border-danger-100 flex items-start gap-3">
+              <div className="text-danger-600 mt-0.5">⚠️</div>
+              <p className="text-sm text-danger-700 font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <Input
+              label="Email"
+              type="email"
+              placeholder="doctor@heallog.com"
+              error={errors.email?.message}
+              icon={<Mail className="w-5 h-5" />}
+              {...register('email')}
+            />
+
+            <div className="space-y-1">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                error={errors.password?.message}
+                suffixIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                }
+                {...register('password')}
+              />
+              <div className="flex justify-end pt-1">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
+              Sign in
+            </Button>
+          </form>
+        </div>
+      </Card>
+
+      {/* 2. Registration Section - MOVED OUTSIDE THE CARD */}
+      <div className="text-center space-y-4">
+        <p className="text-sm text-gray-500">
+          Don't have an account yet?
+        </p>
         <Button
-          type="submit"
+          variant="outline"
           size="lg"
           fullWidth
-          className={cn(
-            'h-12 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl',
-            'shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30',
-            'hover:-translate-y-0.5 transition-all duration-300',
-            'active:translate-y-0 active:shadow-md'
-          )}
-          loading={isSubmitting}
+          onClick={() => navigate('/register')}
+          className="bg-transparent border-gray-300 hover:bg-white hover:border-gray-400"
         >
-          Sign in
+          Create an account
         </Button>
-
-        {/* Security indicator */}
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>256-bit SSL encrypted</span>
-        </div>
-      </form>
-
-      {/* Divider */}
-      <div className="relative py-2">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="px-4 bg-white text-sm text-gray-400">
-            New to HealLog?
-          </span>
-        </div>
       </div>
-
-      {/* Register link */}
-      <Button
-        variant="outline"
-        size="lg"
-        fullWidth
-        className="h-12 rounded-xl border-2 border-gray-200 hover:border-primary-300 hover:bg-primary-50/50 transition-all duration-200"
-        onClick={() => navigate('/register')}
-      >
-        Create an account
-      </Button>
-    </div>
+    </>
   );
 }

@@ -78,7 +78,9 @@ If you discover a security vulnerability in HealLog, please report it responsibl
 
 | Version | Supported |
 |---------|-----------|
-| 1.0.x | Yes (current) |
+| 1.3.x | Yes (current) |
+| 1.2.x | Yes (security patches only) |
+| 1.0.x - 1.1.x | No |
 | < 1.0.0 | No |
 
 ---

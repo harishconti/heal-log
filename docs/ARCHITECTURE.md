@@ -76,16 +76,16 @@ HealLog is a patient management application designed for healthcare professional
 ```
 heal-log/
 ├── frontend/                 # React Native mobile app
-│   ├── app/                  # Expo Router screens (25+ screens)
+│   ├── app/                  # Expo Router screens (31 screens)
 │   │   ├── (auth)/           # Authentication screens
 │   │   ├── (tabs)/           # Main tab screens
 │   │   └── _layout.tsx       # Root layout
-│   ├── components/           # Reusable components
+│   ├── components/           # Reusable components (30+)
 │   │   ├── core/             # Core UI components
 │   │   ├── forms/            # Form components
 │   │   └── ui/               # UI primitives
-│   ├── contexts/             # React contexts
-│   ├── models/               # WatermelonDB models
+│   ├── contexts/             # React contexts (5 contexts)
+│   ├── models/               # WatermelonDB models (5 models)
 │   ├── services/             # API services (12+ services)
 │   ├── store/                # Zustand global store
 │   ├── constants/            # App constants
@@ -102,13 +102,13 @@ heal-log/
 │
 ├── backend/                  # FastAPI backend
 │   ├── app/                  # Application modules
-│   │   ├── api/              # API route handlers (17 routers)
-│   │   ├── core/             # Config, security, exceptions
+│   │   ├── api/              # API route handlers (18 routers)
+│   │   ├── core/             # Config, security, exceptions, auth context
 │   │   ├── db/               # Database connection
 │   │   ├── models/           # Beanie ODM models
-│   │   ├── schemas/          # Pydantic schemas
-│   │   ├── services/         # Business logic (16 services)
-│   │   └── middleware/       # Request logging
+│   │   ├── schemas/          # Pydantic schemas (15 files)
+│   │   ├── services/         # Business logic (18 services)
+│   │   └── middleware/       # CORS, Auth, Logging, Security Headers, CSRF
 │   ├── tests/                # Test files (48 tests)
 │   ├── scripts/              # Database scripts
 │   └── main.py               # Application entry point

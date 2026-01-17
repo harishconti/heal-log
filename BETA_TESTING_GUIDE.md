@@ -221,5 +221,5 @@ Your participation in the beta program helps make HealLog better for all healthc
 
 ---
 
-*Last Updated: January 1, 2026*
-*Version: 3.1.0*
+*Last Updated: January 17, 2026*
+*Version: 1.3.9*

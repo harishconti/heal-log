@@ -4,7 +4,7 @@ This document outlines the planned features and improvements for HealLog. Items 
 
 ---
 
-## Current Version: 1.2.2
+## Current Version: 1.3.9
 
 ### Released Features
 - User registration and authentication with JWT
@@ -26,12 +26,19 @@ This document outlines the planned features and improvements for HealLog. Items 
 - Google Contacts sync integration with duplicate detection
 - Biometric authentication (fingerprint/Face ID)
 - Push notifications support
+- **NEW (v1.3.x):** Architecture improvements
+  - Redis-backed token blacklist for distributed deployments
+  - Unified AuthMiddleware with single JWT processing
+  - Async-safe locks in account lockout service
+  - Standardized error responses with machine-readable codes
+  - Structured logging with sensitive data masking
+  - Centralized rate limit constants
 
 ---
 
 ## Phase 1: Beta Release
 
-**Status:** Complete (v1.2.2)
+**Status:** Complete (v1.3.9)
 
 ### Critical (Must Have)
 - [x] Core authentication flow
@@ -226,7 +233,9 @@ Have a feature idea? Here's how to submit it:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.2.2 | Jan 2026 | Current stable - Android UI/UX improvements |
+| 1.3.9 | Jan 2026 | Current stable - Architecture improvements complete |
+| 1.3.0 | Jan 2026 | Phase 1 security fixes, middleware improvements |
+| 1.2.2 | Jan 2026 | Android UI/UX improvements |
 | 1.2.1 | Jan 2026 | Landing page redesign |
 | 1.0.9 | Jan 2026 | Web dashboard, sync fixes, Google Contacts integration |
 | 1.0.0 | Dec 2025 | Initial release with core features |

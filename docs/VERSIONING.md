@@ -54,22 +54,22 @@ HealLog maintains version information in the following locations:
 
 ### Root (`VERSION`)
 ```
-1.2.2
+1.3.9
 ```
 
 ### Frontend (`frontend/package.json`)
 ```json
 {
   "name": "frontend",
-  "version": "1.2.2"
+  "version": "1.3.9"
 }
 ```
 
 ### Backend (`backend/VERSION.json`)
 ```json
 {
-  "version": "1.2.2",
-  "build_date": "2026-01-11T00:00:00Z",
+  "version": "1.3.9",
+  "build_date": "2026-01-17T00:00:00Z",
   "features": ["..."],
   "fixes": ["..."]
 }
@@ -79,9 +79,9 @@ HealLog maintains version information in the following locations:
 ```json
 {
   "expo": {
-    "version": "1.2.2",
+    "version": "1.3.9",
     "android": {
-      "versionCode": 19
+      "versionCode": 26
     }
   }
 }

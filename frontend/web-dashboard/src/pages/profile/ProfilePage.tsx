@@ -126,14 +126,14 @@ export function ProfilePage() {
   const isPro = user?.plan === 'pro';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full max-w-full lg:max-w-5xl xl:max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Profile Settings</h1>
         <p className="text-gray-500 mt-2 font-medium">Manage your account settings and preferences</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Left Column: Profile Card */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="text-center overflow-hidden relative">
@@ -250,7 +250,7 @@ export function ProfilePage() {
               </div>
 
               <div className="flex justify-end pt-4 border-t border-gray-50">
-                <Button type="submit" loading={isUpdatingProfile} size="lg" className="min-w-[140px]">
+                <Button type="submit" loading={isUpdatingProfile} size="lg" className="w-full sm:w-auto sm:min-w-[140px]">
                   Save Changes
                 </Button>
               </div>
@@ -262,7 +262,7 @@ export function ProfilePage() {
             <CardHeader title="Subscription Plan" />
             <div className="flex flex-col sm:flex-row gap-6 items-start">
                <div className={`
-                 w-full sm:w-auto p-6 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center min-w-[160px]
+                 w-full sm:w-auto p-6 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center sm:min-w-[160px]
                  ${isPro ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100' : 'bg-gray-50 border border-gray-100'}
                `}>
                   <div className={`p-3 rounded-xl mb-3 ${isPro ? 'bg-amber-100' : 'bg-gray-200'}`}>

@@ -219,7 +219,7 @@ export function DashboardPage() {
         </div>
 
         {/* KPI Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <KPICard
             title="Total Patients"
             value={stats?.total_patients || 0}
@@ -249,7 +249,7 @@ export function DashboardPage() {
       </section>
 
       {/* Main Content Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Left Column (Chart/Promo) */}
         <div className="lg:col-span-2">
           {isPro ? (
@@ -275,7 +275,7 @@ export function DashboardPage() {
                   title="Patient Growth Chart"
                 />
               ) : (
-                <div className="h-[300px] flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <div className="h-[250px] sm:h-[300px] lg:h-[320px] flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
                   <Activity className="h-10 w-10 mb-3 text-gray-300" />
                   <p className="font-medium">No growth data available yet</p>
                   <p className="text-sm mt-1">Add patients to see trends</p>
@@ -295,7 +295,7 @@ export function DashboardPage() {
                   </Button>
                 </Link>
               }
-              className="h-full min-h-[380px] flex flex-col justify-center"
+              className="h-full min-h-[300px] sm:min-h-[350px] lg:min-h-[380px] flex flex-col justify-center"
             />
           )}
         </div>

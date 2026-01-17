@@ -201,7 +201,7 @@ export function ChartCard({
         </div>
         {action && <div>{action}</div>}
       </div>
-      <div style={{ minHeight }}>
+      <div className="min-h-[250px] sm:min-h-[300px] lg:min-h-[320px]">
         {children}
       </div>
     </Card>
@@ -310,16 +310,16 @@ export function PromoCard({
     <div
       className={`
         bg-gradient-to-br from-primary-600 to-primary-700
-        rounded-2xl p-8 text-white text-center
+        rounded-2xl p-6 sm:p-8 lg:p-10 text-white text-center
         shadow-lg shadow-primary-500/20
         ${className}
       `}
     >
-      <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
-        <Icon className="w-8 h-8 text-white" />
+      <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+        <Icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
       </div>
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-primary-100 mb-8 leading-relaxed max-w-sm mx-auto">
+      <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">{title}</h3>
+      <p className="text-primary-100 mb-6 sm:mb-8 leading-relaxed max-w-full sm:max-w-sm mx-auto text-sm sm:text-base">
         {description}
       </p>
       {action}

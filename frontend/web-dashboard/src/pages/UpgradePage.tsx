@@ -71,7 +71,7 @@ export function UpgradePage() {
 
   if (isPro) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-16">
+      <div className="max-w-full sm:max-w-2xl mx-auto text-center py-12 sm:py-16">
         <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
           <Crown className="h-10 w-10 text-amber-500" />
         </div>
@@ -87,7 +87,7 @@ export function UpgradePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full max-w-full lg:max-w-5xl xl:max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button

@@ -62,7 +62,7 @@ export function DashboardLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl shadow-gray-200/50 transform transition-transform duration-300 ease-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 w-64 lg:w-72 xl:w-80 bg-white shadow-xl shadow-gray-200/50 transform transition-transform duration-300 ease-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
         {/* Logo */}
@@ -148,7 +148,7 @@ export function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-72 min-h-screen flex flex-col">
+      <div className="lg:pl-72 xl:pl-80 min-h-screen flex flex-col">
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
           <div className="flex items-center justify-between h-16 px-4 lg:px-8">
@@ -230,8 +230,8 @@ export function DashboardLayout() {
         </header>
 
         {/* Page content */}
-        <main id="main-content" className="flex-1 p-6 lg:p-12 bg-gray-50/50" tabIndex={-1}>
-          <div className="max-w-[1600px] mx-auto space-y-8">
+        <main id="main-content" className="flex-1 p-6 lg:p-8 xl:p-12 bg-gray-50/50" tabIndex={-1}>
+          <div className="w-full max-w-full 2xl:max-w-[1800px] mx-auto space-y-8">
             <Outlet />
           </div>
         </main>

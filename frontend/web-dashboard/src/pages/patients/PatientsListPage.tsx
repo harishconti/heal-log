@@ -124,7 +124,7 @@ export function PatientsListPage() {
       key: 'initial_complaint',
       header: 'Complaint',
       render: (patient) => (
-        <div className="max-w-[240px] truncate text-sm text-gray-600">
+        <div className="max-w-[180px] sm:max-w-[240px] lg:max-w-xs xl:max-w-sm truncate text-sm text-gray-600" title={patient.initial_complaint || '-'}>
           {patient.initial_complaint || '-'}
         </div>
       ),
@@ -191,15 +191,15 @@ export function PatientsListPage() {
               <Filter className="h-4 w-4" />
               <span className="text-sm font-medium hidden sm:inline">Filter by Group:</span>
             </div>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <select
                 value={filters.group || ''}
                 onChange={(e) => handleGroupFilter(e.target.value || null)}
                 disabled={isLoadingGroups}
                 className={`
-                  appearance-none block w-full rounded-xl border px-4 py-3 pr-10
+                  appearance-none block w-full sm:min-w-[160px] lg:min-w-[180px] rounded-xl border px-4 py-3 pr-10
                   text-sm font-medium transition-all focus:outline-none focus:ring-4 focus:ring-primary-100
-                  min-w-[180px] cursor-pointer
+                  cursor-pointer
                   ${groupsError
                     ? 'border-red-300 bg-red-50 text-red-700'
                     : isLoadingGroups

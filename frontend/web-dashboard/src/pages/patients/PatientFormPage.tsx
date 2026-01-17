@@ -130,7 +130,7 @@ export function PatientFormPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full max-w-full lg:max-w-5xl xl:max-w-6xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
         <Link
           to={isEditing ? `/patients/${id}` : '/patients'}
@@ -328,7 +328,7 @@ export function PatientFormPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" size="lg" loading={isSubmitting} className="min-w-[160px] shadow-lg shadow-primary-500/20">
+          <Button type="submit" size="lg" loading={isSubmitting} className="w-full sm:w-auto sm:min-w-[160px] shadow-lg shadow-primary-500/20">
             {isEditing ? 'Save Changes' : 'Create Patient'}
           </Button>
         </div>

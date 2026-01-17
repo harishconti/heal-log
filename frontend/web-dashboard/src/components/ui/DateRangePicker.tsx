@@ -165,7 +165,7 @@ export function DateRangePicker({
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-2 z-50 bg-white rounded-2xl border border-gray-200 shadow-xl p-4 min-w-[320px]"
+          className="absolute top-full left-0 mt-2 z-50 bg-white rounded-2xl border border-gray-200 shadow-xl p-4 w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[320px] max-w-md"
           role="dialog"
           aria-label="Date range picker"
         >

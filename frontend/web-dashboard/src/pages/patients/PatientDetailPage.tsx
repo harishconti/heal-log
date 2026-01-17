@@ -110,7 +110,7 @@ export function PatientDetailPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 w-full max-w-full xl:max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ export function PatientDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Patient Info Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           {/* Quick Info Card */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, Theme } from '@/contexts/ThemeContext';
 
 interface DropdownOption {
   label: string;
@@ -63,37 +63,37 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: theme.spacing.md - 4,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.sm,
     backgroundColor: theme.colors.surface,
   },
   dropdownText: {
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.md,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
   },
   modalContent: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm + 2,
     width: '80%',
     maxHeight: '50%',
   },
   option: {
-    padding: 15,
+    padding: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
   optionText: {
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.md,
   },
 });
 

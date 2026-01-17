@@ -94,7 +94,6 @@ const baseStyles = StyleSheet.create({
   strengthBar: {
     flex: 1,
     height: 4,
-    backgroundColor: '#E5E7EB',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -132,7 +131,7 @@ const createDynamicStyles = (theme: Theme, hasError: boolean, isFocused: boolean
       minHeight: heightMap[size as keyof typeof heightMap] || 52,
       ...Platform.select({
         ios: {
-          shadowColor: isFocused ? theme.colors.primary : '#000',
+          shadowColor: isFocused ? theme.colors.primary : theme.colors.shadow,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isFocused ? 0.1 : 0.05,
           shadowRadius: 4,
@@ -275,7 +274,7 @@ export const ControlledInput = <T extends FieldValues = FieldValues>({
             {/* Password strength indicator */}
             {passwordStrength && value && (
               <View style={baseStyles.strengthContainer}>
-                <View style={baseStyles.strengthBar}>
+                <View style={[baseStyles.strengthBar, { backgroundColor: theme.colors.border }]}>
                   <View
                     style={[
                       baseStyles.strengthFill,

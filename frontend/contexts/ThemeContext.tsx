@@ -18,6 +18,10 @@ export interface Theme {
     shadow: string;
     card: string;
     notification: string;
+    // Semantic colors for UI components
+    buttonText: string;        // Text color on filled buttons
+    disabled: string;          // Disabled state background
+    overlay: string;           // Modal/sheet overlay color
   };
   spacing: {
     xs: number;
@@ -68,6 +72,10 @@ const lightTheme: Theme = {
     shadow: '#1A8CFF',         // Blue tint shadow
     card: '#FFFFFF',           // White cards
     notification: '#1A8CFF',   // Blue notifications
+    // Semantic colors for UI components
+    buttonText: '#FFFFFF',     // White text on filled buttons
+    disabled: '#9CA3AF',       // Gray for disabled states
+    overlay: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black overlay
   },
   spacing: {
     xs: 4,
@@ -118,6 +126,10 @@ const darkTheme: Theme = {
     shadow: '#000000',         // Pure black shadow
     card: '#1A2332',           // Dark card background
     notification: '#4DA8FF',   // Light blue
+    // Semantic colors for UI components
+    buttonText: '#FFFFFF',     // White text on filled buttons
+    disabled: '#4B5563',       // Darker gray for disabled states
+    overlay: 'rgba(0, 0, 0, 0.7)', // Darker overlay for dark mode
   },
 };
 

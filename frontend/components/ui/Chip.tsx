@@ -160,14 +160,14 @@ export const Chip: React.FC<ChipProps> = ({
     return {
       fontSize: sizeStyles.fontSize,
       fontWeight: '500',
-      color: isFilledOrSelected ? '#FFFFFF' : colors.text,
+      color: isFilledOrSelected ? theme.colors.buttonText : colors.text,
       ...textStyle,
     };
   };
 
   const getIconColor = () => {
     const isFilledOrSelected = variant === 'filled' || selected;
-    return isFilledOrSelected ? '#FFFFFF' : colors.text;
+    return isFilledOrSelected ? theme.colors.buttonText : colors.text;
   };
 
   const content = (

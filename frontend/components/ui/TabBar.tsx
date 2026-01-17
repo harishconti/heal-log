@@ -116,7 +116,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         backgroundColor: isActive ? theme.colors.surface : 'transparent',
         borderRadius: theme.borderRadius.sm,
         ...(isActive && {
-          shadowColor: '#000',
+          shadowColor: theme.colors.shadow,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.1,
           shadowRadius: 2,
@@ -143,7 +143,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         inactive: theme.colors.textSecondary,
       },
       pills: {
-        active: '#FFFFFF',
+        active: theme.colors.buttonText,
         inactive: theme.colors.textSecondary,
       },
       segmented: {
@@ -165,7 +165,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         inactive: theme.colors.textSecondary,
       },
       pills: {
-        active: '#FFFFFF',
+        active: theme.colors.buttonText,
         inactive: theme.colors.textSecondary,
       },
       segmented: {
@@ -211,8 +211,8 @@ export const TabBar: React.FC<TabBarProps> = ({
           >
             <Text
               style={{
-                color: '#FFFFFF',
-                fontSize: 11,
+                color: theme.colors.buttonText,
+                fontSize: theme.typography.sizes.xs - 1,
                 fontWeight: '600',
               }}
             >

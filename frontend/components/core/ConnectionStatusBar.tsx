@@ -236,14 +236,14 @@ const ConnectionStatusBar: React.FC<ConnectionStatusBarProps> = ({
 const createStyles = (theme: any, bgColor: string) =>
   StyleSheet.create({
     container: {
-      marginHorizontal: 16,
-      marginVertical: 8,
-      borderRadius: 12,
+      marginHorizontal: theme.spacing.md,
+      marginVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
       backgroundColor: bgColor,
       overflow: 'hidden',
       ...Platform.select({
         ios: {
-          shadowColor: '#000',
+          shadowColor: theme.colors.shadow,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.1,
           shadowRadius: 2,
@@ -256,20 +256,20 @@ const createStyles = (theme: any, bgColor: string) =>
     content: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 12,
+      padding: theme.spacing.md - 4,
     },
     iconContainer: {
-      marginRight: 12,
+      marginRight: theme.spacing.md - 4,
     },
     textContainer: {
       flex: 1,
     },
     primaryText: {
-      fontSize: 14,
+      fontSize: theme.typography.sizes.sm,
       fontWeight: '600',
     },
     secondaryText: {
-      fontSize: 12,
+      fontSize: theme.typography.sizes.xs,
       marginTop: 2,
     },
     actionButton: {
@@ -286,23 +286,23 @@ const createStyles = (theme: any, bgColor: string) =>
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 6,
-      marginLeft: 8,
+      marginLeft: theme.spacing.sm,
     },
     badgeText: {
-      fontSize: 11,
+      fontSize: theme.typography.sizes.xs - 1,
       fontWeight: 'bold',
-      color: '#fff',
+      color: theme.colors.buttonText,
     },
     safetyIndicator: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingBottom: 10,
+      paddingHorizontal: theme.spacing.md - 4,
+      paddingBottom: theme.spacing.sm + 2,
       paddingTop: 0,
       gap: 6,
     },
     safetyText: {
-      fontSize: 11,
+      fontSize: theme.typography.sizes.xs - 1,
       fontWeight: '500',
     },
   });

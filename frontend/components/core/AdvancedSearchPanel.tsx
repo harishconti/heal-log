@@ -282,7 +282,7 @@ const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
                   ]}
                 >
                   {localFilters.favoritesOnly && (
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark" size={14} color={theme.colors.buttonText} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -306,7 +306,7 @@ const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
                   ]}
                 >
                   {localFilters.recentlyAdded && (
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark" size={14} color={theme.colors.buttonText} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -321,7 +321,7 @@ const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
               </Text>
             )}
             <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-              <Ionicons name="search" size={20} color="#fff" />
+              <Ionicons name="search" size={20} color={theme.colors.buttonText} />
               <Text style={styles.applyText}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
@@ -335,17 +335,17 @@ const createStyles = (theme: any, fontScale: number) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.colors.overlay,
       justifyContent: 'flex-end',
     },
     container: {
       backgroundColor: theme.colors.background,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: theme.borderRadius.xl,
+      borderTopRightRadius: theme.borderRadius.xl,
       maxHeight: '90%',
       ...Platform.select({
         ios: {
-          shadowColor: '#000',
+          shadowColor: theme.colors.shadow,
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.2,
           shadowRadius: 12,
@@ -432,7 +432,7 @@ const createStyles = (theme: any, fontScale: number) =>
       color: theme.colors.textSecondary,
     },
     presetTextActive: {
-      color: '#fff',
+      color: theme.colors.buttonText,
       fontWeight: '600',
     },
     dateRangeDisplay: {
@@ -470,7 +470,7 @@ const createStyles = (theme: any, fontScale: number) =>
       color: theme.colors.textSecondary,
     },
     groupTextActive: {
-      color: '#fff',
+      color: theme.colors.buttonText,
       fontWeight: '600',
     },
     toggleRow: {
@@ -529,7 +529,7 @@ const createStyles = (theme: any, fontScale: number) =>
     applyText: {
       fontSize: 16 * fontScale,
       fontWeight: '600',
-      color: '#fff',
+      color: theme.colors.buttonText,
     },
   });
 

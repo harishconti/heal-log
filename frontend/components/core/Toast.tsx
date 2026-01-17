@@ -52,7 +52,7 @@ const Toast = forwardRef<ToastHandles, {}>((props, ref) => {
 
   return (
     <Animated.View style={[styles.container, { backgroundColor, opacity }]}>
-      <Ionicons name={icon} size={24} color="#fff" />
+      <Ionicons name={icon} size={24} color={theme.colors.buttonText} />
       <Text style={styles.message}>{message}</Text>
     </Animated.View>
   );
@@ -62,12 +62,12 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 50,
-    left: 20,
-    right: 20,
+    left: theme.spacing.lg - 4,
+    right: theme.spacing.lg - 4,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 8,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -75,9 +75,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     elevation: 5,
   },
   message: {
-    color: '#fff',
-    marginLeft: 10,
-    fontSize: 16,
+    color: theme.colors.buttonText,
+    marginLeft: theme.spacing.sm + 2,
+    fontSize: theme.typography.sizes.md,
   },
 });
 

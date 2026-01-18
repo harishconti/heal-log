@@ -2,7 +2,7 @@
 
 HealLog is a patient management system with a FastAPI backend and a React Native frontend designed for Web, iOS, and Android platforms.
 
-**Current Version:** 1.5.6 | **Backend Tests:** 48 passing | **API Routers:** 18
+**Current Version:** 1.5.7 | **Backend Tests:** 48 passing | **API Routers:** 18
 
 ## Features
 
@@ -271,7 +271,7 @@ REDIS_URL=redis://localhost:6379
 
 ## Project Status
 
-- **Version:** 1.5.6 (stable)
+- **Version:** 1.5.7 (stable)
 - **Tests:** 48 backend tests passing
 - **Endpoints:** All 18 API routers operational
 - **Screens:** 31 React Native screens with Expo Router

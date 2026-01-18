@@ -158,21 +158,44 @@ const handleSubmit = (e: React.FormEvent) => {
 
 ---
 
-### 1.4 OTP Verification Page (NEW - Does Not Exist)
+### 1.4 Email Verification Screen (OTP)
 
-**Status**: Missing in webapp, exists in web-dashboard
+**File**: `components/VerifyEmailScreen.tsx`
 
-**Reference**: `web-dashboard/src/pages/auth/VerifyOtpPage.tsx`
+**Status**: ✅ UI Implemented (Mock)
 
-**Required Implementation**:
+**Current State**: Mock implementation with simulated verification
+```typescript
+// Lines 57-66: Mock OTP verification
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (otp.some(digit => digit === '')) return;
+  setIsLoading(true);
+  setTimeout(() => {
+    setIsLoading(false);
+    onVerify();
+  }, 1500);
+};
+```
 
-| Feature | Description |
-|---------|-------------|
-| OTP Input | 6-digit code input with auto-focus |
-| Timer | 60-second cooldown for resend |
-| Validation | Numeric only, 6 digits |
-| Email Display | Show email being verified (sanitized) |
-| Resend | Button with cooldown timer |
+**Implemented Features**:
+- ✅ 6-digit OTP input with auto-focus
+- ✅ Numeric-only validation
+- ✅ Paste support for OTP codes
+- ✅ Auto-advance to next input on entry
+- ✅ Backspace navigation between inputs
+- ✅ Loading state animation
+- ✅ Resend button (UI only)
+
+**Required Changes**:
+
+| Feature | Current | Required |
+|---------|---------|----------|
+| API Call | None | `POST /api/auth/verify-otp` |
+| Resend OTP | UI only | `POST /api/auth/resend-otp` with cooldown |
+| Email Display | Not shown | Display email being verified |
+| Timer | None | 60-second cooldown for resend |
+| Error Handling | None | Handle invalid OTP, expired OTP |
 
 **Backend Endpoints**:
 - `POST /api/auth/verify-otp` - Verify OTP code
@@ -188,26 +211,66 @@ const handleSubmit = (e: React.FormEvent) => {
 // Response: { success, message }
 ```
 
+**New Features Needed**:
+- [ ] API integration for OTP verification
+- [ ] Resend functionality with 60s cooldown timer
+- [ ] Display email address being verified
+- [ ] Error handling for invalid/expired OTP
+- [ ] Rate limit error handling
+
 ---
 
-### 1.5 Reset Password Page (NEW - Does Not Exist)
+### 1.5 Reset Password Screen
 
-**Status**: Missing in webapp
+**File**: `components/ResetPasswordScreen.tsx`
 
-**Required Implementation**:
+**Status**: ✅ UI Implemented (Mock)
 
-| Feature | Description |
-|---------|-------------|
-| Token from URL | Extract reset token from URL params |
-| New Password | Input with strength indicator |
-| Confirm Password | Confirmation field |
-| Validation | Same password requirements as registration |
+**Current State**: Mock implementation with simulated password reset
+```typescript
+// Lines 16-28: Mock reset password
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (password !== confirmPassword) {
+    return;
+  }
+  setIsLoading(true);
+  setTimeout(() => {
+    setIsLoading(false);
+    onSubmit();
+  }, 1500);
+};
+```
+
+**Implemented Features**:
+- ✅ New password input with show/hide toggle
+- ✅ Confirm password input with show/hide toggle
+- ✅ Password match validation
+- ✅ Loading state animation
+- ✅ Back to login navigation
+
+**Required Changes**:
+
+| Feature | Current | Required |
+|---------|---------|----------|
+| API Call | None | `POST /api/auth/reset-password` |
+| Token from URL | None | Extract reset token from URL params |
+| Password Strength | None | Indicator with requirements display |
+| Validation | Basic match check | 12+ chars, uppercase, lowercase, digit, special char |
+| Error Handling | None | Handle invalid/expired token errors |
 
 **Backend Endpoint**: `POST /api/auth/reset-password`
 ```typescript
 // Body: { token, new_password }
 // Response: { success, message }
 ```
+
+**New Features Needed**:
+- [ ] API integration for password reset
+- [ ] Extract reset token from URL query parameters
+- [ ] Password strength indicator (like web-dashboard)
+- [ ] Password requirements display
+- [ ] Handle 400/404 for invalid/expired token
 
 ---
 
@@ -328,6 +391,83 @@ GET  /api/patients/groups/
 - [ ] Filter tabs (All, Favorites, Critical, Department)
 - [ ] Create patient modal/page
 - [ ] Delete confirmation
+
+---
+
+## 4.1 Register Patient Page
+
+**File**: `components/RegisterPatientPage.tsx`
+
+**Status**: ✅ UI Implemented (Mock)
+
+**Current State**: Form submission logs to console only
+```typescript
+// Lines 40-43: Mock patient registration
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  onSubmit(formData);  // Currently just passes data to parent
+};
+```
+
+**Implemented Features**:
+- ✅ Full patient registration form with styled inputs
+- ✅ Personal info fields (Full Name, Gender, Age)
+- ✅ Contact info fields (Phone, Email)
+- ✅ Location dropdown
+- ✅ Medical Group Category dropdown
+- ✅ Emergency contact section (Name, Phone)
+- ✅ Reason for visit textarea (optional)
+- ✅ Back navigation to Patients list
+- ✅ Favorite star toggle (UI only)
+
+**Form Fields**:
+| Field | Type | Required |
+|-------|------|----------|
+| fullName | text | Yes |
+| gender | select (Male/Female/Other) | Yes |
+| age | number | Yes |
+| phone | tel | Yes |
+| email | email | No |
+| location | select | Yes |
+| category | select (Medical Group) | Yes |
+| emergencyName | text | Yes |
+| emergencyPhone | tel | Yes |
+| reason | textarea | No |
+
+**Required Changes**:
+
+| Feature | Current | Required |
+|---------|---------|----------|
+| API Call | None | `POST /api/patients/` |
+| Field Mapping | Local field names | Map to backend schema (name, year_of_birth, etc.) |
+| Validation | Basic HTML5 | Zod/custom validation |
+| Photo Upload | None | `POST /api/patients/:id/photo` |
+| Success Feedback | Navigate back | Toast notification + navigate |
+| Error Handling | None | Handle validation errors, duplicates |
+
+**Backend Endpoint**: `POST /api/patients/`
+```typescript
+// Request: application/json
+// Body: {
+//   name: string,
+//   phone?: string,
+//   email?: string,
+//   location?: string,
+//   group?: string,
+//   year_of_birth?: number,
+//   gender?: 'male' | 'female' | 'other',
+//   initial_complaint?: string
+// }
+// Response: Patient object
+```
+
+**New Features Needed**:
+- [ ] API integration for patient creation
+- [ ] Map form fields to backend schema
+- [ ] Validation with error messages
+- [ ] Success toast notification
+- [ ] Patient photo upload
+- [ ] Favorite toggle API integration
 
 ---
 
@@ -485,8 +625,19 @@ const handleLogout = () => {
 
 **File**: `types.ts`
 
-**Current State**: Basic types
+**Current State**: Basic types with ViewState enum
 ```typescript
+export interface Patient {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  lastVisit: string;
+  condition: string;
+  status: 'Critical' | 'Stable' | 'Recovering';
+  notes: string;
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   user: {
@@ -494,6 +645,17 @@ export interface AuthState {
     email: string;
     role: string;
   } | null;
+}
+
+export enum ViewState {
+  LOGIN = 'LOGIN',
+  DASHBOARD = 'DASHBOARD',
+  PATIENTS = 'PATIENTS',
+  REGISTER_PATIENT = 'REGISTER_PATIENT',  // ✅ NEW
+  ANALYTICS = 'ANALYTICS',
+  AI_SCRIBE = 'AI_SCRIBE',
+  PROFILE = 'PROFILE',
+  SETTINGS = 'SETTINGS'
 }
 ```
 
@@ -552,18 +714,25 @@ export interface PaginatedResponse<T> { ... }
 
 ### Required New Files
 
-| File | Purpose |
-|------|---------|
-| `api/client.ts` | Axios instance, token management, interceptors |
-| `api/auth.ts` | Auth API functions |
-| `api/patients.ts` | Patients API functions |
-| `api/analytics.ts` | Analytics API functions |
-| `api/user.ts` | User profile API functions |
-| `api/index.ts` | Export all API modules |
-| `store/authStore.ts` | Zustand auth state management |
-| `utils/logger.ts` | Console logging utility |
-| `components/VerifyOtpScreen.tsx` | OTP verification page |
-| `components/ResetPasswordScreen.tsx` | Reset password page |
+| File | Purpose | Status |
+|------|---------|--------|
+| `api/client.ts` | Axios instance, token management, interceptors | ❌ Not created |
+| `api/auth.ts` | Auth API functions | ❌ Not created |
+| `api/patients.ts` | Patients API functions | ❌ Not created |
+| `api/analytics.ts` | Analytics API functions | ❌ Not created |
+| `api/user.ts` | User profile API functions | ❌ Not created |
+| `api/index.ts` | Export all API modules | ❌ Not created |
+| `store/authStore.ts` | Zustand auth state management | ❌ Not created |
+| `utils/logger.ts` | Console logging utility | ❌ Not created |
+
+### Recently Created Files (UI Only - Need API Integration)
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `components/VerifyEmailScreen.tsx` | OTP/Email verification page | ✅ UI complete (mock) |
+| `components/ResetPasswordScreen.tsx` | Reset password page | ✅ UI complete (mock) |
+| `components/RegisterPatientPage.tsx` | New patient registration form | ✅ UI complete (mock) |
+| `services/geminiService.ts` | Gemini AI integration for summaries | ✅ Functional |
 
 ### Dependencies to Add
 
@@ -643,20 +812,20 @@ export interface PaginatedResponse<T> { ... }
 
 | Feature | Webapp | Web-Dashboard | Notes |
 |---------|--------|---------------|-------|
-| Login | Mock | Full | Need API integration |
-| Registration | Mock | Full | Missing fields, OTP flow |
-| OTP Verification | Missing | Full | Create new page |
-| Forgot Password | Mock | Full | Need API integration |
-| Reset Password | Missing | N/A (link in email) | Create new page |
+| Login | Mock UI ✅ | Full | Need API integration |
+| Registration | Mock UI ✅ | Full | Missing fields, OTP flow |
+| OTP Verification | Mock UI ✅ | Full | VerifyEmailScreen.tsx exists |
+| Forgot Password | Mock UI ✅ | Full | Need API integration |
+| Reset Password | Mock UI ✅ | N/A (link in email) | ResetPasswordScreen.tsx exists |
 | Token Refresh | None | Full | Need interceptor |
 | Patients | Mock data | Full API | Need API integration |
-| Patient Create | None | Full | Add functionality |
+| Patient Create | Mock UI ✅ | Full | RegisterPatientPage.tsx exists |
 | Patient Edit | None | Full | Add functionality |
 | Clinical Notes | None | Full | Add functionality |
 | Analytics | Mock data | Full API | Need API integration |
 | Profile | Hardcoded | Full API | Need API integration |
 | Settings | Local state | Partial | Need persistence |
-| AI Summary | Gemini (works) | N/A | Already functional |
+| AI Summary | Gemini ✅ | N/A | Already functional |
 
 ---
 
@@ -738,13 +907,21 @@ export default defineConfig({
 
 ## Conclusion
 
-The webapp has a solid UI foundation matching the web-dashboard design. The primary work involves:
+The webapp has a solid UI foundation matching the web-dashboard design. Recent additions include:
+
+### Recently Added Components (UI Complete - Need API Integration)
+- ✅ `VerifyEmailScreen.tsx` - OTP/Email verification with 6-digit input
+- ✅ `ResetPasswordScreen.tsx` - Password reset with confirmation
+- ✅ `RegisterPatientPage.tsx` - Full patient registration form
+- ✅ `geminiService.ts` - AI-powered patient summaries (functional)
+
+### Remaining Work
 
 1. **Infrastructure**: API client, token management, state management (Zustand)
-2. **Auth Flow**: Complete authentication cycle including OTP verification
+2. **Auth Flow**: Connect existing UI to real API endpoints
 3. **Data Integration**: Replace all mock data with real API calls
-4. **New Pages**: OTP verification, Reset password
+4. **Patient Management**: Connect RegisterPatientPage to backend API
 
 The existing AI features (Gemini integration) are functional and can be retained. The Google/Microsoft OAuth buttons in the UI are placeholders - OAuth integration would require additional backend work if needed.
 
-Estimated scope: Creating ~10 new files, modifying ~8 existing files, adding 2-3 new dependencies.
+**Updated Scope**: Creating ~8 new API/infrastructure files, modifying ~10 existing files for API integration, adding 2-3 new dependencies.

@@ -1,16 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { authApi } from '../api/auth';
+import { useAuthStore } from '../store/authStore';
+import type { AxiosError } from 'axios';
 
 interface VerifyEmailScreenProps {
   onVerify: () => void;
   onBack: () => void;
-  email?: string;
+  email: string;
 }
+
+interface ApiErrorResponse {
+  detail?: string | { msg: string }[];
+}
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack, email }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const login = useAuthStore((state) => state.login);
 
   useEffect(() => {
     // Focus first input on mount
@@ -19,6 +34,16 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
     }
   }, []);
 
+  // Countdown timer for resend cooldown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
   const handleChange = (index: number, value: string) => {
     // Allow only numbers
     if (value && !/^\d+$/.test(value)) return;
@@ -26,6 +51,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1); // Take last char if multiple
     setOtp(newOtp);
+    setError(null); // Clear error on input
 
     // Move to next input if value entered
     if (value && index < 5 && inputRefs.current[index + 1]) {
@@ -43,36 +69,105 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 6).split('');
     if (pastedData.every(char => /^\d$/.test(char))) {
-        const newOtp = [...otp];
-        pastedData.forEach((char, index) => {
-            if (index < 6) newOtp[index] = char;
-        });
-        setOtp(newOtp);
-        // Focus last filled or first empty
-        const nextFocus = Math.min(pastedData.length, 5);
-        inputRefs.current[nextFocus]?.focus();
+      const newOtp = [...otp];
+      pastedData.forEach((char, index) => {
+        if (index < 6) newOtp[index] = char;
+      });
+      setOtp(newOtp);
+      setError(null);
+      // Focus last filled or first empty
+      const nextFocus = Math.min(pastedData.length, 5);
+      inputRefs.current[nextFocus]?.focus();
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.some(digit => digit === '')) return; // Validate all filled
+    if (otp.some(digit => digit === '')) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setError(null);
+
+    try {
+      const otpCode = otp.join('');
+      const response = await authApi.verifyOtp(email, otpCode);
+
+      // Store tokens and user in auth store
+      login(response.user, response.access_token, response.refresh_token);
       onVerify();
-    }, 1500);
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data = axiosError.response.data;
+
+        if (status === 400) {
+          setError('Invalid or expired verification code. Please try again.');
+        } else if (status === 429) {
+          setError('Too many attempts. Please wait before trying again.');
+        } else if (data?.detail) {
+          if (typeof data.detail === 'string') {
+            setError(data.detail);
+          } else if (Array.isArray(data.detail)) {
+            setError(data.detail.map(d => d.msg).join(', '));
+          }
+        } else {
+          setError('Verification failed. Please try again.');
+        }
+      } else {
+        setError('Unable to connect to server. Please check your connection.');
+      }
+      // Clear OTP on error
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    setError(null);
+    setResendSuccess(false);
+
+    try {
+      await authApi.resendOtp(email);
+      setResendSuccess(true);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      // Hide success message after 5 seconds
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.status === 429) {
+        setError('Too many resend attempts. Please wait before trying again.');
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      } else if (axiosError.response?.data?.detail) {
+        const detail = axiosError.response.data.detail;
+        if (typeof detail === 'string') {
+          setError(detail);
+        }
+      } else {
+        setError('Failed to resend code. Please try again.');
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
 
   return (
     <div className="min-h-screen w-full flex bg-gray-50">
       {/* Left Side (Same as other screens) */}
       <div className="hidden lg:flex w-1/2 relative bg-brand-900 overflow-hidden flex-col justify-between p-12 text-white">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop" 
-            alt="Medical Team" 
+          <img
+            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop"
+            alt="Medical Team"
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-brand-900 via-brand-800 to-transparent opacity-90"></div>
@@ -107,7 +202,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
         </div>
 
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl shadow-gray-200/50 p-8 sm:p-10 border border-gray-100">
-          
+
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-brand-600 border border-blue-100">
               <Mail size={28} />
@@ -117,9 +212,23 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h2>
             <p className="text-gray-500 text-sm">
-              Enter the 6-digit code sent to your email address.
+              Enter the 6-digit code sent to <span className="font-medium text-gray-700">{maskedEmail}</span>
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {resendSuccess && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-green-700">A new verification code has been sent to your email.</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="flex justify-between gap-2 mb-8">
@@ -128,6 +237,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
                   key={index}
                   ref={(el) => { inputRefs.current[index] = el; }}
                   type="text"
+                  inputMode="numeric"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
@@ -151,13 +261,17 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Didn't receive the code?{' '}
-            <button className="text-brand-600 font-semibold hover:text-brand-700 hover:underline transition-colors">
-              Resend
+            <button
+              onClick={handleResendOtp}
+              disabled={resendCooldown > 0 || isResending}
+              className="text-brand-600 font-semibold hover:text-brand-700 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+            >
+              {isResending ? 'Sending...' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend'}
             </button>
           </p>
 
           <div className="mt-8 text-center">
-            <button 
+            <button
               onClick={onBack}
               className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -168,9 +282,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onVerify, onBack,
 
           <div className="mt-10 text-center text-xs text-gray-400 flex justify-center gap-4">
             <a href="#" className="hover:text-gray-600">Privacy</a>
-            <span>•</span>
+            <span>*</span>
             <a href="#" className="hover:text-gray-600">Terms</a>
-            <span>•</span>
+            <span>*</span>
             <a href="#" className="hover:text-gray-600">Help Center</a>
           </div>
         </div>

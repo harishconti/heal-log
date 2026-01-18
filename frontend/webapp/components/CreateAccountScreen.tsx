@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { User, Mail, Lock, Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
+import { authApi } from '../api/auth';
+import { useAuthStore } from '../store/authStore';
+import type { AxiosError } from 'axios';
 
 interface CreateAccountScreenProps {
   onNavigateToLogin: () => void;
   onCreateAccount: () => void;
 }
+
+interface ApiErrorResponse {
+  detail?: string | { msg: string }[];
+}
+
+const PASSWORD_REQUIREMENTS = [
+  { id: 'length', label: 'At least 12 characters', test: (p: string) => p.length >= 12 },
+  { id: 'uppercase', label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lowercase', label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { id: 'digit', label: 'One number', test: (p: string) => /\d/.test(p) },
+  { id: 'special', label: 'One special character', test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+];
 
 const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onNavigateToLogin, onCreateAccount }) => {
   const [name, setName] = useState('');
@@ -13,17 +28,78 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onNavigateToL
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const setPendingVerificationEmail = useAuthStore((state) => state.setPendingVerificationEmail);
+
+  const passwordStrength = useMemo(() => {
+    const passed = PASSWORD_REQUIREMENTS.filter(req => req.test(password));
+    return {
+      passed,
+      score: passed.length,
+      isValid: passed.length === PASSWORD_REQUIREMENTS.length
+    };
+  }, [password]);
+
+  const strengthColor = useMemo(() => {
+    if (passwordStrength.score === 0) return 'bg-gray-200';
+    if (passwordStrength.score <= 2) return 'bg-red-500';
+    if (passwordStrength.score <= 4) return 'bg-yellow-500';
+    return 'bg-green-500';
+  }, [passwordStrength.score]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
-    
+
+    setError(null);
+
+    // Validate password strength
+    if (!passwordStrength.isValid) {
+      setError('Please create a password that meets all requirements');
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      await authApi.register({
+        email: email.toLowerCase().trim(),
+        password,
+        full_name: name.trim(),
+      });
+
+      // Store the email for OTP verification
+      setPendingVerificationEmail(email.toLowerCase().trim());
       onCreateAccount();
-    }, 1000);
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data = axiosError.response.data;
+
+        if (status === 409) {
+          setError('An account with this email already exists. Please log in instead.');
+        } else if (status === 422 && data?.detail) {
+          if (typeof data.detail === 'string') {
+            setError(data.detail);
+          } else if (Array.isArray(data.detail)) {
+            setError(data.detail.map(d => d.msg).join(', '));
+          }
+        } else if (data?.detail) {
+          if (typeof data.detail === 'string') {
+            setError(data.detail);
+          }
+        } else {
+          setError('Registration failed. Please try again.');
+        }
+      } else {
+        setError('Unable to connect to server. Please check your connection.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -31,9 +107,9 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onNavigateToL
       {/* Left Side - Hero Image & Branding */}
       <div className="hidden lg:flex w-1/2 relative bg-brand-900 overflow-hidden flex-col justify-between p-12 text-white">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop" 
-            alt="Medical Team" 
+          <img
+            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop"
+            alt="Medical Team"
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-brand-900 via-brand-800 to-transparent opacity-90"></div>
@@ -76,6 +152,13 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onNavigateToL
               Already have an account? <button onClick={onNavigateToLogin} className="text-brand-600 font-medium hover:underline">Log in</button>
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -134,6 +217,37 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onNavigateToL
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+
+              {/* Password strength indicator */}
+              {password && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 flex-1 rounded-full transition-all ${
+                          i <= passwordStrength.score ? strengthColor : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {PASSWORD_REQUIREMENTS.map((req) => (
+                      <div key={req.id} className="flex items-center gap-1.5 text-xs">
+                        <Check
+                          size={12}
+                          className={`flex-shrink-0 ${
+                            req.test(password) ? 'text-green-500' : 'text-gray-300'
+                          }`}
+                        />
+                        <span className={req.test(password) ? 'text-gray-600' : 'text-gray-400'}>
+                          {req.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-start">

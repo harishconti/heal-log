@@ -1,24 +1,27 @@
 import React from 'react';
-import { 
-  Bell, 
-  Menu, 
-  X, 
-  ChevronDown 
+import {
+  Bell,
+  Menu,
+  X,
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
-import { ViewState } from '../types';
+import { ViewState, User } from '../types';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   currentView: ViewState;
   onChangeView: (view: ViewState) => void;
   onLogout: () => void;
+  user: User | null;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
-  children, 
-  currentView, 
-  onChangeView, 
-  onLogout 
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  children,
+  currentView,
+  onChangeView,
+  onLogout,
+  user
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -70,17 +73,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             
             <div className="flex items-center gap-4 pl-6 border-l border-gray-100 h-10">
               <div className="text-right hidden lg:block leading-tight">
-                <p className="text-sm font-bold text-gray-900">Dr. Alexander Smith</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chief Medical Officer</p>
+                <p className="text-sm font-bold text-gray-900">{user?.full_name || 'Doctor'}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{user?.medical_specialty || user?.role || 'Medical Professional'}</p>
               </div>
               <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=100&h=100" 
-                  alt="Dr. Smith" 
-                  className="w-11 h-11 rounded-full border-[3px] border-white shadow-md object-cover"
-                />
+                <div className="w-11 h-11 rounded-full border-[3px] border-white shadow-md bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg">
+                  {user?.full_name?.charAt(0).toUpperCase() || 'D'}
+                </div>
                 <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           </div>
 

@@ -1,26 +1,89 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, Lock, AlertCircle } from 'lucide-react';
+import { authApi } from '../api/auth';
+import { useAuthStore } from '../store/authStore';
+import type { AxiosError } from 'axios';
 
 interface LoginScreenProps {
   onLogin: () => void;
   onForgotPassword: () => void;
   onCreateAccount: () => void;
+  onNeedVerification: (email: string) => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, onCreateAccount }) => {
+interface ApiErrorResponse {
+  detail?: string | { msg: string }[];
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({
+  onLogin,
+  onForgotPassword,
+  onCreateAccount,
+  onNeedVerification
+}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const login = useAuthStore((state) => state.login);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Basic validation
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    if (!password) {
+      setError('Password is required');
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate network delay for realism
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const response = await authApi.login({
+        username: email.toLowerCase().trim(),
+        password,
+      });
+
+      // Store tokens and user in auth store
+      login(response.user, response.access_token, response.refresh_token);
       onLogin();
-    }, 800);
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data = axiosError.response.data;
+
+        if (status === 403) {
+          // Email not verified - redirect to OTP
+          onNeedVerification(email.toLowerCase().trim());
+          return;
+        } else if (status === 401) {
+          setError('Invalid email or password');
+        } else if (status === 429) {
+          setError('Too many login attempts. Please try again in 30 minutes.');
+        } else if (data?.detail) {
+          if (typeof data.detail === 'string') {
+            setError(data.detail);
+          } else if (Array.isArray(data.detail)) {
+            setError(data.detail.map(d => d.msg).join(', '));
+          }
+        } else {
+          setError('An error occurred. Please try again.');
+        }
+      } else {
+        setError('Unable to connect to server. Please check your connection.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -29,9 +92,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
       <div className="hidden lg:flex w-1/2 relative bg-brand-900 overflow-hidden flex-col justify-between p-12 text-white">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop" 
-            alt="Medical Team" 
+          <img
+            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2665&auto=format&fit=crop"
+            alt="Medical Team"
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-brand-900 via-brand-800 to-transparent opacity-90"></div>
@@ -52,17 +115,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
             Focus on patients, not paperwork.
           </h1>
           <p className="text-brand-100 text-lg mb-8 leading-relaxed">
-            The intelligent dashboard for modern medical teams. 
+            The intelligent dashboard for modern medical teams.
             Secure, fast, and designed for clarity.
           </p>
 
           <div className="flex items-center gap-4 text-sm font-medium text-brand-50 bg-white/10 p-4 rounded-xl backdrop-blur-sm w-fit">
             <div className="flex -space-x-2">
               {[1, 2, 3].map((i) => (
-                <img 
+                <img
                   key={i}
-                  src={`https://picsum.photos/seed/${i + 10}/100/100`} 
-                  alt="User" 
+                  src={`https://picsum.photos/seed/${i + 10}/100/100`}
+                  alt="User"
                   className="w-8 h-8 rounded-full border-2 border-brand-900"
                 />
               ))}
@@ -70,7 +133,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
             <div className="flex flex-col">
                <span>Trusted by 10,000+ clinicians</span>
                <div className="flex gap-1 text-yellow-400 text-xs">
-                 ★★★★★
+                 *****
                </div>
             </div>
           </div>
@@ -93,6 +156,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
               New here? <button onClick={onCreateAccount} className="text-brand-600 font-medium hover:underline">Create an account</button>
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
@@ -121,7 +191,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   className="block w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm"
                 />
                 <button
@@ -133,7 +203,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
                 </button>
               </div>
               <div className="flex justify-end mt-2">
-                <button 
+                <button
                   type="button"
                   onClick={onForgotPassword}
                   className="text-xs font-medium text-brand-600 hover:text-brand-700"
@@ -176,9 +246,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onForgotPassword, on
 
           <div className="mt-8 text-center text-xs text-gray-400 flex justify-center gap-4">
             <a href="#" className="hover:text-gray-600">Privacy</a>
-            <span>•</span>
+            <span>*</span>
             <a href="#" className="hover:text-gray-600">Terms</a>
-            <span>•</span>
+            <span>*</span>
             <a href="#" className="hover:text-gray-600">Help Center</a>
           </div>
         </div>

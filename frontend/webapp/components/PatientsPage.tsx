@@ -17,6 +17,7 @@ import { MOCK_PATIENTS } from '../constants';
 
 interface PatientsPageProps {
   onSelectPatient: (patient: Patient) => void;
+  onAddNewPatient?: () => void;
 }
 
 const StatCard = ({ label, value, icon: Icon, colorClass, bgClass }: any) => (
@@ -94,7 +95,7 @@ const PatientListItem = ({ patient, onClick }: { patient: Patient; onClick: () =
   );
 };
 
-const PatientsPage: React.FC<PatientsPageProps> = ({ onSelectPatient }) => {
+const PatientsPage: React.FC<PatientsPageProps> = ({ onSelectPatient, onAddNewPatient }) => {
   // Mock current date
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -120,7 +121,10 @@ const PatientsPage: React.FC<PatientsPageProps> = ({ onSelectPatient }) => {
                   className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-sm"
                 />
               </div>
-              <button className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-600/20 transition-all active:scale-95 whitespace-nowrap">
+              <button 
+                onClick={onAddNewPatient}
+                className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-600/20 transition-all active:scale-95 whitespace-nowrap"
+              >
                 <Plus size={20} />
                 New Patient
               </button>

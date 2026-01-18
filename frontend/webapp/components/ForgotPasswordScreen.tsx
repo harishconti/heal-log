@@ -3,9 +3,10 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface ForgotPasswordScreenProps {
   onBackToLogin: () => void;
+  onNavigateToReset?: () => void; // Optional for backward compatibility, but we'll use it
 }
 
-const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onBackToLogin }) => {
+const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onBackToLogin, onNavigateToReset }) => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,17 +119,26 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onBackToLog
                  </div>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-              <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              <p className="text-gray-500 text-sm mb-4 leading-relaxed">
                 We sent a password reset link to <br/>
                 <span className="font-medium text-gray-900">{email}</span>
               </p>
               
               <button
                   onClick={onBackToLogin}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors mb-4"
                 >
                   Back to login
               </button>
+
+              {onNavigateToReset && (
+                <button 
+                  onClick={onNavigateToReset}
+                  className="text-xs text-brand-600 hover:text-brand-700 underline font-medium block mx-auto"
+                >
+                  (Demo) Simulate clicking email link
+                </button>
+              )}
               
               <p className="mt-6 text-xs text-gray-400">
                 Didn't receive the email? <button onClick={() => setIsSubmitted(false)} className="text-brand-600 hover:underline font-medium">Click to resend</button>

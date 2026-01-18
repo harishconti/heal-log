@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client';
 import LoginScreen from './components/LoginScreen';
 import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import CreateAccountScreen from './components/CreateAccountScreen';
+import ResetPasswordScreen from './components/ResetPasswordScreen';
+import VerifyEmailScreen from './components/VerifyEmailScreen';
 import DashboardLayout from './components/DashboardLayout';
 import PatientCard from './components/PatientCard';
 import PatientsPage from './components/PatientsPage';
+import RegisterPatientPage from './components/RegisterPatientPage';
 import AnalyticsPage from './components/AnalyticsPage';
 import ProfilePage from './components/ProfilePage';
 import SettingsPage from './components/SettingsPage';
@@ -106,7 +109,7 @@ const DashboardOverview = () => {
             {/* Header */}
             <div>
                 <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Main Dashboard Overview</h2>
-                <p className="text-gray-500 mt-2">Welcome back, Dr. Smith. You have 8 appointments scheduled for today.</p>
+                <p className="text-gray-500 mt-2">Welcome back, Dr. Alexander Smith. You have 8 appointments scheduled for today.</p>
             </div>
 
             {/* Stats Grid */}
@@ -116,7 +119,7 @@ const DashboardOverview = () => {
                     value="1,284" 
                     trend={12} 
                     icon={Users} 
-                    colorClass="text-brand-600"
+                    colorClass="text-brand-600" 
                     iconBgClass="bg-brand-50"
                 />
                 <StatCard 
@@ -124,7 +127,7 @@ const DashboardOverview = () => {
                     value="42" 
                     trend={5.2} 
                     icon={UserPlus} 
-                    colorClass="text-green-600"
+                    colorClass="text-green-600" 
                     iconBgClass="bg-green-50"
                 />
                 <StatCard 
@@ -132,7 +135,7 @@ const DashboardOverview = () => {
                     value="5" 
                     trend={-2} 
                     icon={AlertTriangle} 
-                    colorClass="text-orange-600"
+                    colorClass="text-orange-600" 
                     iconBgClass="bg-orange-50"
                 />
                 <StatCard 
@@ -140,7 +143,7 @@ const DashboardOverview = () => {
                     value="14m" 
                     trend={0} 
                     icon={Clock} 
-                    colorClass="text-purple-600"
+                    colorClass="text-purple-600" 
                     iconBgClass="bg-purple-50"
                 />
             </div>
@@ -170,7 +173,7 @@ const DashboardOverview = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="h-[300px] w-full">
+                        <div className="h-[300px] w-full min-w-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>
@@ -299,7 +302,7 @@ const DashboardOverview = () => {
 
 // --- Main App Component ---
 
-type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'REGISTER';
+type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'REGISTER' | 'RESET_PASSWORD' | 'VERIFY_EMAIL';
 
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>({ isAuthenticated: false, user: null });
@@ -312,7 +315,7 @@ const App: React.FC = () => {
   const handleLogin = () => {
     setAuth({
       isAuthenticated: true,
-      user: { name: 'Dr. John Doe', email: 'doctor@hospital.com', role: 'Doctor' }
+      user: { name: 'Dr. Alexander Smith', email: 'alexander.smith@heallog.med', role: 'Chief Medical Officer' }
     });
     setAuthView('LOGIN'); // Reset for next logout
   };
@@ -329,13 +332,28 @@ const App: React.FC = () => {
         return (
           <CreateAccountScreen 
             onNavigateToLogin={() => setAuthView('LOGIN')}
-            onCreateAccount={handleLogin}
+            onCreateAccount={() => setAuthView('VERIFY_EMAIL')}
           />
+        );
+      case 'VERIFY_EMAIL':
+        return (
+            <VerifyEmailScreen 
+                onVerify={handleLogin}
+                onBack={() => setAuthView('REGISTER')}
+            />
         );
       case 'FORGOT_PASSWORD':
         return (
           <ForgotPasswordScreen 
             onBackToLogin={() => setAuthView('LOGIN')} 
+            onNavigateToReset={() => setAuthView('RESET_PASSWORD')}
+          />
+        );
+      case 'RESET_PASSWORD':
+        return (
+          <ResetPasswordScreen 
+            onBackToLogin={() => setAuthView('LOGIN')}
+            onSubmit={() => setAuthView('LOGIN')}
           />
         );
       case 'LOGIN':
@@ -378,7 +396,20 @@ const App: React.FC = () => {
             {currentView === ViewState.DASHBOARD && <DashboardOverview />}
             
             {currentView === ViewState.PATIENTS && (
-                <PatientsPage onSelectPatient={setSelectedPatient} />
+                <PatientsPage 
+                  onSelectPatient={setSelectedPatient} 
+                  onAddNewPatient={() => setCurrentView(ViewState.REGISTER_PATIENT)}
+                />
+            )}
+
+            {currentView === ViewState.REGISTER_PATIENT && (
+                <RegisterPatientPage 
+                  onBack={() => setCurrentView(ViewState.PATIENTS)}
+                  onSubmit={(data) => {
+                    console.log('Registered new patient:', data);
+                    setCurrentView(ViewState.PATIENTS);
+                  }}
+                />
             )}
 
             {currentView === ViewState.ANALYTICS && <AnalyticsPage />}
